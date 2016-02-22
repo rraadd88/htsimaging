@@ -28,15 +28,17 @@ def csv2nums(csv_fh):
         # vec = vec
         # vec = vec[~np.isnan(vec)]
         # vec = vec[~np.isinf(vec)]
-        try:
-            argsGumbel0 = gumbel_r.fit(vec)
-            bins = np.arange(0, 5000, 50)#np.arange(5000)
-            probs, binedges = np.histogram(vec, bins=bins, normed=True)
-            bincenters = 0.5*(binedges[1:]+binedges[:-1])
-            argsGumbel1 = curve_fit(gumbel_r.pdf, bincenters, probs, p0=argsGumbel0)[0]
-            nums.loc[0,'peak']=argsGumbel1[0]
-        except:
-            nums.loc[0,'peak']=np.nan
+        # try:
+        bins = np.arange(0, 5000, 50)#np.arange(5000)
+        probs, binedges = np.histogram(vec, bins=bins, normed=True)
+        bincenters = 0.5*(binedges[1:]+binedges[:-1])
+        # fit = gumbel_r.fit(vec)
+        # curvefit = curve_fit(gumbel_r.pdf, bincenters, probs, p0=fit)[0]
+        fit = stats.norm.fit(vec)
+        curvefit = curve_fit(stats.norm.pdf, bincenters, probs, p0=fit)[0]
+        nums.loc[0,'peak']=curvefit[0]
+        # except:
+        #     nums.loc[0,'peak']=np.nan
         
         # Thresholding
         dw_threshold=2000
@@ -50,15 +52,17 @@ def csv2nums(csv_fh):
         # vec = vec
         # vec = vec[~np.isnan(vec)]
         # vec = vec[~np.isinf(vec)]
-        try:
-            argsGumbel0 = gumbel_r.fit(vec)
-            bins = np.arange(0, 5000, 50)#np.arange(5000)
-            probs, binedges = np.histogram(vec, bins=bins, normed=True)
-            bincenters = 0.5*(binedges[1:]+binedges[:-1])
-            argsGumbel1 = curve_fit(gumbel_r.pdf, bincenters, probs, p0=argsGumbel0)[0]
-            nums.loc[0,'peak_thr']=argsGumbel1[0]
-        except:
-            nums.loc[0,'peak_thr']=np.nan
+        # try:
+        bins = np.arange(0, 5000, 50)#np.arange(5000)
+        probs, binedges = np.histogram(vec, bins=bins, normed=True)
+        bincenters = 0.5*(binedges[1:]+binedges[:-1])
+        # fit = gumbel_r.fit(vec)
+        # curvefit = curve_fit(gumbel_r.pdf, bincenters, probs, p0=fit)[0]
+        fit = stats.norm.fit(vec)
+        curvefit = curve_fit(stats.norm.pdf, bincenters, probs, p0=fit)[0]
+        nums.loc[0,'peak_thr']=curvefit[0]
+        # except:
+        #     nums.loc[0,'peak_thr']=np.nan
         
         nums.to_csv(nums_fh)
     else:
@@ -109,6 +113,7 @@ if __name__ == '__main__':
     pool.map(csv2nums,csv_fhs)
     pool.close(); pool.join()
     
+    data_job.set_index(['File Name', 'File Frame Index'], inplace=True)
     for i in range(len(nums_fhs)):  
         nums_fh=nums_fhs[i]
         nums_df=pd.read_csv(nums_fh)
@@ -117,6 +122,11 @@ if __name__ == '__main__':
         data_job.loc[(nd_fn,framei),'mean']  =nums_df.loc[0,'mean']
         data_job.loc[(nd_fn,framei),'mode']  =nums_df.loc[0,'mode']
         data_job.loc[(nd_fn,framei),'median']=nums_df.loc[0,'median']
-       
+        data_job.loc[(nd_fn,framei),'peak']=nums_df.loc[0,'peak']
+        data_job.loc[(nd_fn,framei),'mean_thr']  =nums_df.loc[0,'mean_thr']
+        data_job.loc[(nd_fn,framei),'mode_thr']  =nums_df.loc[0,'mode_thr']
+        data_job.loc[(nd_fn,framei),'median_thr']=nums_df.loc[0,'median_thr']
+        data_job.loc[(nd_fn,framei),'peak_thr']=nums_df.loc[0,'peak_thr']
+
     data_job=data_job.reset_index()
     data_job.to_csv(data_xls_fh+".nums")      

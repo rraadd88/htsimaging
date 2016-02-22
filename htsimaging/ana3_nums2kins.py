@@ -159,8 +159,9 @@ def main(data_xls_fh):
     info_pt00s=info_pt00s.set_index('well')
     time=np.array(range(24))*2
 
-    for num_type in ['mean','mode','median']: 
-    	data_job2kin(data_job,num_type,info_pt00s,time,wells)
+    for num_type in ['mean','mode','median','peak','mean_thr','mode_thr','median_thr','peak_thr']: 
+    	print num_type
+        data_job2kin(data_job,num_type,info_pt00s,time,wells)
 
 	    # data_mean  =data_job2data_num(data_job,'mean')
 	    # data_mode  =data_job2data_num(data_job,'mode')
