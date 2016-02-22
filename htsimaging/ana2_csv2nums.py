@@ -11,21 +11,59 @@ from scipy import stats
 import os
 from multiprocessing import Pool
 from os.path import splitext,basename,exists
+from scipy.optimize import curve_fit
+# from scipy.stats import gumbel_r
 
 def csv2nums(csv_fh):
     nums_fh=csv_fh+".nums"    
-    if exists(csv_fh) and (not exists(nums_fh)) :
-#         print ">>> STATUS  : processing : %s" % csv_fh 
+    if exists(csv_fh):# and (not exists(nums_fh)) :
+        print ">>> STATUS  : processing : %s" % csv_fh 
         arr=np.genfromtxt(csv_fh,delimiter=',')
         vec=np.concatenate(arr)
         nums=pd.DataFrame()
+        
         nums.loc[0,'mode']=stats.mode(vec)[0][0]
         nums.loc[0,'mean']=np.mean(vec)
         nums.loc[0,'median']=np.median(vec)
+        # vec = vec
+        # vec = vec[~np.isnan(vec)]
+        # vec = vec[~np.isinf(vec)]
+        try:
+            argsGumbel0 = gumbel_r.fit(vec)
+            bins = np.arange(0, 5000, 50)#np.arange(5000)
+            probs, binedges = np.histogram(vec, bins=bins, normed=True)
+            bincenters = 0.5*(binedges[1:]+binedges[:-1])
+            argsGumbel1 = curve_fit(gumbel_r.pdf, bincenters, probs, p0=argsGumbel0)[0]
+            nums.loc[0,'peak']=argsGumbel1[0]
+        except:
+            nums.loc[0,'peak']=np.nan
+        
+        # Thresholding
+        dw_threshold=2000
+        up_threshold=5000
+        vec = vec[vec>dw_threshold]
+        vec = vec[vec<up_threshold]
+
+        nums.loc[0,'mode_thr']=stats.mode(vec)[0][0]
+        nums.loc[0,'mean_thr']=np.mean(vec)
+        nums.loc[0,'median_thr']=np.median(vec)
+        # vec = vec
+        # vec = vec[~np.isnan(vec)]
+        # vec = vec[~np.isinf(vec)]
+        try:
+            argsGumbel0 = gumbel_r.fit(vec)
+            bins = np.arange(0, 5000, 50)#np.arange(5000)
+            probs, binedges = np.histogram(vec, bins=bins, normed=True)
+            bincenters = 0.5*(binedges[1:]+binedges[:-1])
+            argsGumbel1 = curve_fit(gumbel_r.pdf, bincenters, probs, p0=argsGumbel0)[0]
+            nums.loc[0,'peak_thr']=argsGumbel1[0]
+        except:
+            nums.loc[0,'peak_thr']=np.nan
+        
         nums.to_csv(nums_fh)
     else:
         print ">>> WARNING   : skipping : %s" % csv_fh
-#     data_job.to_csv('data_xls_fh_nums.csv')
+# data_job.to_csv('data_xls_fh_nums.csv')
 
 # import matplotlib.pyplot as plt
 # hist=plt.hist(vec,80)
@@ -66,7 +104,7 @@ if __name__ == '__main__':
         nums_fhs.append("%s/%s%02d.csv.nums" % (nd_dh,nd_fns[i],frameis[i]))
         nd_fn_framei_tps.append([nd_fns[i],frameis[i]])
 
-        #       csv2nums(nd_fns_frameis_tps[0])
+    # csv2nums(csv_fhs[0])
     pool=Pool(processes=int(cores)) 
     pool.map(csv2nums,csv_fhs)
     pool.close(); pool.join()
@@ -81,13 +119,4 @@ if __name__ == '__main__':
         data_job.loc[(nd_fn,framei),'median']=nums_df.loc[0,'median']
        
     data_job=data_job.reset_index()
-    data_job.to_csv(data_xls_fh+".nums")
-        
-        
-        
-        
-        
-        
-        
-        
-        
+    data_job.to_csv(data_xls_fh+".nums")      
