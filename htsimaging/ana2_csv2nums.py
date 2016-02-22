@@ -15,7 +15,7 @@ from os.path import splitext,basename,exists
 def csv2nums(csv_fh):
     nums_fh=csv_fh+".nums"    
     if exists(csv_fh) and (not exists(nums_fh)) :
-        print ">>> STATUS  : processing : %s" % csv_fh 
+#         print ">>> STATUS  : processing : %s" % csv_fh 
         arr=np.genfromtxt(csv_fh,delimiter=',')
         vec=np.concatenate(arr)
         nums=pd.DataFrame()
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     csv_fhs =[]
     nums_fhs=[]
     nd_fn_framei_tps=[]
-    for i in range(len(csv_fhs)):
+    for i in range(len(nd_fns)):
         csv_fhs.append("%s/%s%02d.csv" % (nd_dh,nd_fns[i],frameis[i]))
         nums_fhs.append("%s/%s%02d.csv.nums" % (nd_dh,nd_fns[i],frameis[i]))
         nd_fn_framei_tps.append([nd_fns[i],frameis[i]])
@@ -71,11 +71,14 @@ if __name__ == '__main__':
     pool.map(csv2nums,csv_fhs)
     pool.close(); pool.join()
     
-    data_job=data_job.set_index(['File Name', 'File Frame Index'], inplace=True)
-    for nd_fn_framei_tps in nd_fn_framei_tps:        
-        nd_fn=nd_fn_framei_tps[0]
-        framei=nd_fn_framei_tps[1]
-        data_job[nd_fn][framei]
+    for i in range(len(nums_fhs)):        
+        nums_fh=nums_fhs[i]
+        nums_df=pd.read_csv(nums_fh)
+        nd_fn=nd_fn_framei_tps[i][0]
+        framei=nd_fn_framei_tps[i][1]
+        data_job.loc[(nd_fn,framei),'mean']  =nums_df.loc[0,'mean']
+        data_job.loc[(nd_fn,framei),'mode']  =nums_df.loc[0,'mode']
+        data_job.loc[(nd_fn,framei),'median']=nums_df.loc[0,'median']
         
     data_job=data_job.reset_index()
         
