@@ -110,8 +110,12 @@ def main(data_xls_fh):
             diff_df.loc[:,wells_b[welli]]           =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[2]
             rateofrecov_df.loc[wells_b[welli],'rateofrecov'] =getrateofrecov(diff_df.loc[:,wells_b[welli]])[0]        
             diff_fitted_df.loc[:,wells_b[welli]]             =getrateofrecov(diff_df.loc[:,wells_b[welli]])[1]
-        wells_rows=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P']
-        wells_rows_ctrl, wells_rows_test =wells_rows[::2],wells_rows[1::2] # odd,even
+	    
+	    #make tp for well, pt00
+	        #rateofrecov_df.loc[wells_b[welli],'rateofrecov']  =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[3]
+	        #data_num_kin.loc[:,wells_b[welli]], data_num_kin.loc[:,wells_u[welli]], diff_df.loc[:,wells_b[welli]], rateofrecov_df.loc[wells_b[welli],'rateofrecov']=data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)
+	     wells_rows=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P']
+	     wells_rows_ctrl, wells_rows_test =wells_rows[::2],wells_rows[1::2] # odd,even
         rateofrecov_df.to_csv("%s.%s.rateofrecov" % (data_xls_fh,num_type))	    
         rateofrecov_df=rateofrecov_df.reset_index()    
         lbls=pd.read_excel(data_xls_fh,'lbls')
@@ -129,21 +133,21 @@ def main(data_xls_fh):
         len(smpi)
         len(rateofrecov_df)
         rateofrecov_df['smpi']=smpi
-        rateofrecov_df['rateofrecov']=rateofrecov_df['rateofrecov'].astype(float)
-        rateofrecov_per_smpi_df=pd.pivot_table(rateofrecov_df,values='rateofrecov',index='smpi',columns='smp_type')
-        rateofrecov_per_smpi_df=rateofrecov_per_smpi_df.reset_index()
-        rateofrecov_per_smpi_df=rateofrecov_per_smpi_df.reset_index()
-        del rateofrecov_per_smpi_df.columns.name
+		  rateofrecov_df['rateofrecov']=rateofrecov_df['rateofrecov'].astype(float)
+	     rateofrecov_per_smpi_df=pd.pivot_table(rateofrecov_df,values='rateofrecov',index='smpi',columns='smp_type')
+	     rateofrecov_per_smpi_df=rateofrecov_per_smpi_df.reset_index()
+	     rateofrecov_per_smpi_df=rateofrecov_per_smpi_df.reset_index()
+	     del rateofrecov_per_smpi_df.columns.name
+	    
+	     info_genes_df=pd.read_excel('/home/kclabws1/Documents/propro/writ/prjs/2_chem_chap_screens/data/data_sampling_yeast_gfp_genes/data/160208_corrected_smpi/151217_final_list90_data.xls')
+	     combo=pd.concat([info_genes_df,rateofrecov_per_smpi_df],axis=1)
 
-        info_genes_df=pd.read_excel('/home/kclabws1/Documents/propro/writ/prjs/2_chem_chap_screens/data/data_sampling_yeast_gfp_genes/data/160208_corrected_smpi/151217_final_list90_data.xls')
-        combo=pd.concat([info_genes_df,rateofrecov_per_smpi_df],axis=1)
-
-        data_num.to_csv("%s.%s.data_num" % (data_xls_fh,num_type)) 
-        data_num_kin.to_csv("%s.%s.data_num_kin" % (data_xls_fh,num_type))
-        diff_df.to_csv("%s.%s.diff_df" % (data_xls_fh,num_type))  
-        diff_fitted_df.to_csv("%s.%s.diff_fitted_df" % (data_xls_fh,num_type))
-        rateofrecov_per_smpi_df.to_csv("%s.%s.rateofrecov_per_smpi_df" % (data_xls_fh,num_type))
-        combo.to_csv("%s.%s.combo" % (data_xls_fh,num_type))
+	     data_num.to_csv("%s.%s.data_num" % (data_xls_fh,num_type)) 
+	     data_num_kin.to_csv("%s.%s.data_num_kin" % (data_xls_fh,num_type))
+	     diff_df.to_csv("%s.%s.diff_df" % (data_xls_fh,num_type))  
+	     diff_fitted_df.to_csv("%s.%s.diff_fitted_df" % (data_xls_fh,num_type))
+	     rateofrecov_per_smpi_df.to_csv("%s.%s.rateofrecov_per_smpi_df" % (data_xls_fh,num_type))
+	     combo.to_csv("%s.%s.combo" % (data_xls_fh,num_type))
 
     #data_xls_fh='../../../data/yeast_gfp_half_life/data/160211_bleach_chase/160211_yeast_bleach_chase_data.xlsx'	    
     data_job=pd.read_csv(data_xls_fh+".nums")

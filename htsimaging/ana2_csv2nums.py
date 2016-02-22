@@ -71,7 +71,7 @@ if __name__ == '__main__':
     pool.map(csv2nums,csv_fhs)
     pool.close(); pool.join()
     
-    for i in range(len(nums_fhs)):        
+    for i in range(len(nums_fhs)):  
         nums_fh=nums_fhs[i]
         nums_df=pd.read_csv(nums_fh)
         nd_fn=nd_fn_framei_tps[i][0]
@@ -79,8 +79,9 @@ if __name__ == '__main__':
         data_job.loc[(nd_fn,framei),'mean']  =nums_df.loc[0,'mean']
         data_job.loc[(nd_fn,framei),'mode']  =nums_df.loc[0,'mode']
         data_job.loc[(nd_fn,framei),'median']=nums_df.loc[0,'median']
-        
+       
     data_job=data_job.reset_index()
+    data_job.to_csv(data_xls_fh+".nums")
         
         
         
