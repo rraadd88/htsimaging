@@ -36,9 +36,10 @@ def main(data_xls_fh):
             otpt_u_data=u_data[pt00:pt00+12]
             #return otpt_u_data
             #otpt_diff=np.log(otpt_u_data-otpt_b_data+10000)
-            otpt_diff=otpt_u_data-otpt_b_data
+            # otpt_diff=otpt_u_data-otpt_b_data
+            otpt_diff=otpt_b_data-otpt_u_data
             #otpt_diff=norm2max(otpt_diff)
-            #otpt_diff=otpt_diff - otpt_diff.max() # normalised to max
+            # otpt_diff=otpt_diff - otpt_diff.min() # normalised to min
             #otpt_diff=(otpt_diff - otpt_diff.min())/(otpt_diff.max()-otpt_diff.min()) # normalised to max
             return otpt_b_data.reset_index(),otpt_u_data.reset_index(),otpt_diff.reset_index(drop=True)      
         else :   
@@ -49,7 +50,10 @@ def main(data_xls_fh):
             otpt_diff=np.log(otpt_u_data-otpt_b_data+10000)
             return otpt_b_data.reset_index(),otpt_u_data.reset_index(),otpt_diff.reset_index(drop=True)
     
-    def exp1(x, a, b, c):
+    def exp1_growth(x, a, b, c):
+        return a * np.exp( b * x) + c  
+
+    def exp1_decay(x, a, b, c):
         return a * np.exp(-b * x) + c  
                                                                                                                                                       
     def getrateofrecov(y):
@@ -61,7 +65,7 @@ def main(data_xls_fh):
             #rate, intercept, r_value, p_value, rate_std_error = stats.linregress(x[:totpts], y[:totpts])
         try:
             #popt, pcov = curve_fit(exp1, x, y,p0=[50,0,-50])
-            popt, pcov = curve_fit(exp1, x, y,p0=[1,0,0])
+            popt, pcov = curve_fit(exp1_growth, x, y,p0=[0,0,1])
             #plt.figure()
             #plt.plot(x, y, 'ko', label="Original Noised Data")
             #plt.plot(x, exp1(x, *popt), 'r-', label="Fitted Curve")
@@ -76,7 +80,7 @@ def main(data_xls_fh):
                 #plt.plot(x[:totpts], predict_y, 'k-')
                 #plt.show()
                 rate=popt[1]
-                otpt_diff_fitted=pd.Series(exp1(x, *popt))
+                otpt_diff_fitted=pd.Series(exp1_growth(x, *popt))
             else:
                 rate=np.nan
                 print ">>> WARNING : getrateofrecov : standard deviation error (%.4f) > 0.1 " % perr[1]
@@ -108,8 +112,18 @@ def main(data_xls_fh):
             data_num_kin.loc[:,wells_b[welli]]     =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[0]
             data_num_kin.loc[:,wells_u[welli]]     =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[1]
             diff_df.loc[:,wells_b[welli]]           =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[2]
+        #background correction
+        diff_df_blanks=diff_df[['O13','O15','O17','O19','O21','O23','P13','P15','P17','P19','P21','P23']]
+        diff_df_blanks_average=diff_df_blanks.mean(axis=1)
+        diff_df_blanks.to_csv("%s.%s.diff_df_blanks" % (data_xls_fh,num_type))     
+        for welli in range(len(wells_b)):            
+            diff_df.loc[:,wells_b[welli]]=diff_df.loc[:,wells_b[welli]]-diff_df_blanks_average
+            diff_df_mn=diff_df.loc[:,wells_b[welli]].min()
+            diff_df_mx=diff_df.loc[:,wells_b[welli]].max()
+            diff_df.loc[:,wells_b[welli]]=(diff_df.loc[:,wells_b[welli]]-diff_df_mn)/(diff_df_mx-diff_df_mn)
             rateofrecov_df.loc[wells_b[welli],'rateofrecov'] =getrateofrecov(diff_df.loc[:,wells_b[welli]])[0]        
             diff_fitted_df.loc[:,wells_b[welli]]             =getrateofrecov(diff_df.loc[:,wells_b[welli]])[1]
+            del diff_df_mn,diff_df_mx
         wells_rows=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P']
         wells_rows_ctrl, wells_rows_test =wells_rows[::2],wells_rows[1::2] # odd,even
         rateofrecov_df.to_csv("%s.%s.rateofrecov" % (data_xls_fh,num_type))	    
@@ -159,7 +173,7 @@ def main(data_xls_fh):
     info_pt00s=info_pt00s.set_index('well')
     time=np.array(range(24))*2
 
-    for num_type in ['mean','mode','median','peak','mean_thr','mode_thr','median_thr','peak_thr']: 
+    for num_type in ['sum_thr','pixels_thr']:#['mean','mode','median','peak','mean_thr','mode_thr','median_thr','peak_thr']: 
     	print num_type
         data_job2kin(data_job,num_type,info_pt00s,time,wells)
 

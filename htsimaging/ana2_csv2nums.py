@@ -49,6 +49,8 @@ def csv2nums(csv_fh):
         nums.loc[0,'mode_thr']=stats.mode(vec)[0][0]
         nums.loc[0,'mean_thr']=np.mean(vec)
         nums.loc[0,'median_thr']=np.median(vec)
+        nums.loc[0,'sum_thr']=np.sum(vec)
+        nums.loc[0,'pixels_thr']=len(vec)        
         # vec = vec
         # vec = vec[~np.isnan(vec)]
         # vec = vec[~np.isinf(vec)]
@@ -61,6 +63,7 @@ def csv2nums(csv_fh):
         fit = stats.norm.fit(vec)
         curvefit = curve_fit(stats.norm.pdf, bincenters, probs, p0=fit)[0]
         nums.loc[0,'peak_thr']=curvefit[0]
+
         # except:
         #     nums.loc[0,'peak_thr']=np.nan
         
@@ -127,6 +130,7 @@ if __name__ == '__main__':
         data_job.loc[(nd_fn,framei),'mode_thr']  =nums_df.loc[0,'mode_thr']
         data_job.loc[(nd_fn,framei),'median_thr']=nums_df.loc[0,'median_thr']
         data_job.loc[(nd_fn,framei),'peak_thr']=nums_df.loc[0,'peak_thr']
-
+        data_job.loc[(nd_fn,framei),'sum_thr']=nums_df.loc[0,'sum_thr']
+        data_job.loc[(nd_fn,framei),'pixels_thr']=nums_df.loc[0,'pixels_thr']
     data_job=data_job.reset_index()
     data_job.to_csv(data_xls_fh+".nums")      
