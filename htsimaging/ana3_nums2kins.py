@@ -51,7 +51,7 @@ def main(data_xls_fh):
             return otpt_b_data.reset_index(),otpt_u_data.reset_index(),otpt_diff.reset_index(drop=True)
     
     def exp1_growth(x, a, b, c):
-        return a * np.exp( b * x) + c  
+        return a * np.exp(-b * x) + c  
 
     def exp1_decay(x, a, b, c):
         return a * np.exp(-b * x) + c  
@@ -65,7 +65,7 @@ def main(data_xls_fh):
             #rate, intercept, r_value, p_value, rate_std_error = stats.linregress(x[:totpts], y[:totpts])
         try:
             #popt, pcov = curve_fit(exp1, x, y,p0=[50,0,-50])
-            popt, pcov = curve_fit(exp1_growth, x, y,p0=[0,0,1])
+            popt, pcov = curve_fit(exp1_growth, x, y,p0=[0,1,0])
             #plt.figure()
             #plt.plot(x, y, 'ko', label="Original Noised Data")
             #plt.plot(x, exp1(x, *popt), 'r-', label="Fitted Curve")
