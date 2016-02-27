@@ -41,8 +41,8 @@ def csv2nums(csv_fh):
         #     nums.loc[0,'peak']=np.nan
         
         # Thresholding
-        dw_threshold=2000
-        up_threshold=5000
+        dw_threshold=1500
+        up_threshold=4000
         vec = vec[vec>dw_threshold]
         vec = vec[vec<up_threshold]
 

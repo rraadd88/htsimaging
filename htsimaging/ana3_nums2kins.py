@@ -56,16 +56,18 @@ def main(data_xls_fh):
     def exp1_decay(x, a, b, c):
         return a * np.exp(-b * x) + c  
                                                                                                                                                       
-    def getrateofrecov(y):
-        y=(y - y.min())/(y.max()-y.min()) # norm to min0 max1
-        y=y[~y.isnull()]#remove nans
-        x=np.array(range(len(y)))*1.5
+    def getrateofrecov(x,y):
+        # y=(y - y.min())/(y.max()-y.min()) # norm to min0 max1
+        # y=y[~y.isnull()]#remove nans
+        x=x[0:len(y)]
+        # x=np.array(range(len(y)))*2
         otpt_diff_fitted=pd.Series(index=range(len(x)))
         #for totpts in range(12,4,-1):
             #rate, intercept, r_value, p_value, rate_std_error = stats.linregress(x[:totpts], y[:totpts])
         try:
             #popt, pcov = curve_fit(exp1, x, y,p0=[50,0,-50])
-            popt, pcov = curve_fit(exp1_growth, x, y,p0=[0,1,0])
+            # popt, pcov = curve_fit(exp1_growth, x, y,p0=[0,1,0])
+            popt, pcov = curve_fit(exp1_growth, x, y,p0=[0,1,10000])
             #plt.figure()
             #plt.plot(x, y, 'ko', label="Original Noised Data")
             #plt.plot(x, exp1(x, *popt), 'r-', label="Fitted Curve")
@@ -79,7 +81,7 @@ def main(data_xls_fh):
                 #plt.plot(x, y, 'o')
                 #plt.plot(x[:totpts], predict_y, 'k-')
                 #plt.show()
-                rate=popt[1]
+                rate=popt[2]
                 otpt_diff_fitted=pd.Series(exp1_growth(x, *popt))
             else:
                 rate=np.nan
@@ -95,7 +97,6 @@ def main(data_xls_fh):
         data_num_P =pd.pivot_table(data_job,values=num_type,index='TimeLapse1 Index',columns='Well Name')
         data_num   =pd.concat([data_num,data_num_P],axis=0)
         data_num   =data_num.reset_index()
-
         wells_b, wells_u =wells[::2],wells[1::2]
 
         data_num_kin=pd.DataFrame(columns=wells)
@@ -106,12 +107,12 @@ def main(data_xls_fh):
         diff_fitted_df.loc[:,'time']=time
         rateofrecov_df=pd.DataFrame(index=wells_b,columns=['rateofrecov'])
         rateofrecov_df.index.name='smp_well'
-
+        
         for welli in range(len(wells_b)):   
             print wells_b[welli]
             data_num_kin.loc[:,wells_b[welli]]     =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[0]
             data_num_kin.loc[:,wells_u[welli]]     =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[1]
-            diff_df.loc[:,wells_b[welli]]           =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[2]
+            diff_df.loc[:,wells_b[welli]]          =data2diff(data_num,wells_b[welli],wells_u[welli],info_pt00s)[2]
         #background correction
         diff_df_blanks=diff_df[['O13','O15','O17','O19','O21','O23','P13','P15','P17','P19','P21','P23']]
         diff_df_blanks_average=diff_df_blanks.mean(axis=1)
@@ -119,11 +120,12 @@ def main(data_xls_fh):
         for welli in range(len(wells_b)):            
             diff_df.loc[:,wells_b[welli]]=diff_df.loc[:,wells_b[welli]]-diff_df_blanks_average
             diff_df_mn=diff_df.loc[:,wells_b[welli]].min()
-            diff_df_mx=diff_df.loc[:,wells_b[welli]].max()
-            diff_df.loc[:,wells_b[welli]]=(diff_df.loc[:,wells_b[welli]]-diff_df_mn)/(diff_df_mx-diff_df_mn)
-            rateofrecov_df.loc[wells_b[welli],'rateofrecov'] =getrateofrecov(diff_df.loc[:,wells_b[welli]])[0]        
-            diff_fitted_df.loc[:,wells_b[welli]]             =getrateofrecov(diff_df.loc[:,wells_b[welli]])[1]
-            del diff_df_mn,diff_df_mx
+            # diff_df_mx=diff_df.loc[:,wells_b[welli]].max()
+            # diff_df.loc[:,wells_b[welli]]=(diff_df.loc[:,wells_b[welli]]-diff_df_mn)/(diff_df_mx-diff_df_mn)
+            diff_df.loc[:,wells_b[welli]]=(diff_df.loc[:,wells_b[welli]]-diff_df_mn)
+            rateofrecov_df.loc[wells_b[welli],'rateofrecov'] =getrateofrecov(time,diff_df.loc[:,wells_b[welli]])[0]        
+            diff_fitted_df.loc[:,wells_b[welli]]             =getrateofrecov(time,diff_df.loc[:,wells_b[welli]])[1]
+            del diff_df_mn #,diff_df_mx
         wells_rows=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P']
         wells_rows_ctrl, wells_rows_test =wells_rows[::2],wells_rows[1::2] # odd,even
         rateofrecov_df.to_csv("%s.%s.rateofrecov" % (data_xls_fh,num_type))	    
@@ -139,7 +141,6 @@ def main(data_xls_fh):
                 smpi.append(i)
             for i in list(np.array(range(1,13))+12*(rowi-1)):
                 smpi.append(i)
-
         len(smpi)
         len(rateofrecov_df)
         rateofrecov_df['smpi']=smpi
