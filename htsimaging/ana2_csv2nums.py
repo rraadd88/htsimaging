@@ -14,6 +14,18 @@ from os.path import splitext,basename,exists
 from scipy.optimize import curve_fit
 # from scipy.stats import gumbel_r
 
+def pdf2cdfestimate(bincenters,pdf,percentile):
+    pdf=pdf/pdf.sum()
+    cdf=np.cumsum(pdf)
+    for i in range(len(cdf)):
+        if (percentile-cdf[i])<0:
+            break
+#     cdf.ix[cdfi[0]-50]
+#     cdfi[0]-50
+    Y=np.array([bincenters[i-1],bincenters[i]])
+    X=np.array([cdf[i-1], cdf[i]])
+    return np.interp(percentile, X, Y)
+
 def csv2nums(csv_fh):
     nums_fh=csv_fh+".nums"    
     if exists(csv_fh):# and (not exists(nums_fh)) :
@@ -25,48 +37,18 @@ def csv2nums(csv_fh):
         nums.loc[0,'mode']=stats.mode(vec)[0][0]
         nums.loc[0,'mean']=np.mean(vec)
         nums.loc[0,'median']=np.median(vec)
-        # vec = vec
-        # vec = vec[~np.isnan(vec)]
-        # vec = vec[~np.isinf(vec)]
-        # try:
+        nums.loc[0,'Q25']=np.percentile(vec, 25)
+        nums.loc[0,'Q50']=np.percentile(vec, 50)
+        nums.loc[0,'Q75']=np.percentile(vec, 75)
+        nums.loc[0,'Q90']=np.percentile(vec, 90)
+        
         bins = np.arange(0, 5000, 50)#np.arange(5000)
         probs, binedges = np.histogram(vec, bins=bins, normed=True)
         bincenters = 0.5*(binedges[1:]+binedges[:-1])
-        # fit = gumbel_r.fit(vec)
-        # curvefit = curve_fit(gumbel_r.pdf, bincenters, probs, p0=fit)[0]
-        fit = stats.norm.fit(vec)
-        curvefit = curve_fit(stats.norm.pdf, bincenters, probs, p0=fit)[0]
-        nums.loc[0,'peak']=curvefit[0]
-        # except:
-        #     nums.loc[0,'peak']=np.nan
-        
-        # Thresholding
-        dw_threshold=1500
-        up_threshold=4000
-        vec = vec[vec>dw_threshold]
-        vec = vec[vec<up_threshold]
-
-        nums.loc[0,'mode_thr']=stats.mode(vec)[0][0]
-        nums.loc[0,'mean_thr']=np.mean(vec)
-        nums.loc[0,'median_thr']=np.median(vec)
-        nums.loc[0,'sum_thr']=np.sum(vec)
-        nums.loc[0,'pixels_thr']=len(vec)        
-        # vec = vec
-        # vec = vec[~np.isnan(vec)]
-        # vec = vec[~np.isinf(vec)]
-        # try:
-        bins = np.arange(0, 5000, 50)#np.arange(5000)
-        probs, binedges = np.histogram(vec, bins=bins, normed=True)
-        bincenters = 0.5*(binedges[1:]+binedges[:-1])
-        # fit = gumbel_r.fit(vec)
-        # curvefit = curve_fit(gumbel_r.pdf, bincenters, probs, p0=fit)[0]
-        fit = stats.norm.fit(vec)
-        curvefit = curve_fit(stats.norm.pdf, bincenters, probs, p0=fit)[0]
-        nums.loc[0,'peak_thr']=curvefit[0]
-
-        # except:
-        #     nums.loc[0,'peak_thr']=np.nan
-        
+        nums.loc[0,'cdf25']=pdf2cdfestimate(bincenters,probs,0.25)        
+        nums.loc[0,'cdf50']=pdf2cdfestimate(bincenters,probs,0.5)        
+        nums.loc[0,'cdf75']=pdf2cdfestimate(bincenters,probs,0.75)        
+        nums.loc[0,'cdf90']=pdf2cdfestimate(bincenters,probs,0.9)            
         nums.to_csv(nums_fh)
     else:
         print ">>> WARNING   : skipping : %s" % csv_fh
@@ -125,12 +107,15 @@ if __name__ == '__main__':
         data_job.loc[(nd_fn,framei),'mean']  =nums_df.loc[0,'mean']
         data_job.loc[(nd_fn,framei),'mode']  =nums_df.loc[0,'mode']
         data_job.loc[(nd_fn,framei),'median']=nums_df.loc[0,'median']
-        data_job.loc[(nd_fn,framei),'peak']=nums_df.loc[0,'peak']
-        data_job.loc[(nd_fn,framei),'mean_thr']  =nums_df.loc[0,'mean_thr']
-        data_job.loc[(nd_fn,framei),'mode_thr']  =nums_df.loc[0,'mode_thr']
-        data_job.loc[(nd_fn,framei),'median_thr']=nums_df.loc[0,'median_thr']
-        data_job.loc[(nd_fn,framei),'peak_thr']=nums_df.loc[0,'peak_thr']
-        data_job.loc[(nd_fn,framei),'sum_thr']=nums_df.loc[0,'sum_thr']
-        data_job.loc[(nd_fn,framei),'pixels_thr']=nums_df.loc[0,'pixels_thr']
+        data_job.loc[(nd_fn,framei),'Q25']=nums_df.loc[0,'Q25']
+        data_job.loc[(nd_fn,framei),'Q50']=nums_df.loc[0,'Q50']
+        data_job.loc[(nd_fn,framei),'Q75']=nums_df.loc[0,'Q75']
+        data_job.loc[(nd_fn,framei),'Q90']=nums_df.loc[0,'Q90']
+
+        data_job.loc[(nd_fn,framei),'cdf25']=nums_df.loc[0,'cdf25']
+        data_job.loc[(nd_fn,framei),'cdf50']=nums_df.loc[0,'cdf50']
+        data_job.loc[(nd_fn,framei),'cdf75']=nums_df.loc[0,'cdf75']
+        data_job.loc[(nd_fn,framei),'cdf90']=nums_df.loc[0,'cdf90']
+
     data_job=data_job.reset_index()
     data_job.to_csv(data_xls_fh+".nums")      

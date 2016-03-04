@@ -178,60 +178,6 @@ def main(data_xls_fh):
     	print num_type
         data_job2kin(data_job,num_type,info_pt00s,time,wells)
 
-	    # data_mean  =data_job2data_num(data_job,'mean')
-	    # data_mode  =data_job2data_num(data_job,'mode')
-	    # data_median=data_job2data_num(data_job,'median')
-	    
-	    #data_num=pd.read_csv(data_xls_fh+'data_num.csv') 
-	    #diff_df=pd.read_csv(data_xls_fh+'diff.csv')
-	    #rateofrecov_per_smpi_df=pd.read_csv(data_xls_fh+'rateofrecov.csv')
-	    #combo=pd.read_csv(data_xls_fh+'rateofrecov_info.csv')
-
-	    #plot_diff_df=diff_df
-	    ##plot_diff_df=plot_diff_df.set_index('smp_well')
-	    #plot_diff_df=plot_diff_df.drop('smp_well',axis=1)
-	    #plot_diff_df=plot_diff_df.ix[:][:11]
-	    #plot_diff_df=plot_diff_df.set_index('time')
-	    #plot_diff_df=plot_diff_df.stack()
-	    #plot_diff_df=plot_diff_df.reset_index()
-	    ##plot_diff_df=plot_diff_df.ix[1:][:]
-	    ##plot_diff_df=plot_diff_df.reset_index(drop=True)
-	    #plot_diff_df.columns=['time','well','diff']
-	    #plot_diff_df=plot_diff_df.sort(columns='well')
-	    #
-	    #test=plot_diff_df.ix[:15]
-	    #sns.set(style="ticks")
-	    ## Initialize a grid of plots with an Axes for each walk
-	    #grid = sns.FacetGrid(test, col="well", hue="well", col_wrap=4, size=1.5)    
-	    ## Draw a horizontal line to show the starting point
-	    #grid.map(plt.axhline, y=9, ls=":", c=".5")    
-	    ## Draw a line plot to show the trajectory of each random walk
-	    #grid.map(plt.plot, "time", "diff", marker="o", ms=4)    
-	    ##fitted lines
-	    #
-	    ## Adjust the tick positions and labels
-	    #grid.set(xticks=np.arange(0,20,5), yticks=np.arange(9.1,9.5,0.1),
-	    #        xlim=(-0.5, 18.5), ylim=(9.2, 9.3))    
-	    ## Adjust the arrangement of the plots
-	    #grid.fig.tight_layout(w_pad=1)
-	    #grid.fig.savefig(data_xls_fh+'diff.png')       
-	    
-
-	    
-	    
-	    #rateofrecov_df.to_csv('test3.csv')
-	    #rateofrecov_ctrl=rateofrecov_df.loc[(rateofrecov_df.smp_type.astype(str).str.contains('ctrl')),'rateofrecov']
-	    #rateofrecov_test=rateofrecov_df.loc[(rateofrecov_df.smp_type.astype(str).str.contains('test')),'rateofrecov']
-	    #rateofrecov_ctrl=rateofrecov_ctrl.loc[~rateofrecov_ctrl.isnull()]
-	    #rateofrecov_test=rateofrecov_test.loc[~rateofrecov_test.isnull()]
-	    #
-	    #plt.scatter( list(rateofrecov_ctrl),list(rateofrecov_test) )
-	    
-	    
-	    #rateofrecov_df=pd.DataFrame({'smp_well': wells_b, \
-	    #                        'rateofrecov' : rateofrecov_list}) 
-	    #%matplotlib inline    
-	    #data_num.plot(x="time", y=["C01","C02"])
     
 if __name__ == '__main__':
     # # GET INPTS
