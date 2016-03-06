@@ -174,7 +174,7 @@ def main(data_xls_fh):
     info_pt00s=info_pt00s.set_index('well')
     time=np.array(range(24))*2
 
-    for num_type in ['sum_thr','pixels_thr']:#['mean','mode','median','peak','mean_thr','mode_thr','median_thr','peak_thr']: 
+    for num_type in ['Q25','Q50','Q75','Q90','cdf25','cdf50','cdf75','cdf90',]:#['sum_thr','pixels_thr']:#['mean','mode','median','peak','mean_thr','mode_thr','median_thr','peak_thr']: 
     	print num_type
         data_job2kin(data_job,num_type,info_pt00s,time,wells)
 
