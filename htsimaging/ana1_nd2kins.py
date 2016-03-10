@@ -69,7 +69,7 @@ def main(fh_xls):
                 prev_image = image
                 #clip sides
                 ht,wd=np.shape(stable_image)
-                clip=0.25
+                clip=0.125 #0.25
                 lt=int(wd*clip)
                 rt=int(wd-wd*clip)
                 up=int(ht*clip)
@@ -130,15 +130,27 @@ def main(fh_xls):
         return slope,otpt_diff_fitted
 
     def data_num_kin2ana(data_num_kin,wells,wells_b,wells_u): #num_type mode, mean, meadian
+        diff_df=pd.DataFrame(columns=wells_b)
+        diff_df.loc[:,'time']=time
         for welli in range(len(wells_b)):
             print wells_b[welli]
-            diff_df.loc[:,wells_b[welli]]  =data_num_kin2diff(data_num,wells_b[welli],wells_u[welli])
+            diff_df.loc[:,wells_b[welli]]  =data_num_kin2diff(data_num_kin,wells_b[welli],wells_u[welli])
+        diff_df.to_csv("%s.diff_df" % (fh_xls))  
+
+        rateofrecov_df=pd.DataFrame(index=wells_b,columns=['rateofrecov'])
+        rateofrecov_df.index.name='smp_well'
+        diff_fitted_df=pd.DataFrame(columns=wells_b)
+        diff_fitted_df.loc[:,'time']=time
         for welli in range(len(wells_b)): # get rate of recov
             rateofrecov_df.loc[wells_b[welli],'rateofrecov'] =getrateofrecov(diff_df.loc[:,'time'],diff_df.loc[:,wells_b[welli]])[0]        
             diff_fitted_df.loc[:,wells_b[welli]]             =getrateofrecov(diff_df.loc[:,'time'],diff_df.loc[:,wells_b[welli]])[1]
+        diff_fitted_df.to_csv("%s.diff_fitted_df" % (fh_xls))
+
+
         wells_rows=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P']
         wells_rows_ctrl, wells_rows_test =wells_rows[::2],wells_rows[1::2] # odd,even
         rateofrecov_df.to_csv("%s.rateofrecov" % (fh_xls))      
+        
         rateofrecov_df=rateofrecov_df.reset_index()    
         lbls=pd.read_excel(fh_xls,'lbls')
         for s in wells_rows_ctrl:
@@ -158,22 +170,27 @@ def main(fh_xls):
         rateofrecov_per_smpi_df=pd.pivot_table(rateofrecov_df,values='rateofrecov',index='smpi',columns='smp_type')
         rateofrecov_per_smpi_df=rateofrecov_per_smpi_df.reset_index()
         rateofrecov_per_smpi_df=rateofrecov_per_smpi_df.reset_index()
+        rateofrecov_per_smpi_df.to_csv("%s.rateofrecov_per_smpi_df" % (fh_xls))
         del rateofrecov_per_smpi_df.columns.name
 
         info_genes_df=pd.read_excel('/home/kclabws1/Documents/propro/writ/prjs/2_chem_chap_screens/data/data_sampling_yeast_gfp_genes/data/160208_corrected_smpi/151217_final_list90_data.xls')
         combo=pd.concat([info_genes_df,rateofrecov_per_smpi_df],axis=1)
-
-        data_num_kin.to_csv("%s.data_num_kin" % (fh_xls))
-        diff_df.to_csv("%s.diff_df" % (fh_xls))  
-        diff_fitted_df.to_csv("%s.diff_fitted_df" % (fh_xls))
-        rateofrecov_per_smpi_df.to_csv("%s.rateofrecov_per_smpi_df" % (fh_xls))
         combo.to_csv("%s.combo" % (fh_xls))
 
+    # fh_xls=sys.argv[1]
+    info=pd.read_excel(fh_xls,'info')
+    info=info.set_index('varname')
+    for var in info.iterrows() :
+        val=info['input'][var[0]]
+        if not pd.isnull(val):
+            exec("%s=info['input']['%s']" % (var[0],var[0]),locals(), globals())
+        else:
+            exec("%s=info['default']['%s']" % (var[0],var[0]),locals(), globals())
 
     #../tests/test.xlsx
     # fh_xls='../test/test.xlsx'
     data_job=pd.read_excel(fh_xls,'JobView')
-    nd_dh="/media/Transcend/20160219_000356_267"
+    # nd_dh="/media/Transcend/20160219_000356_267"
     data_fns=pd.pivot_table(data_job,values='File Name',index='Loop_bleach Index',columns='Well Name', aggfunc=lambda x: x.iloc[0])
     data_fns_P =pd.pivot_table(data_job,values='File Name',index='TimeLapse1 Index',columns='Well Name', aggfunc=lambda x: x.iloc[0])
     data_fns   =pd.concat([data_fns,data_fns_P],axis=0)
@@ -196,34 +213,35 @@ def main(fh_xls):
     time=np.array(range(12))*2
     # data_num=pd.DataFrame(columns=wells)
     # data_num.loc[:,'time']=time
-    data_num_kin=pd.DataFrame(columns=wells)
-    data_num_kin.loc[:,'time']=time
-    diff_df=pd.DataFrame(columns=wells_b)
-    diff_df.loc[:,'time']=time
-    diff_fitted_df=pd.DataFrame(columns=wells_b)
-    diff_fitted_df.loc[:,'time']=time
-    rateofrecov_df=pd.DataFrame(index=wells_b,columns=['rateofrecov'])
-    rateofrecov_df.index.name='smp_well'
 
-    for well in wells:
-    #     nd_fns=np.sort(data_fns[well].dropna().unique())
-        print ">>> STATUS  : nd2kins : %s" % well 
-        nd_fns=data_fns[well].dropna().unique()
-        well_kin=nd2kins(nd_fns,nd_dh)
-        if not pd.isnull(info_pt00s.loc[well])[0]:
-            pt00=int(info_pt00s.loc[well])
-            data_num_kin[well]=well_kin[pt00:pt00+12].values
-        else :   
-            data_num_kin[well]=well_kin[0:12].values
-
+    if not exists("%s.data_num_kin" % (fh_xls)):
+        data_num_kin=pd.DataFrame(columns=wells)
+        data_num_kin.loc[:,'time']=time
+        for well in wells:
+            print ">>> STATUS  : nd2kins : %s" % well 
+            nd_fns=data_fns[well].dropna().unique()
+            well_kin=nd2kins(nd_fns,nd_dh)
+            if not pd.isnull(info_pt00s.loc[well])[0]:
+                pt00=int(info_pt00s.loc[well])
+                data_num_kin[well]=well_kin[pt00:pt00+12].values
+            else :   
+                data_num_kin[well]=well_kin[0:12].values
+        data_num_kin.to_csv("%s.data_num_kin" % (fh_xls))
+    else:
+        print ">>> STATUS  : data_num_kin :already done"
+        data_num_kin=pd.read_csv("%s.data_num_kin" % (fh_xls))
     data_num_kin2ana(data_num_kin,wells,wells_b,wells_u)
 
 if __name__ == '__main__':
     # # GET INPTS
-    if 1 < len(sys.argv) < 1: 
+    if len(sys.argv) < 1: 
         print "### ERROR : check number of nput args required"
         sys.exit()
     if not exists(sys.argv[1]) :
         print >> sys.stderr, "### ERROR : Could not find '%s'!\n" % sys.argv[1]
         sys.exit(1)
+    # if not exists(sys.argv[2]) :
+    #     print >> sys.stderr, "### ERROR : Could not find '%s'!\n" % sys.argv[2]
+    #     sys.exit(1)
+
     main(sys.argv[1])
