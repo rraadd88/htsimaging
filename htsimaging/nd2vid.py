@@ -4,21 +4,22 @@
 # This program is distributed under General Public License v. 3.    
 
 import sys
-from os.path import exists
+import os
+from os.path import exists,splitext,basename
+import glob
 import nd2reader
 import pandas as pd
 import string
 import numpy as np
-from scipy import stats
-import os
+from scipy import stats,ndimage
 from multiprocessing import Pool
-from os.path import splitext,basename
 import cv2
 from skimage.segmentation import random_walker
 # from skimage.data import binary_blobs
 from skimage import io,exposure,restoration,filters,morphology,measure
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
+import subprocess
 
 def main(fh_xls,well):
     def nd2arr_list(nd_dh,nd_fns):
@@ -55,44 +56,41 @@ def main(fh_xls,well):
             stb_arr_list.append(stable_image_clipped)
         return stb_arr_list
 
-    def arr_list2kins(arr_list):
-        pre_bleach=arr_list[0]
-        smoothened = filters.median(pre_bleach.astype('uint16'),np.ones((10,10)))
+    def arr_list2regions(arr_list):
+        pre_bleach=arr_list_stb[0]
+        smoothened = filters.median(pre_bleach.astype('uint16'),np.ones((4,4)))
         markers = np.zeros(smoothened.shape, dtype=np.uint)
         markers[smoothened < filters.threshold_otsu(smoothened)] = 1
         markers[smoothened > filters.threshold_otsu(smoothened)] = 2
         labels = random_walker(smoothened, markers, beta=10, mode='bf')
         regions= measure.label(labels)
-        props  = measure.regionprops(regions,arr_list[0]) #ref
-        regions_areas=np.array([prop.area for prop in props])
-        regions_index_large=np.where((regions_areas<5000) & (regions_areas>200))[0]
-        for i in range(len(arr_list)):
-            props = measure.regionprops(regions,arr_list[i])
-            means=np.array([prop.mean_intensity for prop in props])
-    #         kins_mean.loc[:,i]=means[regions_index_large]
-            kins_mean.loc[i,:]=means[regions_index_large]
-    #         print np.shape(means[regions_index_large])
-            del props
-        return kins_mean.mean(axis=1)
+        label_objects, nb_labels = ndimage.label(regions)
+        sizes = np.bincount(label_objects.ravel())
+        mask_sizes = sizes > 100
+        mask_sizes[0] = 0
+        regions_cleaned = mask_sizes[label_objects]
+        return regions_cleaned
 
-    def arr_list2vid(arr_list,vid_fh):
+    def arr_list2vid(regions,arr_list,vid_fh,xpixels, ypixels):
         dpi = 100
-        xpixels, ypixels = 512, 512
+        files = glob.glob('tmp/*')
+        for f in files:
+            os.remove(f)
         fig = plt.figure(figsize=(ypixels/dpi, xpixels/dpi), dpi=dpi)
         ax = plt.Axes(fig, [0., 0., 1, 1])
         fig.add_axes(ax)
         ax.set_axis_off()
         ax.set_aspect('equal')
-        im = ax.imshow(arr_list[0],cmap='gray')
-        # plt.savefig('test.png')
-        def update_img(n):
-            tmp = arr_list[n]
-            im.set_data(tmp)
-            return im
-        # #legend(loc=0)
-        ani = animation.FuncAnimation(fig,update_img,np.arange(1,len(arr_list)),interval=60,blit=False)
-        writer = animation.writers['ffmpeg'](fps=4)
-        ani.save(vid_fh,writer=writer)#dpi=dpi
+        for i in range(len(arr_list)):
+            im=ax.imshow(arr_list[i],cmap='gray',animated=True)
+            im=ax.contour(regions, [0.5], linewidths=1.2, colors='r',animated=False)
+            plt.savefig('tmp/%02d.png' % i)
+
+        bash_command=("ffmpeg -f image2 -r 4 -i tmp/%02d.png -vcodec mpeg4 -y "+vid_fh)
+        subprocess.Popen(bash_command, shell=True, executable='/bin/bash')
+        files = glob.glob('tmp/*')
+        for f in files:
+            os.remove(f)
 
 	info=pd.read_excel(fh_xls,'info')
 	info=info.set_index('varname')
@@ -110,17 +108,18 @@ def main(fh_xls,well):
 
 	wells=[str(x) for x in list(data_job['Well Name'].unique())]
 	if not any(x in well for x in wells):
-        print >> sys.stderr, "### ERROR : Could not find '%s'!" % well
+        print "### ERROR : Could not find '%s'!" % well
         sys.exit(1)
-
-	if not exists("%s.%s.mp4" % (fh_xls,well)):
+    if not exists("%s.%sstb.mp4" % (fh_xls,well)):
         print ">>> STATUS  : nd2vid : %s" % well 
         nd_fns=data_fns[well].dropna().unique()
         arr_list=nd2arr_list(nd_dh,nd_fns)
         arr_list_stb=raw2phasecorr(arr_list)
-        arr_list2vid(arr_list,fh_xls+'.mp4')
-	else:
-	    print ">>> STATUS  : nd2vid :already done"
+        regions=arr_list2regions(arr_list_stb)
+        arr_list2vid(regions,arr_list_stb,('%s.%sstb.mp4' % (fh_xls,well)),384, 384)
+        arr_list2vid(regions,arr_list    ,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
+    else:
+        print ">>> STATUS  : nd2vid :already done"
 
 if __name__ == '__main__':
     # # GET INPTS
@@ -130,5 +129,4 @@ if __name__ == '__main__':
     if not exists(sys.argv[1]) :
         print >> sys.stderr, "### ERROR : Could not find '%s'!\n" % sys.argv[1]
         sys.exit(1)
-
     main(sys.argv[1],sys.argv[2])
