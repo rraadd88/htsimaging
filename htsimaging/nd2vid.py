@@ -74,8 +74,9 @@ def main(fh_xls,well):
     def arr_list2vid(regions,arr_list,vid_fh,xpixels, ypixels):
         dpi = 100
         files = glob.glob('tmp/*')
-        for f in files:
-            os.remove(f)
+        if len(files)>0: 
+            for f in files:
+                os.remove(f)
         fig = plt.figure(figsize=(ypixels/dpi, xpixels/dpi), dpi=dpi)
         ax = plt.Axes(fig, [0., 0., 1, 1])
         fig.add_axes(ax)
@@ -88,26 +89,26 @@ def main(fh_xls,well):
 
         bash_command=("ffmpeg -f image2 -r 4 -i tmp/%02d.png -vcodec mpeg4 -y "+vid_fh)
         subprocess.Popen(bash_command, shell=True, executable='/bin/bash')
-        files = glob.glob('tmp/*')
-        for f in files:
-            os.remove(f)
+        # if len(files)>0: 
+        #     for f in files:
+        #         os.remove(f)
 
-	info=pd.read_excel(fh_xls,'info')
-	info=info.set_index('varname')
-	for var in info.iterrows() :
-	    val=info['input'][var[0]]
-	    if not pd.isnull(val):
-	        exec("%s=info['input']['%s']" % (var[0],var[0]),locals(), globals())
-	    else:
-	        exec("%s=info['default']['%s']" % (var[0],var[0]),locals(), globals())
+    info=pd.read_excel(fh_xls,'info')
+    info=info.set_index('varname')
+    for var in info.iterrows() :
+        val=info['input'][var[0]]
+        if not pd.isnull(val):
+            exec("%s=info['input']['%s']" % (var[0],var[0]),locals(), globals())
+        else:
+            exec("%s=info['default']['%s']" % (var[0],var[0]),locals(), globals())
 
-	data_job=pd.read_excel(fh_xls,'JobView')
-	data_fns=pd.pivot_table(data_job,values='File Name',index='Loop_bleach Index',columns='Well Name', aggfunc=lambda x: x.iloc[0])
-	data_fns_P =pd.pivot_table(data_job,values='File Name',index='TimeLapse1 Index',columns='Well Name', aggfunc=lambda x: x.iloc[0])
-	data_fns   =pd.concat([data_fns,data_fns_P],axis=0)
+    data_job=pd.read_excel(fh_xls,'JobView')
+    data_fns=pd.pivot_table(data_job,values='File Name',index='Loop_bleach Index',columns='Well Name', aggfunc=lambda x: x.iloc[0])
+    data_fns_P =pd.pivot_table(data_job,values='File Name',index='TimeLapse1 Index',columns='Well Name', aggfunc=lambda x: x.iloc[0])
+    data_fns   =pd.concat([data_fns,data_fns_P],axis=0)
 
-	wells=[str(x) for x in list(data_job['Well Name'].unique())]
-	if not any(x in well for x in wells):
+    wells=[str(x) for x in list(data_job['Well Name'].unique())]
+    if not any(x in well for x in wells):
         print "### ERROR : Could not find '%s'!" % well
         sys.exit(1)
     if not exists("%s.%sstb.mp4" % (fh_xls,well)):
@@ -117,7 +118,7 @@ def main(fh_xls,well):
         arr_list_stb=raw2phasecorr(arr_list)
         regions=arr_list2regions(arr_list_stb)
         arr_list2vid(regions,arr_list_stb,('%s.%sstb.mp4' % (fh_xls,well)),384, 384)
-        arr_list2vid(regions,arr_list    ,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
+        # arr_list2vid(regions,arr_list    ,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
     else:
         print ">>> STATUS  : nd2vid :already done"
 
