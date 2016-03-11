@@ -73,10 +73,12 @@ def main(fh_xls,well):
 
     def arr_list2vid(regions,arr_list,vid_fh,xpixels, ypixels):
         dpi = 100
-        files = glob.glob('tmp/*')
-        if len(files)>0: 
-            for f in files:
-                os.remove(f)
+        png_dh=os.path.splitext(vid_fh)[0]
+        if not os.path.exists(png_dh):
+            try:
+                os.makedirs(png_dh)
+            except :
+                print ">>> WARNING : race error data_lbl"
         fig = plt.figure(figsize=(ypixels/dpi, xpixels/dpi), dpi=dpi)
         ax = plt.Axes(fig, [0., 0., 1, 1])
         fig.add_axes(ax)
@@ -85,13 +87,9 @@ def main(fh_xls,well):
         for i in range(len(arr_list)):
             im=ax.imshow(arr_list[i],cmap='gray',animated=True)
             im=ax.contour(regions, [0.5], linewidths=1.2, colors='r',animated=False)
-            plt.savefig('tmp/%02d.png' % i)
-
-        bash_command=("ffmpeg -f image2 -r 4 -i tmp/%02d.png -vcodec mpeg4 -y "+vid_fh)
+            plt.savefig(png_dh+'/%02d.png' % i)
+        bash_command=("ffmpeg -f image2 -r 4 -i "+png_dh+"/%02d.png -vcodec mpeg4 -y "+vid_fh)
         subprocess.Popen(bash_command, shell=True, executable='/bin/bash')
-        # if len(files)>0: 
-        #     for f in files:
-        #         os.remove(f)
 
     info=pd.read_excel(fh_xls,'info')
     info=info.set_index('varname')
@@ -118,7 +116,7 @@ def main(fh_xls,well):
         arr_list_stb=raw2phasecorr(arr_list)
         regions=arr_list2regions(arr_list_stb)
         arr_list2vid(regions,arr_list_stb,('%s.%sstb.mp4' % (fh_xls,well)),384, 384)
-        # arr_list2vid(regions,arr_list    ,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
+        arr_list2vid(regions,arr_list    ,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
     else:
         print ">>> STATUS  : nd2vid :already done"
 
