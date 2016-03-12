@@ -31,13 +31,22 @@ def main(fh_xls,well):
             del nd
         return arr_list
 
-    def raw2phasecorr(arr_list):
+    # def raw2phasecorr(arr_list): #skimage
+    #     stb_arr_list=[]
+    def threshold_otsu(smoothened):
+        markers = np.zeros(smoothened.shape, dtype=np.uint)
+        markers[smoothened < filters.threshold_otsu(smoothened)] = 1
+        markers[smoothened > filters.threshold_otsu(smoothened)] = 2
+        return markers
+
+    def raw2phasecorr(arr_list): #cv
         cx = 0.0
         cy = 0.0
         stb_arr_list=[]
-        prev_image = np.float32(arr_list[0]) #ref
-        for frame in arr_list:
-            image = np.float32(frame)
+        prev_frame = arr_list[0]
+        prev_image = np.float32(restoration.denoise_tv_chambolle(prev_frame.astype('uint16'), weight=0.1, multichannel=True)) #ref
+        for frame in arr_list:           
+            image = np.float32(restoration.denoise_tv_chambolle(frame.astype('uint16'), weight=0.1, multichannel=True))
             # TODO: set window around phase correlation
             dp = cv2.phaseCorrelate(prev_image, image)
             cx = cx - dp[0]
@@ -59,9 +68,7 @@ def main(fh_xls,well):
     def arr_list2regions(arr_list, time_increment):
         pre_bleach=arr_list_stb[0]
         smoothened = filters.median(pre_bleach.astype('uint16'),np.ones((4,4)))
-        markers = np.zeros(smoothened.shape, dtype=np.uint)
-        markers[smoothened < filters.threshold_otsu(smoothened)] = 1
-        markers[smoothened > filters.threshold_otsu(smoothened)] = 2
+        markers = threshold_otsu(smoothened)
         labels = random_walker(smoothened, markers, beta=10, mode='bf')
         regions= measure.label(labels)
         label_objects, nb_labels = ndimage.label(regions)
