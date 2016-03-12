@@ -33,11 +33,6 @@ def main(fh_xls,well):
 
     # def raw2phasecorr(arr_list): #skimage
     #     stb_arr_list=[]
-    def threshold_otsu(smoothened):
-        markers = np.zeros(smoothened.shape, dtype=np.uint)
-        markers[smoothened < filters.threshold_otsu(smoothened)] = 1
-        markers[smoothened > filters.threshold_otsu(smoothened)] = 2
-        return markers
 
     def raw2phasecorr(arr_list): #cv
         cx = 0.0
@@ -52,7 +47,7 @@ def main(fh_xls,well):
             cx = cx - dp[0]
             cy = cy - dp[1]
             xform = np.float32([[1, 0, cx], [0, 1, cy]])
-            stable_image = cv2.warpAffine(image, xform, dsize=(image.shape[1], image.shape[0]))
+            stable_image = cv2.warpAffine(frame.astype('float32'), xform, dsize=(image.shape[1], image.shape[0]))
             prev_image = image
             #clip sides
             ht,wd=np.shape(stable_image)
@@ -68,7 +63,9 @@ def main(fh_xls,well):
     def arr_list2regions(arr_list, time_increment):
         pre_bleach=arr_list_stb[0]
         smoothened = filters.median(pre_bleach.astype('uint16'),np.ones((4,4)))
-        markers = threshold_otsu(smoothened)
+        markers = np.zeros(smoothened.shape, dtype=np.uint)
+        markers[smoothened < filters.threshold_otsu(smoothened)] = 1
+        markers[smoothened > filters.threshold_otsu(smoothened)] = 2
         labels = random_walker(smoothened, markers, beta=10, mode='bf')
         regions= measure.label(labels)
         label_objects, nb_labels = ndimage.label(regions)
