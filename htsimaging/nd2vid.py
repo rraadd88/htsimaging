@@ -101,9 +101,10 @@ def main(fh_xls,well):
         ax_img.set_aspect('equal')
         for i in range(len(arr_list)):
             ax_img.imshow(arr_list[i],cmap='gray',animated=True)
-            ax_img.contour(regions, [0.5], linewidths=1.2, colors='r',animated=False)
+            ax_img.contour(regions, [0.5], linewidths=0.25, colors='r',animated=False)
             if len(kins_mean.columns)>1:
                 kins_mean.plot(x='time',legend=False,ax=ax_kin)
+                ax_kin.plot(kins_mean['time'],kins_mean.drop(['time'], axis=1).mean(axis=1),lw=6,color='k')
             ax_kin.set_xlim([kins_mean.loc[0,'time'],kins_mean.loc[len(kins_mean)-1,'time']])
             ax_kin.axvline(kins_mean.loc[i,'time'], color='r', linestyle='--',lw=2)
             plt.savefig(png_dh+'/%02d.png' % i)
@@ -136,7 +137,7 @@ def main(fh_xls,well):
         arr_list_stb=raw2phasecorr(arr_list)
         regions,kins_mean=arr_list2regions(arr_list_stb,time_increment)
         arr_list2vid(arr_list_stb,regions,kins_mean,('%s.%sstb.mp4' % (fh_xls,well)),384, 384)
-        arr_list2vid(arr_list    ,regions,kins_mean,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
+        # arr_list2vid(arr_list    ,regions,kins_mean,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
     else:
         print ">>> STATUS  : nd2vid :already done"
 
