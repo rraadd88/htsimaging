@@ -130,14 +130,14 @@ def main(fh_xls,well):
     if not any(x in well for x in wells):
         print "### ERROR : Could not find '%s'!" % well
         sys.exit(1)
-    if not exists("%s.%sstb.mp4" % (fh_xls,well)):
+    if not exists("%s.%sstb1.mp4" % (fh_xls,well)):
         print ">>> STATUS  : nd2vid : %s" % well 
         nd_fns=data_fns[well].dropna().unique()
         arr_list=nd2arr_list(nd_dh,nd_fns)
         arr_list_stb=raw2phasecorr(arr_list)
         regions,kins_mean=arr_list2regions(arr_list_stb,time_increment)
         arr_list2vid(arr_list_stb,regions,kins_mean,('%s.%sstb.mp4' % (fh_xls,well)),384, 384)
-        # arr_list2vid(arr_list    ,regions,kins_mean,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
+        arr_list2vid(arr_list    ,regions,kins_mean,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
     else:
         print ">>> STATUS  : nd2vid :already done"
 
