@@ -62,29 +62,32 @@ def main(fh_xls,well):
 
     def arr_list2regions(arr_list, time_increment):
         pre_bleach=arr_list_stb[0]
-        smoothened = filters.median(pre_bleach.astype('uint16'),np.ones((4,4)))
+        denoised=restoration.denoise_bilateral(pre_bleach.astype('uint16'), sigma_range=0.01, sigma_spatial=15)
+        smoothened = filters.median(denoised,np.ones((4,4)))
         markers = np.zeros(smoothened.shape, dtype=np.uint)
         markers[smoothened < filters.threshold_otsu(smoothened)] = 1
         markers[smoothened > filters.threshold_otsu(smoothened)] = 2
         labels = random_walker(smoothened, markers, beta=10, mode='bf')
         regions= measure.label(labels)
-        label_objects, nb_labels = ndimage.label(regions)
-        sizes = np.bincount(label_objects.ravel())
-        mask_sizes = ((sizes > 200) & (sizes < 5000))
-        mask_sizes[0] = 0
-        regions_cleaned = mask_sizes[label_objects]
         props = measure.regionprops(regions,arr_list[0]) #ref
-        regions_areas=np.array([prop.area for prop in props])
-        regions_index_large=np.where((regions_areas<5000) & (regions_areas>200))[0]
-        kins_mean=pd.DataFrame(columns=regions_index_large, index=range(len(arr_list)))
+        regions_areas=np.array([prop.area  for prop in props])
+        regions_lbls =np.array([prop.label for prop in props])
+        regions_means=np.array([prop.mean_intensity  for prop in props])
+        regions_index_large=np.where((regions_areas<5000) & (regions_areas>200) & (regions_means>2000))[0]
+        regions_lbls_large=regions_lbls[regions_index_large] 
+        regions_large=np.zeros((regions.shape), dtype=bool)
+        for i in regions_lbls_large:
+            booli = (regions == i) 
+            regions_large=np.logical_or(regions_large,booli)
+        kins_mean=pd.DataFrame(columns=regions_lbls_large, index=range(len(arr_list)))
         for i in range(len(arr_list)):
             props = measure.regionprops(regions,arr_list[i])
             means=np.array([prop.mean_intensity for prop in props])
             kins_mean.loc[i,:]=means[regions_index_large]
             del props
-        kins_mean=kins_mean.loc[:, ~(kins_mean < 2000).any(axis=0)] #stitch
+        kins_mean=kins_mean.loc[:, ~(kins_mean < 3000).any(axis=0)] #stitch
         kins_mean['time']=np.array(range(len(arr_list)))*time_increment #stitch
-        return regions_cleaned,kins_mean
+        return regions_large,kins_mean
 
     def arr_list2vid(arr_list,regions,kins_mean,vid_fh,xpixels, ypixels):
         dpi = 100
@@ -101,13 +104,15 @@ def main(fh_xls,well):
         ax_img.set_aspect('equal')
         for i in range(len(arr_list)):
             ax_img.imshow(arr_list[i],cmap='gray',animated=True)
-            ax_img.contour(regions, [0.5], linewidths=0.25, colors='r',animated=False)
+            ax_img.contour(regions, [0.25], linewidths=1.2, colors='r',animated=False)
             if len(kins_mean.columns)>1:
                 kins_mean.plot(x='time',legend=False,ax=ax_kin)
                 ax_kin.plot(kins_mean['time'],kins_mean.drop(['time'], axis=1).mean(axis=1),lw=6,color='k')
+                ax_kin.set_ylabel("Fluorescence Intensity (FU)")
             ax_kin.set_xlim([kins_mean.loc[0,'time'],kins_mean.loc[len(kins_mean)-1,'time']])
             ax_kin.axvline(kins_mean.loc[i,'time'], color='r', linestyle='--',lw=2)
-            plt.savefig(png_dh+'/%02d.png' % i)
+            fig.subplots_adjust(wspace=.4)
+            fig.savefig(png_dh+'/%02d.png' % i)
             ax_kin.clear()
         bash_command=("ffmpeg -f image2 -r 4 -i "+png_dh+"/%02d.png -vcodec mpeg4 -y "+vid_fh)
         subprocess.Popen(bash_command, shell=True, executable='/bin/bash')
@@ -135,9 +140,12 @@ def main(fh_xls,well):
         nd_fns=data_fns[well].dropna().unique()
         arr_list=nd2arr_list(nd_dh,nd_fns)
         arr_list_stb=raw2phasecorr(arr_list)
+        plt.imshow(arr_list_stb[0])
+        plt.savefig('%s.%s_ref_frame.png' % (fh_xls,well))
         regions,kins_mean=arr_list2regions(arr_list_stb,time_increment)
+        kins_mean.to_csv('%s.%s_kins_mean.csv' % (fh_xls,well))
         arr_list2vid(arr_list_stb,regions,kins_mean,('%s.%sstb.mp4' % (fh_xls,well)),384, 384)
-        arr_list2vid(arr_list    ,regions,kins_mean,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
+        # arr_list2vid(arr_list    ,regions,kins_mean,('%s.%sraw.mp4' % (fh_xls,well)),384, 384)
     else:
         print ">>> STATUS  : nd2vid :already done"
 
