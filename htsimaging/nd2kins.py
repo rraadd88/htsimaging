@@ -20,99 +20,78 @@ from skimage import io,exposure,restoration,filters,morphology,measure
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 
+def nd2arr_list(nd_dh,nd_fns):
+    arr_list=[]
+    for nd_fn in nd_fns:
+        nd = nd2reader.Nd2("%s/%s" % (nd_dh,nd_fn))
+        for ndi in nd:
+            arr_list.append(np.array(ndi))
+        del nd
+    return arr_list
+
+def raw2phasecorr(arr_list): #cv
+    cx = 0.0
+    cy = 0.0
+    stb_arr_list=[]
+    prev_frame = arr_list[0]
+    prev_image = np.float32(restoration.denoise_tv_chambolle(prev_frame.astype('uint16'), weight=0.1, multichannel=True)) #ref
+    for frame in arr_list:           
+        image = np.float32(restoration.denoise_tv_chambolle(frame.astype('uint16'), weight=0.1, multichannel=True))
+        # TODO: set window around phase correlation
+        dp = cv2.phaseCorrelate(prev_image, image)
+        cx = cx - dp[0]
+        cy = cy - dp[1]
+        xform = np.float32([[1, 0, cx], [0, 1, cy]])
+        stable_image = cv2.warpAffine(frame.astype('float32'), xform, dsize=(image.shape[1], image.shape[0]))
+        prev_image = image
+        #clip sides
+        ht,wd=np.shape(stable_image)
+        clip=0.125 #0.25
+        lt=int(wd*clip)
+        rt=int(wd-wd*clip)
+        up=int(ht*clip)
+        dw=int(ht-ht*clip)
+        stable_image_clipped=stable_image[up:dw,lt:rt]
+        stb_arr_list.append(stable_image_clipped)
+    return stb_arr_list
+
+def arr_list2regions(arr_list, time_increment):
+    pre_bleach=arr_list[0]
+    denoised=restoration.denoise_bilateral(pre_bleach.astype('uint16'), sigma_range=0.01, sigma_spatial=15)
+    smoothened = filters.median(denoised,np.ones((4,4)))
+    markers = np.zeros(smoothened.shape, dtype=np.uint)
+    markers[smoothened < filters.threshold_otsu(smoothened)] = 1
+    markers[smoothened > filters.threshold_otsu(smoothened)] = 2
+    labels = random_walker(smoothened, markers, beta=10, mode='bf')
+    regions= measure.label(labels)
+    props = measure.regionprops(regions,arr_list[0]) #ref
+    regions_areas=np.array([prop.area  for prop in props])
+    regions_lbls =np.array([prop.label for prop in props])
+    regions_means=np.array([prop.mean_intensity  for prop in props])
+    regions_index_large=np.where((regions_areas<10000) & (regions_areas>200) & (regions_means>2000))[0]
+    regions_lbls_large=regions_lbls[regions_index_large] 
+    regions_large=np.zeros((regions.shape), dtype=bool)
+    for i in regions_lbls_large:
+        booli = (regions == i) 
+        regions_large=np.logical_or(regions_large,booli)
+    kins_mean=pd.DataFrame(columns=regions_lbls_large, index=range(len(arr_list)))
+    for i in range(len(arr_list)):
+        props = measure.regionprops(regions,arr_list[i])
+        means=np.array([prop.mean_intensity for prop in props])
+        kins_mean.loc[i,:]=means[regions_index_large]
+        del props
+    kins_mean=kins_mean.loc[:, ~(kins_mean < 3000).any(axis=0)] #stitch
+    kins_mean['time']=np.array(range(len(arr_list)))*time_increment #stitch
+    return regions_large,kins_mean
+
 def main(fh_xls):
-    def nd2arr_list(nd_dh,nd_fns):
-        arr_list=[]
-        for nd_fn in nd_fns:
-            nd = nd2reader.Nd2("%s/%s" % (nd_dh,nd_fn))
-            for ndi in nd:
-                arr_list.append(np.array(ndi))
-            del nd
-        return arr_list
-        
+      
     def nd2kins(nd_fns,nd_dh,time_increment):
-        def raw2phasecorr(arr_list): #cv
-            cx = 0.0
-            cy = 0.0
-            stb_arr_list=[]
-            prev_frame = arr_list[0]
-            prev_image = np.float32(restoration.denoise_tv_chambolle(prev_frame.astype('uint16'), weight=0.1, multichannel=True)) #ref
-            for frame in arr_list:           
-                image = np.float32(restoration.denoise_tv_chambolle(frame.astype('uint16'), weight=0.1, multichannel=True))
-                # TODO: set window around phase correlation
-                dp = cv2.phaseCorrelate(prev_image, image)
-                cx = cx - dp[0]
-                cy = cy - dp[1]
-                xform = np.float32([[1, 0, cx], [0, 1, cy]])
-                stable_image = cv2.warpAffine(frame.astype('float32'), xform, dsize=(image.shape[1], image.shape[0]))
-                prev_image = image
-                #clip sides
-                ht,wd=np.shape(stable_image)
-                clip=0.125 #0.25
-                lt=int(wd*clip)
-                rt=int(wd-wd*clip)
-                up=int(ht*clip)
-                dw=int(ht-ht*clip)
-                stable_image_clipped=stable_image[up:dw,lt:rt]
-                stb_arr_list.append(stable_image_clipped)
-            return stb_arr_list
-
-        # def arr_list2kins(arr_list):
-        #     pre_bleach=arr_list[0]
-        #     smoothened = filters.median(pre_bleach.astype('uint16'),np.ones((10,10)))
-        #     markers = np.zeros(smoothened.shape, dtype=np.uint)
-        #     markers[smoothened < filters.threshold_otsu(smoothened)] = 1
-        #     markers[smoothened > filters.threshold_otsu(smoothened)] = 2
-        #     labels = random_walker(smoothened, markers, beta=10, mode='bf')
-        #     regions=measure.label(labels)
-        #     props = measure.regionprops(regions,arr_list[0]) #ref
-        #     regions_areas=np.array([prop.area for prop in props])
-        #     regions_index_large=np.where((regions_areas<5000) & (regions_areas>200))[0]
-        # #     return regions_index_large
-        # #     kins_mean=pd.DataFrame(index=regions_index_large, columns=range(len(arr_list)))
-        #     kins_mean=pd.DataFrame(columns=regions_index_large, index=range(len(arr_list)))
-        # #     print kins_mean.shape
-        #     for i in range(len(arr_list)):
-        #         props = measure.regionprops(regions,arr_list[i])
-        #         means=np.array([prop.mean_intensity for prop in props])
-        # #         kins_mean.loc[:,i]=means[regions_index_large]
-        #         kins_mean.loc[i,:]=means[regions_index_large]
-        # #         print np.shape(means[regions_index_large])
-        #         del props
-        #     kins_mean=kins_mean.loc[:, ~(kins_mean < 2000).any(axis=0)] #stitch
-        #     return kins_mean.mean(axis=1)
-
-        def arr_list2regions(arr_list, time_increment):
-            pre_bleach=arr_list_stb[0]
-            smoothened = filters.median(pre_bleach.astype('uint16'),np.ones((4,4)))
-            markers = np.zeros(smoothened.shape, dtype=np.uint)
-            markers[smoothened < filters.threshold_otsu(smoothened)] = 1
-            markers[smoothened > filters.threshold_otsu(smoothened)] = 2
-            labels = random_walker(smoothened, markers, beta=10, mode='bf')
-            regions= measure.label(labels)
-            label_objects, nb_labels = ndimage.label(regions)
-            sizes = np.bincount(label_objects.ravel())
-            mask_sizes = ((sizes > 200) & (sizes < 5000))
-            mask_sizes[0] = 0
-            regions_cleaned = mask_sizes[label_objects]
-            props = measure.regionprops(regions,arr_list[0]) #ref
-            regions_areas=np.array([prop.area for prop in props])
-            regions_index_large=np.where((regions_areas<5000) & (regions_areas>200))[0]
-            kins_mean=pd.DataFrame(columns=regions_index_large, index=range(len(arr_list)))
-            for i in range(len(arr_list)):
-                props = measure.regionprops(regions,arr_list[i])
-                means=np.array([prop.mean_intensity for prop in props])
-                kins_mean.loc[i,:]=means[regions_index_large]
-                del props
-            kins_mean=kins_mean.loc[:, ~(kins_mean < 2000).any(axis=0)] #stitch
-            kins_mean['time']=np.array(range(len(arr_list)))*time_increment #stitch
-            return regions_cleaned,kins_mean
-
         arr_list=nd2arr_list(nd_dh,nd_fns)
         arr_list_stb=raw2phasecorr(arr_list)
         # kins_mean=arr_list2kins(stb_arr_list)
         regions,kins_mean=arr_list2regions(arr_list_stb,time_increment)
-        kins_mean=kins_mean.mean(axis=1)        
+        kins_mean=kins_mean.drop(['time'], axis=1).mean(axis=1)        
         return kins_mean
 
     def data_num_kin2diff(data_num,b_well,u_well):    
