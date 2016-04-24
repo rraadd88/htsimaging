@@ -84,14 +84,25 @@ def arr_list2regions(arr_list, time_increment):
     kins_mean['time']=np.array(range(len(arr_list)))*time_increment #stitch
     return regions_large,kins_mean
 
+def arr_list_stb2kin(arr_list_stb,cut_off):
+    ## cut_off=3000
+    pre_bleach=arr_list_stb[0]
+    index=np.where(pre_bleach>cut_off)
+    kin=pd.DataFrame(columns=["time","mean"], index=range(len(arr_list_stb)))
+    for arri in range(len(arr_list_stb)):
+        arr=arr_list_stb[arri]
+        kin.loc[arri,"mean"]=np.mean(arr[index])
+        del arr
+    kin['time']=np.array(range(len(arr_list_stb)))*time_increment
+    return kin
+
 def main(fh_xls):
       
     def nd2kins(nd_fns,nd_dh,time_increment):
         arr_list=nd2arr_list(nd_dh,nd_fns)
         arr_list_stb=raw2phasecorr(arr_list)
-        # kins_mean=arr_list2kins(stb_arr_list)
-        regions,kins_mean=arr_list2regions(arr_list_stb,time_increment)
-        kins_mean=kins_mean.drop(['time'], axis=1).mean(axis=1)        
+        kin=arr_list_stb2kin(arr_list_stb,3000)
+        kins_mean=kins_mean.drop(['time'], axis=1) 
         return kins_mean
 
     def data_num_kin2diff(data_num,b_well,u_well):    
