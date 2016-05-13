@@ -5,6 +5,8 @@
 
 import sys
 from os.path import exists
+import logging
+logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..): %(message)s',level=logging.DEBUG) # filename=cfg_xls_fh+'.log'
 import nd2reader
 import pandas as pd
 import string
@@ -101,8 +103,8 @@ def main(fh_xls):
     def nd2kins(nd_fns,nd_dh,time_increment):
         arr_list=nd2arr_list(nd_dh,nd_fns)
         arr_list_stb=raw2phasecorr(arr_list)
-        kin=arr_list_stb2kin(arr_list_stb,3000)
-        kins_mean=kins_mean.drop(['time'], axis=1) 
+        kin=arr_list_stb2kin(arr_list_stb,3000) #stitch
+        kins_mean=kin.drop(['time'], axis=1) 
         return kins_mean
 
     def data_num_kin2diff(data_num,b_well,u_well):    
@@ -130,7 +132,7 @@ def main(fh_xls):
         diff_df=pd.DataFrame(columns=wells_b)
         diff_df.loc[:,'time']=time
         for welli in range(len(wells_b)):
-            print wells_b[welli]
+            logging.info("processing: %s" % wells_b[welli])
             diff_df.loc[:,wells_b[welli]]  =data_num_kin2diff(data_num_kin,wells_b[welli],wells_u[welli])
         diff_df.to_csv("%s.diff_df" % (fh_xls))  
 
@@ -215,7 +217,7 @@ def main(fh_xls):
         data_num_kin=pd.DataFrame(columns=wells)
         data_num_kin.loc[:,'time']=time
         for well in wells:
-            print ">>> STATUS  : nd2kins : %s" % well 
+            logging.info("processing: %s" % well) 
             nd_fns=data_fns[well].dropna().unique()
             well_kin=nd2kins(nd_fns,nd_dh,time_increment)
             if not pd.isnull(info_pt00s.loc[well])[0]:
@@ -225,8 +227,8 @@ def main(fh_xls):
                 data_num_kin[well]=well_kin[0:12].values
         data_num_kin.to_csv("%s.data_num_kin" % (fh_xls))
     else:
-        print ">>> STATUS  : data_num_kin :already done"
-        data_num_kin=pd.read_csv("%s.data_num_kin" % (fh_xls))
+        logging.info("already processed: %s.data_num_kin" % (fh_xls))
+    data_num_kin=pd.read_csv("%s.data_num_kin" % (fh_xls))
     data_num_kin2ana(data_num_kin,wells,wells_b,wells_u)
 
 if __name__ == '__main__':
