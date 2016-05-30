@@ -1,4 +1,18 @@
+#!/usr/bin/env python
 
+# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
+# This program is distributed under General Public License v. 3.    
+
+from os.path import splitext, join, exists, isdir,basename,abspath,dirname
+from os import makedirs
+import trackpy as tp
+import nd2reader
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import pims
+import pims_nd2
+from glob import glob
 
 
 def plot_msd(imsd,emsd,ax):

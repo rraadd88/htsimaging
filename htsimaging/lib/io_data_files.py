@@ -1,5 +1,14 @@
+#!/usr/bin/env python
+
+# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
+# This program is distributed under General Public License v. 3.    
 
 
+from os.path import splitext, join, exists, isdir,basename,abspath,dirname
+from os import makedirs
+import numpy as np
+import pandas as pd
+from glob import glob
 
 
 
