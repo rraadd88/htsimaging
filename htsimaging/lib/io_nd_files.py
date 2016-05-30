@@ -123,5 +123,8 @@ def arr_list2vid(arr_list,regions,kins_mean,vid_fh,xpixels, ypixels):
 
 @pims.pipeline
 def average_z(image):
-    return image.mean(axis=0)  # the same as image[0] + ... + image[4]
+    if len(np.shape(frames))==4:
+        return image.mean(axis=0)  # the same as image[0] + ... + image[4]
+    else: 
+        return image
 
