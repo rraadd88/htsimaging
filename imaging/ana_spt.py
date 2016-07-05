@@ -3,13 +3,16 @@
 # Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
 # This program is distributed under General Public License v. 3.    
 
+import sys
 import logging
 import pandas as pd
 import numpy as np
+import trackpy as tp
 logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..): %(message)s',level=logging.DEBUG) # 
 from imaging.lib import spt #.expt2plots,spt.fit_power,spt.fit_line
 
 def main(expt_dh):
+    expt_dh=expt_dh+"/"
     expt_data_chem_trial=spt.expt2plots(spt.expt_dh2expt_info(expt_dh),expt_dh)
 
     expt_data=pd.read_csv(expt_dh+"expt.emsd")
@@ -23,6 +26,11 @@ def main(expt_dh):
 
     for col in expt_data.columns.tolist():
     #     print col
+        values=tp.utils.fit_powerlaw(expt_data.loc[:,col],plot=False)
+        values=values.reset_index()
+        parameters.loc[col,"n"]= values.loc[0,"n"]
+        parameters.loc[col,"A"]= values.loc[0,"A"]
+        
         parameters.loc[col,"power law exponent"],\
         parameters.loc[col,"power law constant"], \
         parameters.loc[col,"rsquared of power"] = \
@@ -33,6 +41,7 @@ def main(expt_dh):
         parameters.loc[col,"rsquared of line"] = \
         spt.fit_line(np.log10(np.array(list(expt_data.index))[:60]),np.log10(np.array(list(expt_data.loc[:,col]))[:60]))
     parameters.to_csv("%s/parameters" % expt_dh)
+    
 
     
 if __name__ == '__main__':
