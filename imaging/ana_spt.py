@@ -22,10 +22,10 @@ def main(expt_dh):
     if 'Unnamed: 0' in expt_data.columns.tolist():
         del expt_data['Unnamed: 0']
 
-    parameters=pd.DataFrame(index=expt_data.columns.tolist(), columns=["power law exponent","power law constant","rsquared of power","slope","y intercept","rsquared of line"])
+    parameters=pd.DataFrame(index=expt_data.columns.tolist(), columns=["power law exponent","power law constant","rsquared of power","amplitude","slope","y intercept","rsquared of line"])
 
     for col in expt_data.columns.tolist():
-    #     print col
+        # print col
         values=tp.utils.fit_powerlaw(expt_data.loc[:,col],plot=False)
         values=values.reset_index()
         parameters.loc[col,"n"]= values.loc[0,"n"]
@@ -33,13 +33,14 @@ def main(expt_dh):
         
         parameters.loc[col,"power law exponent"],\
         parameters.loc[col,"power law constant"], \
-        parameters.loc[col,"rsquared of power"] = \
-        spt.fit_power(np.array(list(expt_data.index))[:60],np.array(list(expt_data.loc[:,col]))[:60])
+        parameters.loc[col,"rsquared of power"], \
+        parameters.loc[col,"amplitude"]= \
+        spt.fit_power(np.array(list(expt_data.index))[:40],np.array(list(expt_data.loc[:,col]))[:40])
 
         parameters.loc[col,"slope"],\
         parameters.loc[col,"y intercept"], \
         parameters.loc[col,"rsquared of line"] = \
-        spt.fit_line(np.log10(np.array(list(expt_data.index))[:60]),np.log10(np.array(list(expt_data.loc[:,col]))[:60]))
+        spt.fit_line(np.log10(np.array(list(expt_data.index))[:40]),np.log10(np.array(list(expt_data.loc[:,col]))[:40]))
     parameters.to_csv("%s/parameters" % expt_dh)
     
 
