@@ -168,7 +168,8 @@ def main(data_xls_fh):
     rateofrecov_per_smpi_df=rateofrecov_per_smpi_df.reset_index()
     del rateofrecov_per_smpi_df.columns.name
     
-    info_genes_df=pd.read_excel('/home/kclabws1/Documents/propro/writ/prjs/2_chem_chap_screens/data/data_sampling_yeast_gfp_genes/data/160208_corrected_smpi/151217_final_list90_data.xls')
+    data_xls_fh='151217_final_list90_data.xls'    
+    info_genes_df=pd.read_excel()
         
     combo=pd.concat([info_genes_df,rateofrecov_per_smpi_df],axis=1)
     #combo_parameters=combo.loc[:89,['molwt','pi','gravy','cai','fop','aromacity','codon_bias','abund','length','index','smpi',str(conditions.ix[0][0]),str(conditions.ix[1][0])]]
