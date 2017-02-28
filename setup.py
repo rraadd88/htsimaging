@@ -9,7 +9,7 @@
 setup.py
 ========
 
-installs dms2dfe
+installs package
 
 USAGE :
 python setup.py install
@@ -36,19 +36,21 @@ name='dms2dfe',
 author='Rohan Dandage',
 author_email='rraadd_8@hotmail.com,rohan@igib.in',
 version='1',
-url='https://github.com/rraadd88/dms2dfe',
-download_url='https://github.com/rraadd88/dms2dfe/archive/master.zip',
-description='Pipeline to analyse Deep Mutational Scanning (DMS) experiments in terms of Distribution of Fitness Effects (DFE)',
-long_description='https://github.com/rraadd88/dms2dfe/README.md',
+url='https://github.com/rraadd88/..',
+download_url='https://github.com/rraadd88/dms2dfe/..',
+description='..',
+long_description='https://github.com/rraadd88/../README.md',
 license='General Public License v. 3',
-install_requires=['biopython >= 1.65',
-                    'pandas >= 0.18.0',
+install_requires=[  'pandas >= 0.18.0',
                     'scipy >= 0.17.0',
                     'scikit_learn >= 0.17.1',
                     'matplotlib >= 1.5.1',
                     'seaborn >= 0.6.0',
-                    'pysam >= 0.8.4'],
+                    'pims == 0.3.3',
+                    'opencv == 2.4.9',
+                    'scikits.image == 0.11.3'
+                    ],
 platforms='Tested on Linux (Ubuntu 12.04)',
-keywords=['bioinformatics','Deep sequencing','molecular evolution'],
+keywords=['1','1','1'],
 packages=find_packages(),
 )
