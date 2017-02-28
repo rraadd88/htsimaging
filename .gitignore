@@ -1,1 +1,16 @@
+*.ipynb
+*.pyc
+*.ipynb_checkpoints
+
+docs
+#docs/*.rst
+#docs/*.py
+#docs/_build
+#docs/generated
+#docs/_static
+#docs/_templates
+#docs/Makefile
+
+update_forks
 test/*
+test_dataset/*
