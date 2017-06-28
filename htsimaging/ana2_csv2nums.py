@@ -12,7 +12,8 @@ import os
 #from multiprocessing import Pool
 from os.path import splitext,basename,exists
 
-data_xls_fh=sys.argv[1]
+if len(sys.argv)>2:
+    data_xls_fh=sys.argv[1]
 info=pd.read_excel(data_xls_fh,'info')
 info=info.set_index('varname')
 for var in info.iterrows():
