@@ -8,7 +8,7 @@ sudo: false
 env:
   global:
     - PACKAGENAME="htsimaging"
-    - CONDA_DEPS="pip flake8 pytest numpy scipy matplotlib pandas opencv-python" 
+    - CONDA_DEPS="pip flake8 pytest numpy scipy matplotlib pandas" 
 #    - PIP_DEPS="coveralls pytest-cov" -
     - MINICONDA_URL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 
@@ -26,6 +26,7 @@ before_install:
 - conda update conda
 - conda info -a
 - conda config --add channels conda-forge
+- conda install -c https://conda.binstar.org/menpo opencv
 - conda install python=$TRAVIS_PYTHON_VERSION $CONDA_DEPS
 - travis_retry pip install $PIP_DEPS
 
