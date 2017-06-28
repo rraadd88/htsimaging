@@ -26,7 +26,7 @@ before_install:
 - conda update conda
 - conda info -a
 - conda config --add channels conda-forge
-- conda install -c https://conda.binstar.org/menpo opencv
+- pip install opencv-python
 - conda install python=$TRAVIS_PYTHON_VERSION $CONDA_DEPS
 - travis_retry pip install $PIP_DEPS
 
