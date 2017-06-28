@@ -47,7 +47,7 @@ install_requires=[  'pandas >= 0.18.0',
                     'matplotlib >= 1.5.1',
                     'seaborn >= 0.6.0',
                     'pims == 0.3.3',
-                    'opencv == 2.4.9',
+                    'opencv-python == 2.4.9',
                     'scikit-image == 0.11.3'
                     ],
 platforms='Tested on Linux (Ubuntu 12.04)',
