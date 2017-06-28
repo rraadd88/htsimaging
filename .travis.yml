@@ -34,6 +34,6 @@ install:
 - python setup.py install --record installed_files.txt
 
 script:
-- py.test test
+- py.test
 after_success:
 - coveralls
