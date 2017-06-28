@@ -32,12 +32,12 @@ if (sys.version_info[0], sys.version_info[1]) != (2, 7):
                
 # main setup command
 setup(
-name='dms2dfe',
+name='htsimaging',
 author='Rohan Dandage',
 author_email='rraadd_8@hotmail.com,rohan@igib.in',
 version='1',
 url='https://github.com/rraadd88/..',
-download_url='https://github.com/rraadd88/dms2dfe/..',
+download_url='https://github.com/rraadd88/htsimaging/..',
 description='..',
 long_description='https://github.com/rraadd88/../README.md',
 license='General Public License v. 3',
@@ -48,7 +48,7 @@ install_requires=[  'pandas >= 0.18.0',
                     'seaborn >= 0.6.0',
                     'pims == 0.3.3',
                     'opencv == 2.4.9',
-                    'scikits.image == 0.11.3'
+                    'scikit-image == 0.11.3'
                     ],
 platforms='Tested on Linux (Ubuntu 12.04)',
 keywords=['1','1','1'],
