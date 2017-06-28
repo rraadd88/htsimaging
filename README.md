@@ -1,8 +1,10 @@
 # htsimaging
 
+<!--
 [![build status](
   http://img.shields.io/travis/rraadd88/htsimaging/master.svg?style=flat)](
  https://travis-ci.org/rraadd88/htsimaging)
+-->
 
 Python package for analysis of big bunch of images obtained from high throughput imaging.
 
