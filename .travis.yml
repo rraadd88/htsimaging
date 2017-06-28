@@ -33,4 +33,4 @@ install:
 - python setup.py install --record installed_files.txt
 
 script:
-- pytest
+- py.test
