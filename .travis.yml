@@ -3,12 +3,13 @@
 # https://github.com/uwescience/shablona
 
 language: python
+cache: pip
 sudo: false
 
 env:
   global:
     - PACKAGENAME="htsimaging"
-    - CONDA_DEPS="pip flake8 pytest numpy scipy matplotlib pandas opencv" 
+    - CONDA_DEPS="pip flake8 pytest pytest-cov coveralls numpy scipy matplotlib pandas opencv" 
 #    - PIP_DEPS="coveralls pytest-cov" -
     - MINICONDA_URL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 
@@ -33,4 +34,6 @@ install:
 - python setup.py install --record installed_files.txt
 
 script:
-- py.test
+- py.test test
+after_success:
+- coveralls
