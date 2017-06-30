@@ -8,7 +8,12 @@
 
 Python package for analysis of big bunch of images obtained from high throughput imaging.
 
-## Contents
+## Installation
+
+	cd htsimaging_master
+	pip install .
+
+## Contents of the package
 
 	htsimaging/  
 	|-- bleach_chase2kins.py (bleach-chase images to kinetics)  
