@@ -2,5 +2,5 @@ def test_configure():
     from dms2dfe import configure    
     configure.main('prj')
 
-    import htsimaging
-    from imaging.lib.spt import expt_dh2expt_info,nd2msd
+    from htsimaging import trackinginfo2emsd
+    trackinginfo2emsd.main(expt_dh)
