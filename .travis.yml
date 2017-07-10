@@ -28,8 +28,9 @@ before_install:
 - conda info -a
 - conda config --add channels conda-forge
 - conda install python=$TRAVIS_PYTHON_VERSION $CONDA_DEPS
-- pip install https://github.com/rraadd88/dms2dfe/archive/v1.0.6.zip
 - travis_retry pip install $PIP_DEPS
+- pip install https://github.com/rraadd88/dms2dfe/archive/v1.0.6.zip
+- pip install https://github.com/soft-matter/pims_nd2/archive/v1.0.zip
 
 install:
 - python setup.py install --record installed_files.txt

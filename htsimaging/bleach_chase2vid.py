@@ -20,7 +20,7 @@ from skimage import io,exposure,restoration,filters,morphology,measure
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import subprocess
-from nd2kins import nd2arr_list,raw2phasecorr,arr_list2regions
+# from nd2kins import nd2arr_list,raw2phasecorr,arr_list2regions
 
 def main(fh_xls,well):
     info=pd.read_excel(fh_xls,'info')
