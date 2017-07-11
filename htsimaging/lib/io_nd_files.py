@@ -13,10 +13,13 @@ import string
 import numpy as np
 from scipy import stats,ndimage
 from multiprocessing import Pool
+
+import pims
 import cv2
 from skimage.segmentation import random_walker
 # from skimage.data import binary_blobs
 from skimage import io,exposure,restoration,filters,morphology,measure
+
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import subprocess
@@ -122,9 +125,9 @@ def arr_list2vid(arr_list,regions,kins_mean,vid_fh,xpixels, ypixels):
     subprocess.Popen(bash_command, shell=True, executable='/bin/bash')
 
 @pims.pipeline
-def average_z(image):
+def average_z(frames):
     if len(np.shape(frames))==4:
-        return image.mean(axis=0)  # the same as image[0] + ... + image[4]
+        return frames.mean(axis=0)  # the same as image[0] + ... + image[4]
     else: 
-        return image
+        return frames
 

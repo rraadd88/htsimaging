@@ -13,7 +13,10 @@ from glob import glob
 
 
 def expt_dh2expt_info(expt_dh):
-    expt_info=pd.read_csv(expt_dh+"info")
+    if exists(expt_dh+"info"):
+        expt_info=pd.read_csv(expt_dh+"info")
+    elif exists(expt_dh+"info.csv"):
+        expt_info=pd.read_csv(expt_dh+"info.csv")
     cols_del=["dh","fn_lead"]
     for col in expt_info.columns.tolist():
         if "Unnamed" in col:
@@ -23,9 +26,10 @@ def expt_dh2expt_info(expt_dh):
             del expt_info[col]    
     expt_info2=expt_info.drop(["smpn"],axis=1).T
     expt_info2.columns=expt_info.loc[:,"smpn"]
-
+    
+    # print expt_info2
     for col in expt_info2.columns.tolist():
-        for i in range(len(expt_info2)):
+        for i in range(len([i for i in expt_info2.index if 'replicate' in i])):
             if not pd.isnull(expt_info2.loc["replicate %d" % (i+1),col]):
                 expt_info2.loc[("replicate %d" % (i+1)),col]=['replicate %d' % (i+1),expt_info2.loc[("replicate %d" % (i+1)),col]]
             else:

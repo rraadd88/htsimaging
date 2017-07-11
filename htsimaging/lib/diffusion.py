@@ -6,14 +6,16 @@
 from os.path import splitext, join, exists, isdir,basename,abspath,dirname
 from os import makedirs
 import trackpy as tp
-import nd2reader
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import pims
-import pims_nd2
+# import pims_nd2
+# import nd2reader
 from glob import glob
-
+from htsimaging.lib.io_nd_files import average_z
+import logging
+logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..): %(message)s',level=logging.DEBUG) # 
 
 def plot_msd(imsd,emsd,ax):
     imsd.reset_index().plot(x="lag time [s]",legend=None,alpha=0.75,ax=ax)
@@ -31,6 +33,7 @@ def plot_msd(imsd,emsd,ax):
     return ax
 
 def plot_emsd(expt_data,ax_emsd):
+    # print expt_data.head()
     expt_data.plot(x="lagt",style='o',ax=ax_emsd)
     ax_emsd.set_xscale('log')
     ax_emsd.set_yscale('log')
@@ -40,10 +43,13 @@ def plot_emsd(expt_data,ax_emsd):
     plt.tight_layout()
 
 def nd2msd(nd_fh):
+    # print nd_fh
     frames=pims.ND2_Reader(nd_fh)
+    logging.info('number of frames = %d' % len(np.shape(frames)))
     if len(np.shape(frames))==4:
         frames = average_z(frames)
-    f_batch = tp.batch(frames,diameter=11,threshold=np.percentile(frames,75))
+    threshold=np.percentile(frames,75)
+    f_batch = tp.batch(frames,diameter=11,threshold=threshold)
 
     t = tp.link_df(f_batch, search_range=11, memory=3)
     t_flt = tp.filter_stubs(t, 3*int(len(frames)/4))
@@ -76,10 +82,11 @@ def expt2plots(expt_info,expt_dh):
                 out_fn=splitext(basename(nd_fh))[0]
                 out_fh=expt_dh+out_fn
                 if not exists(out_fh+".imsd.png"):
-                    try:
-                        imsd,emsd=nd2msd(nd_fh)
-                    except:
-                        continue
+                    # try:
+                    print nd_fh
+                    imsd,emsd=nd2msd(nd_fh)
+                    # except:
+                    #     continue
                     emsd=pd.DataFrame(emsd)
                     emsd.columns=[repn]
                     emsd=emsd.reset_index()
@@ -105,10 +112,13 @@ def expt2plots(expt_info,expt_dh):
     #             expt_data.loc[:,test_data.columns.tolist()]=test_data.loc[:,test_data.columns.tolist()]
             expt_data=pd.concat([expt_data,test_data.loc[:,[col for col in test_data.columns.tolist() if col != "lagt"]]],axis=1)
 #     expt_data=expt_data.drop_duplicates("lagt",keep='first')
-    expt_data.to_csv(expt_dh+"expt.emsd")
+    if len(expt_data)!=0:
+        expt_data.to_csv(expt_dh+"expt.emsd")
 
-    fig = plt.figure(figsize=(6, 3))
-    ax_emsd=plt.subplot(121)
-    ax_emsd=plot_emsd(expt_data,ax_emsd)
-    plt.savefig(expt_dh+"emsd.png");plt.clf();plt.close()
-    return expt_data
+        fig = plt.figure(figsize=(6, 3))
+        ax_emsd=plt.subplot(121)
+        ax_emsd=plot_emsd(expt_data,ax_emsd)
+        plt.savefig(expt_dh+"emsd.png");plt.clf();plt.close()
+        return expt_data
+    else:
+        logging.error('no data analyzed')
