@@ -10,6 +10,7 @@ import pims_nd2
 from glob import glob
 import logging
 import pandas as pd
+from htsimaging.lib.io_dfs import set_index 
 
 # %matplotlib inline
 
@@ -98,7 +99,7 @@ def expt_dh2expt_info(expt_dh):
     del expt_info2["index"]
     return expt_info2
 
-def expt2plots(expt_info,expt_dh):
+def expt2plots(expt_info,expt_dh,):
     if not exists(expt_dh):
         makedirs(expt_dh)
     expt_data=pd.DataFrame()
@@ -123,11 +124,11 @@ def expt2plots(expt_info,expt_dh):
                         print repn
                         emsd.columns=[repn]
                         imsd.index=emsd.index
-                        print imsd.head()
-                        print out_fh+".imsd"
+                        # print imsd.head()
+                        # print out_fh+".imsd"
                         imsd.to_csv(out_fh+".imsd")
                         emsd.to_csv(out_fh+".emsd")
-                        plot_msd(imsd,emsd,ax_imsd,scale='',plot_fh=plot_fh)
+                        plot_msd(imsd,emsd,scale='linear',plot_fh=plot_fh)
                     else:
                         emsd=pd.read_csv(out_fh+".emsd")
                         if "Unnamed: 0" in emsd.columns.tolist(): 
@@ -139,6 +140,7 @@ def expt2plots(expt_info,expt_dh):
                 else:
         #                 test_data[repn]=emsd[repn]
                     test_data=pd.concat([test_data,emsd[repn]],axis=1)
+            test_data=set_index(test_data,col_index='lagt')
             test_data.to_csv(expt_dh+test+".emsd")
         if len(expt_data)==0:
             expt_data=test_data
@@ -146,12 +148,12 @@ def expt2plots(expt_info,expt_dh):
     #             expt_data.loc[:,test_data.columns.tolist()]=test_data.loc[:,test_data.columns.tolist()]
             expt_data=pd.concat([expt_data,test_data.loc[:,[col for col in test_data.columns.tolist() if col != "lagt"]]],axis=1)
     #     expt_data=expt_data.drop_duplicates("lagt",keep='first')
+    expt_data=set_index(expt_data,col_index='lagt')
     expt_data.to_csv(expt_dh+"expt.emsd")
     plot_fh=expt_dh+"emsd.pdf"
-    plot_emsd(expt_data, plot_fh=plot_fh)
+    plot_emsd(expt_data,scale='linear',plot_fh=plot_fh)
     expt_data_log10=np.log10(expt_data)
     expt_data_log10.to_csv(expt_dh+"expt.emsdlog10")
-    expt_data=expt_data.set_index('lagt',drop=True)
     return expt_data
 
 
@@ -168,51 +170,3 @@ def createinfo(expt_dh):
     info.to_csv(expt_dh+"info",index=False)
     
     
-from scipy.optimize import leastsq
-
-def power(x, A, B):
-    """power law equation."""
-    return B*x**A
-def power_residuals(p, y, x):
-    """Deviations of data from fitted 4PL curve"""
-    A,B = p
-    err = y-power(x, A, B)
-    return err
-def power_peval(x, p):
-    """Evaluated value at x with current parameters."""
-    A,B = p
-    return power(x, A, B)
-def fit_power(x,y,p0=[0, 1],plot=False):
-    plsq,cov,infodict,mesg,ier= leastsq(power_residuals, p0, args=(y, x),full_output=1)
-    ss_err=(infodict['fvec']**2).sum()
-    ss_tot=((y-y.mean())**2).sum()
-    rsquared=1-(ss_err/ss_tot)
-    if rsquared<0.85:
-        print "poor fit %d" % rsquared
-    if plot==True:
-        plt.plot(x,y,'o')  
-        plt.plot(x,power_peval(x,plsq)) 
-    return plsq[0], plsq[1],rsquared,power_peval(np.max(x),plsq)
-def line(x, m, C):
-    """power law equation."""
-    return m*x+C
-def line_residuals(p, y, x):
-    """Deviations of data from fitted 4PL curve"""
-    m,C = p
-    err = y-line(x, m,C)
-    return err
-def line_peval(x, p):
-    """Evaluated value at x with current parameters."""
-    m,C = p
-    return line(x, m,C)
-def fit_line(x,y,p0=[0, 1],plot=False):
-    plsq,cov,infodict,mesg,ier= leastsq(line_residuals, p0, args=(y, x),full_output=1)
-    ss_err=(infodict['fvec']**2).sum()
-    ss_tot=((y-y.mean())**2).sum()
-    rsquared=1-(ss_err/ss_tot)
-    if rsquared<0.85:
-        print "poor fit %d" % rsquared
-    if plot==True:
-        plt.plot(x,y,'o')  
-        plt.plot(x,line_peval(x,plsq)) 
-    return plsq[0], plsq[1],rsquared
