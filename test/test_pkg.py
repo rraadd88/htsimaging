@@ -1,3 +1,3 @@
 def test_configure():
-    from htsimaging import trackinginfo2emsd
-    trackinginfo2emsd.main('prj')
+    from htsimaging import ana_spt
+    ana_spt.main('prj')

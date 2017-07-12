@@ -21,7 +21,7 @@ from matplotlib import colors
 import subprocess
 
 import trackpy as tp
-from imaging.lib import spt
+from htsimaging.lib import spt
 
 def filterframes(frames,cutoff=0):
     frames_cleaned=[]
