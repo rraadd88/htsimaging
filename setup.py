@@ -30,6 +30,9 @@ except ImportError:
 if (sys.version_info[0], sys.version_info[1]) != (2, 7):
     raise RuntimeError('Python 2.7 required ')
                
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+    
 # main setup command
 setup(
 name='htsimaging',
@@ -41,19 +44,7 @@ download_url='https://github.com/rraadd88/htsimaging/..',
 description='..',
 long_description='https://github.com/rraadd88/../README.md',
 license='General Public License v. 3',
-install_requires=[  'pandas >= 0.18.0',
-                    'scipy >= 0.17.0',
-                    'scikit_learn >= 0.17.1',
-                    'matplotlib >= 1.5.1',
-                    'seaborn >= 0.6.0',
-                    'pims == 0.3.3',
-                    # 'opencv',
-                    'scikit-image == 0.11.3',
-                    'nd2reader',
-                    'trackpy',
-                    'pims_nd2',
-                    'xlrd',
-                    ],
+install_requires=required,
 platforms='Tested on Linux (Ubuntu 12.04)',
 keywords=['1','1','1'],
 packages=find_packages(),

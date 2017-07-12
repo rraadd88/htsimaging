@@ -1,0 +1,13 @@
+# while read requirement; do conda install --yes $requirement; done < requirements.txt
+pandas >= 0.18.0
+scipy >= 0.17.0
+scikit_learn >= 0.17.1
+matplotlib >= 1.5.1
+seaborn >= 0.6.0
+pims == 0.3.3
+scikit-image == 0.11.3
+nd2reader
+trackpy
+pims_nd2
+xlrd
+https://github.com/rraadd88/dms2dfe/archive/v1.0.6.zip

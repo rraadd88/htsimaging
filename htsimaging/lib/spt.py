@@ -10,39 +10,51 @@ import pims_nd2
 from glob import glob
 import logging
 import pandas as pd
+
 # %matplotlib inline
 
 @pims.pipeline
 def average_z(image):
     return image.mean(axis=0) 
     
-def plot_msd(imsd,emsd,ax,scale="log"):
-    imsd.reset_index().plot(x="lag time [s]",legend=None,alpha=0.75,ax=ax)
+def plot_msd(imsd,emsd,ax=None,scale="log",plot_fh=None):
+    if ax is None:
+        plt.figure(figsize=(3, 3))
+        ax=plt.subplot(111)
+
+    imsd.plot(x=imsd.index,legend=None,alpha=0.75,ax=ax)
     ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]',
            xlabel='lag time $t$')
     if scale=="log":
         ax.set_xscale('log')
         ax.set_yscale('log')
 
-    emsd.plot(x="lagt",style='o',legend=None,ax=ax)
+    emsd.plot(x=emsd.index,style='o',legend=None,ax=ax)
     if scale=="log":
-	    ax.set_xscale('log')
-	    ax.set_yscale('log')
+        ax.set_xscale('log')
+        ax.set_yscale('log')
     ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]',
            xlabel='lag time $t$')
     plt.tight_layout()
+    if not plot_fh is None: 
+        ax.figure.savefig(plot_fh,format='pdf');plt.clf();plt.close()
     return ax
 
-def plot_emsd(expt_data,ax_emsd,color='k',scale="log"):
-    expt_data.plot(x="lagt",style='o',c=color,ax=ax_emsd,markeredgecolor = 'none')
+def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
+    if ax is None:
+        plt.figure(figsize=(6, 3))
+        ax=plt.subplot(121)
+    expt_data.plot(x=expt_data.index,style='o',c=color,ax=ax,markeredgecolor = 'none')
     if scale=="log":
-	    ax_emsd.set_xscale('log')
-	    ax_emsd.set_yscale('log')
-    ax_emsd.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]',
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]',
                 xlabel='lag time $t$')
-    ax_emsd.legend(loc = 'center left', bbox_to_anchor = (1.0, 0.5)) #bbox_to_anchor=(2.2, 1.0)
+    ax.legend(loc = 'center left', bbox_to_anchor = (1.0, 0.5)) #bbox_to_anchor=(2.2, 1.0)
     plt.tight_layout()
-    return ax_emsd 
+    if not plot_fh is None: 
+        ax.figure.savefig(plot_fh,format='pdf');plt.clf();plt.close()
+    return ax 
 
 def nd2msd(nd_fh):
     frames=pims.ND2_Reader(nd_fh)
@@ -110,13 +122,12 @@ def expt2plots(expt_info,expt_dh):
                         emsd=pd.DataFrame(emsd)
                         print repn
                         emsd.columns=[repn]
-                        emsd=emsd.reset_index()
-                        imsd.to_csv(out_fh+".imsd",index=False)
-                        emsd.to_csv(out_fh+".emsd",index=False)
-                        fig = plt.figure(figsize=(3, 3))
-                        ax_imsd=plt.subplot(111)
-                        ax_imsd=plot_msd(imsd,emsd,ax_imsd)
-                        ax_imsd.figure.savefig(plot_fh,format='pdf');plt.clf();plt.close()
+                        imsd.index=emsd.index
+                        print imsd.head()
+                        print out_fh+".imsd"
+                        imsd.to_csv(out_fh+".imsd")
+                        emsd.to_csv(out_fh+".emsd")
+                        plot_msd(imsd,emsd,ax_imsd,scale='',plot_fh=plot_fh)
                     else:
                         emsd=pd.read_csv(out_fh+".emsd")
                         if "Unnamed: 0" in emsd.columns.tolist(): 
@@ -128,19 +139,16 @@ def expt2plots(expt_info,expt_dh):
                 else:
         #                 test_data[repn]=emsd[repn]
                     test_data=pd.concat([test_data,emsd[repn]],axis=1)
-            test_data.to_csv(expt_dh+test+".emsd",index=False)
+            test_data.to_csv(expt_dh+test+".emsd")
         if len(expt_data)==0:
             expt_data=test_data
         else:
     #             expt_data.loc[:,test_data.columns.tolist()]=test_data.loc[:,test_data.columns.tolist()]
             expt_data=pd.concat([expt_data,test_data.loc[:,[col for col in test_data.columns.tolist() if col != "lagt"]]],axis=1)
     #     expt_data=expt_data.drop_duplicates("lagt",keep='first')
-    expt_data.to_csv(expt_dh+"expt.emsd",index=False)
-    fig = plt.figure(figsize=(6, 3))
-    ax_emsd=plt.subplot(121)
-    ax_emsd=plot_emsd(expt_data,ax_emsd)
+    expt_data.to_csv(expt_dh+"expt.emsd")
     plot_fh=expt_dh+"emsd.pdf"
-    plt.savefig(plot_fh,format='pdf');plt.clf();plt.close()
+    plot_emsd(expt_data, plot_fh=plot_fh)
     expt_data_log10=np.log10(expt_data)
     expt_data_log10.to_csv(expt_dh+"expt.emsdlog10")
     expt_data=expt_data.set_index('lagt',drop=True)
