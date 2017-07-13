@@ -11,18 +11,11 @@ docs
 #docs/_templates
 #docs/Makefile
 
-update_forks
 test/*
 test_dataset/*
 .cache/*
-htsimaging.egg-info/
-
-lrt.egg-info/*
 dist/*
-test/*
-test_dataset
 
-################
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -33,18 +26,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
 *.egg-info/
 .installed.cfg
 *.egg
