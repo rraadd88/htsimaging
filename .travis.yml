@@ -1,21 +1,13 @@
-# many thanks to 
-# https://github.com/jakevdp/travis-python-template
-# https://github.com/uwescience/shablona
-
 language: python
 cache: pip
 sudo: false
-
 env:
   global:
-    - PACKAGENAME="htsimaging"
-    - CONDA_DEPS="pip flake8 pytest numpy scipy matplotlib pandas opencv scikit-bio" 
-#    - PIP_DEPS="coveralls pytest-cov" -
-    - MINICONDA_URL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
-
+  - PACKAGENAME="htsimaging"
+  - CONDA_DEPS="pip flake8 pytest numpy scipy matplotlib pandas opencv scikit-bio"
+  - MINICONDA_URL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 python:
-  - '2.7'
-  
+- '2.7'
 before_install:
 - export MINICONDA=$HOME/miniconda
 - export PATH="$MINICONDA/bin:$PATH"
@@ -26,19 +18,20 @@ before_install:
 - conda config --set always_yes yes
 - conda update conda
 - conda info -a
-- conda config --add channels biocore 
+- conda config --add channels biocore
 - conda config --add channels conda-forge
 - conda install python=$TRAVIS_PYTHON_VERSION $CONDA_DEPS
 - travis_retry pip install $PIP_DEPS
 - pip install https://github.com/rraadd88/dms2dfe/archive/v1.0.6.zip
 - pip install https://github.com/soft-matter/pims_nd2/archive/v1.0.zip
-
 install:
 - python setup.py install --record installed_files.txt
-
 script:
-#- py.test
 - pytest test/test_pkg.py
-
 after_success:
 - coveralls
+deploy:
+  provider: pypi
+  user: rraadd88
+  password:
+    secure: XrYXWKn9tDaEi4bxt+JAji5yvJuYG7ulCjvk1lfQnYB0QHm7kxxGpzqX9OUZFn/qG9HZNJrA0ISK/eTQ+1pfblLeTiy34nwfibpKW8cpon1P1+QuifrStPmEe91KYPYymvUfc5XT3GvPkVNCKm+3fhWUfsUa6cieQ+oIMk1rws2+HJ4qBPr9wy/llYyxgAsH9jaUJ1HE2RAn4jD8SwbwUk2/vjPZpTYbs8auZtGaLy3LLfLxSJg2Yw/JPo399KOgSpNb5kB/H7PY/k6Puw1fy/3VFH/lX04W8OFUd6hMnKDMh2W8OUXjYlomdhdwmWa98hvn0ZKQW3mUUhFGSPhzb8Bg4HInohVtdB2nuKDR0fZ0MjAz3yAvFjuWu5WV7vnleVqr1ksrjgEETgkRqwx9Nu01/kX/b24UxkHsF1RdzrqrFNkS/m839G6i6deY0T0rWL8BgV3pCgHAMH1bH4PteRNIhLpyLnArW4M7IqflE7T8aa+bnl5fl7rdtq6g+F6soBiWK4UyC7WNG6nrjAo88xpttsPmBabCgkVMKE9u8SgEKHAEP9IE5BwG4usMSwLPRgTvLIji3Wsd0r5xMKa37742H+h7QAScyLL9r4thBOFwfMQKhSuJXHgq/TwfSq2PkFYenTkcSXOTrXUSdwQ6nJSQ+Au1pUEwQe6jf0Zl7Hk=
