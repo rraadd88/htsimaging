@@ -97,3 +97,12 @@ def get_time():
     import datetime
     time=make_pathable_string('%s' % datetime.datetime.now())
     return time.replace('-','_').replace(':','_').replace('.','_')
+
+from os.path import basename
+def get_dir(p): 
+    if p[-2:]=='//':
+        return basename(p[:-2]) 
+    elif p[-1]=='/':
+        return basename(p[:-1]) 
+    else:
+        return basename(p)

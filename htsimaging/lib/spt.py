@@ -170,3 +170,64 @@ def createinfo(expt_dh):
     info.to_csv(expt_dh+"info",index=False)
     
     
+from htsimaging.lib import spt
+from htsimaging.lib import fit_kin
+
+def get_params(imsd,fit_type='power',out_fh=None):
+    if fit_type=='power':
+        parameters=pd.DataFrame(index=expt_data.columns.tolist(),
+                                columns=["power law exponent",
+                                         "power law constant",
+                                         "rsquared of power",
+                                         "amplitude",
+#                                          "slope",
+#                                          "y intercept",
+#                                          "rsquared of line",
+                                        ])
+        for col in imsd:
+        #     parameters=tp.utils.fit_powerlaw(imsd.loc[:,col],plot=True)
+            parameters.loc[col,"power law exponent"],\
+            parameters.loc[col,"power law constant"], \
+            parameters.loc[col,"rsquared of power"], \
+            parameters.loc[col,"amplitude"]= \
+            fit_kin.fit_power(np.array(list(expt_data.index)),np.array(list(expt_data.loc[:,col])))
+        if not out_fh is None:
+            parameters.to_csv(out_fh)
+        return parameters
+
+def flt_traj(imsd,l=60,flt_amplitude=True,mn_traj=3,
+            out_fh=None):
+    # for l in range(10,110,10):
+    if not out_fh is None:
+        params_fh='%s.params' % out_fh
+        params_flt_fh='%s.params_flt' % out_fh
+        imsd_flt_fh='%s.imsd_flt' % out_fh
+    parameters=get_params(imsd.head(l),fit_type='power',out_fh=params_fh)
+    traj_flt1=parameters.loc[(parameters.loc[:,'power law exponent']<1) & \
+                            (parameters.loc[:,'rsquared of power']>0.95) \
+                            ,:].index.tolist()
+    parameters=parameters.loc[traj_flt1,:]
+#     print parameters.head()
+    if flt_amplitude:
+        for i in np.arange(0,1.1,0.1)[::-1]:
+            traj_flt=parameters.loc[(parameters.loc[:,'amplitude']<(parameters.loc[:,'amplitude'].mean()+i*parameters.loc[:,'amplitude'].std())) & \
+                                    (parameters.loc[:,'amplitude']>(parameters.loc[:,'amplitude'].mean()-i*parameters.loc[:,'amplitude'].std())) \
+                                    ,:].index.tolist()
+            if len(traj_flt)<mn_traj:
+                if 'traj_flt_prev' in locals():
+                    traj_flt=traj_flt_prev
+                else:
+                    traj_flt=traj_flt1
+                print 'filtered: %s : %s' % (len(traj_flt1),len(traj_flt))
+                break
+            traj_flt_prev=traj_flt                
+    else:
+        traj_flt=traj_flt1
+    print 'filtered: %s : %s' % (len(traj_flt1),len(traj_flt))
+    imsd_flt=imsd.loc[:,traj_flt].head(l)
+#     emsd_flt=pd.DataFrame(imsd_flt.T.mean())
+    params_flt=parameters.loc[traj_flt,:]
+    if not out_fh is None:
+        imsd_flt.to_csv(imsd_flt_fh)
+        params_flt.to_csv(params_flt_fh)
+    return imsd_flt,params_flt
