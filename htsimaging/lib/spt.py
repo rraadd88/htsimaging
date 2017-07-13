@@ -169,13 +169,10 @@ def createinfo(expt_dh):
     #     break
     info.to_csv(expt_dh+"info",index=False)
     
-    
-from htsimaging.lib import spt
-from htsimaging.lib import fit_kin
-
+from htsimaging.lib.fit_kin import fit_power
 def get_params(imsd,fit_type='power',out_fh=None):
     if fit_type=='power':
-        parameters=pd.DataFrame(index=expt_data.columns.tolist(),
+        parameters=pd.DataFrame(index=imsd.columns.tolist(),
                                 columns=["power law exponent",
                                          "power law constant",
                                          "rsquared of power",
@@ -190,7 +187,7 @@ def get_params(imsd,fit_type='power',out_fh=None):
             parameters.loc[col,"power law constant"], \
             parameters.loc[col,"rsquared of power"], \
             parameters.loc[col,"amplitude"]= \
-            fit_kin.fit_power(np.array(list(expt_data.index)),np.array(list(expt_data.loc[:,col])))
+            fit_power(np.array(list(imsd.index)),np.array(list(imsd.loc[:,col])))
         if not out_fh is None:
             parameters.to_csv(out_fh)
         return parameters

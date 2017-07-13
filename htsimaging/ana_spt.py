@@ -12,18 +12,19 @@ import trackpy as tp
 from glob import glob
 
 logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..): %(message)s',level=logging.DEBUG) # 
-from htsimaging.lib import spt #.expt2plots,spt.fit_power,spt.fit_line
+# from htsimaging.lib import spt #.expt2plots,spt.fit_power,spt.fit_line
+from htsimaging.lib.spt import expt2plots,expt_dh2expt_info,flt_traj
 
 def main(expt_dh):
     expt_dh=expt_dh+"/"
     if exists(expt_dh):    
         # print expt_dh
-        spt.expt2plots(spt.expt_dh2expt_info(expt_dh),expt_dh)
+        expt2plots(expt_dh2expt_info(expt_dh),expt_dh)
 
         imsd_fhs=glob('%s/*.imsd' % expt_dh)
         for imsd_fh in imsd_fhs:  
             imsd=pd.read_csv(imsd_fh).set_index('lagt')
-            imsd_flt,params_flt=spt.flt_traj(imsd,flt_amplitude=True,out_fh=imsd_fh)
+            imsd_flt,params_flt=flt_traj(imsd,flt_amplitude=True,out_fh=imsd_fh)
         from htsimaging.lib.fit_kin import plot_kin_all        
         plot_kin_all(expt_dh,imsd_fhs)
     else:

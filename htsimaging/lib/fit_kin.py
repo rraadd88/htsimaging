@@ -162,7 +162,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 def plot_kin_all(expt_dh,imsd_fhs):
     fig=plt.figure(figsize=(8,3))
-    colors=cm.rainbow(np.linspace(0,1,len(imsd_flt_fhs)))
+    colors=cm.rainbow(np.linspace(0,1,len(imsd_fhs)))
     for i,imsd_fh in enumerate(imsd_fhs):
         imsd_flt_fh='%s.imsd_flt' % imsd_fh
         imsd_flt=pd.read_csv(imsd_flt_fh).set_index('lagt')
@@ -182,4 +182,4 @@ def plot_kin_all(expt_dh,imsd_fhs):
                  plot_fh=None)
     ax1.set_ylim([0,0.2])
     ax1.legend(bbox_to_anchor=[1,1,0,0],loc=2)
-    fig.savefig('%s/plot_flt_%s.pdf' % (expt_dh,get_dir(expt_dh))
+    fig.savefig('%s/plot_flt_%s.pdf' % (expt_dh,get_dir(expt_dh)))
