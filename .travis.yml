@@ -33,5 +33,10 @@ after_success:
 deploy:
   provider: pypi
   user: rraadd88
+  distributions: sdist bdist_wheel
   password:
     secure: km47kpNm6jtKkI1h/JRgVdBkWCXeOXiekyLTGhCo58przmXrq4fV11xRbwAwvzd9TF7Ok5rGtcBshR6kDMwegXpKi61+j5uHMvfaL64Rwk29CUxhsC+HW4XtztTbDGQ3zH6yUy+Q96QbndNs7MXqAKRkd/pksKAza1d3SLWP+rpD91L5SF1thWXNwMflPz6EkVfIB6qOV0htJ1zFtiCF9ykN2JaeszZk1Mq7Ev/WEwUosM2pN0ORIIoUzQCwMY0sMT0QEHo76QgnRqRJz69G/KagG2vZcqKaXYMUsBY6bFvhr6W5BJiPGxoQ/rBfyfygAuGq9n+tBAtDuMMOsY/8d0lbZDqygZoQX1fph8gwlSbFkom/zEkhklncHRDSXsTmxSiPbS3BL14GEzucxIEPTBsJrF2xfaaEq9XN9DMA68UuNmnf/CoLZSS8Er8zm+PTJf3rIZtPgM04jyStnbfOGGuhjC3s55U4CIsyUNHx/58plldTf03A58zxmFCYWE/wnnxxGlbnaX4awI38RRpii0g7M+35nRURcwKMEnfYPVInMR+UTXZVCAcptvV8ofs82VjvwDxtpSPR7neEbM2LwHxfdoQdW5+7tyqLiKC1NhbstPrz2u42AWAunRpTrR5/eiJReie3E+hUHPilzeB8kyzVhoFZEjZF/IQDcxbAO3Y=
+  on:
+    tags: true
+    repo: rraadd88/htsimaging
+    branch: master
