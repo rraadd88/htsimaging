@@ -38,7 +38,7 @@ setup(
 name='htsimaging',
 author='Rohan Dandage',
 author_email='rraadd_8@hotmail.com,rohan@igib.in',
-version='0.0.3',
+version='0.0.4',
 url='https://github.com/rraadd88/..',
 download_url='https://github.com/rraadd88/htsimaging/..',
 description='For analysis of microscopy images',
@@ -50,5 +50,8 @@ keywords=['microscopy','imaging','trackpy'],
 packages=find_packages(),
 )
 
+#for git 
+# git tag -a v$(python setup.py --ve
+# rsion) -m 'still beta'
 # for pypi
 # pandoc -o README.rst README.md
