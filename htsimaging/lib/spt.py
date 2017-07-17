@@ -90,9 +90,9 @@ def nd2msd(nd_fh,
 
 def expt_dh2expt_info(expt_dh):
     try:
-        expt_info=pd.read_csv(expt_dh+"info")
+        expt_info=pd.read_csv(expt_dh+"/info")
     except:
-        expt_info=pd.read_csv(expt_dh+"info.csv")
+        expt_info=pd.read_csv(expt_dh+"/info.csv")
     if "Unnamed" in expt_info.columns.tolist():
         cols_del.append(col)
 
@@ -128,6 +128,10 @@ def expt2plots(expt_info,expt_dh,_cfg={}):
                 repn="%s %s" % (test,rep[0])
     #             print repn
                 nd_fh=rep[1]
+                if not exists(nd_fh):    
+                    if nd_fh.count('/')<2:
+                        nd_fh='%s/%s' % (expt_dh,nd_fh)
+                        print nd_fh
                 if exists(nd_fh):
                     out_fh="%s/%s" % (expt_dh,repn.replace(" ","_"))
     #                 print out_fh

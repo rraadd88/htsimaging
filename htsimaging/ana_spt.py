@@ -6,7 +6,7 @@
 import sys
 import logging
 import pandas as pd
-from os.path import exists
+from os.path import exists, basename, dirname, abspath
 import numpy as np
 import trackpy as tp
 from glob import glob
@@ -16,14 +16,18 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(
 from htsimaging.lib.spt import expt2plots,expt_dh2expt_info,flt_traj
 
 def main(expt_dh):
-    expt_dh=expt_dh+"/"
+    # expt_dh=expt_dh
+    if not exists(expt_dh):    
+        if expt_dh.count('/')<2:
+            expt_dh='%s/../test_dataset/%s' % (dirname(abspath(__file__)),expt_dh) 
+            print expt_dh     
     if exists(expt_dh):    
         # print expt_dh
         _cfg_fh='%s/_cfg.csv' % expt_dh
         if exists(_cfg_fh):
             _cfg=pd.read_csv(_cfg_fh).set_index('var')
             _cfg=_cfg['val'].to_dict()
-            print _cfg #debug
+            # print _cfg #debug
         else:
             _cfg={}
 

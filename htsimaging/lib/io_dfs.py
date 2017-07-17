@@ -24,8 +24,8 @@ def set_index(data,col_index):
         return data
     elif data.index.name==col_index:
         return data
-    else:
-        logging.error('here')
+    # else:
+    #     logging.error('here')
         # print data.head() 
 
 # dfs
