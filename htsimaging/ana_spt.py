@@ -19,12 +19,19 @@ def main(expt_dh):
     expt_dh=expt_dh+"/"
     if exists(expt_dh):    
         # print expt_dh
-        expt2plots(expt_dh2expt_info(expt_dh),expt_dh)
+        _cfg_fh='%s/_cfg.csv' % expt_dh
+        if exists(_cfg_fh):
+            _cfg=pd.read_csv(_cfg_fh).set_index('var')
+            _cfg=_cfg['val'].to_dict()
+            print _cfg #debug
+        else:
+            _cfg={}
 
+        expt2plots(expt_dh2expt_info(expt_dh),expt_dh,_cfg=_cfg)
         imsd_fhs=glob('%s/*.imsd' % expt_dh)
         for imsd_fh in imsd_fhs:  
             imsd=pd.read_csv(imsd_fh).set_index('lagt')
-            imsd_flt,params_flt=flt_traj(imsd,flt_amplitude=True,out_fh=imsd_fh)
+            imsd_flt,params_flt=flt_traj(imsd,flt_amplitude=True,out_fh=imsd_fh,**_cfg)
         from htsimaging.lib.fit_kin import plot_kin_all        
         plot_kin_all(expt_dh,imsd_fhs)
     else:

@@ -59,7 +59,8 @@ def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
 
 def nd2msd(nd_fh,
            diameter=11,
-           search_range=11):
+           search_range=11,
+           mpp=0.0645,fps=0.2, max_lagtime=100):
     if nd_fh.endswith('nd2'):
         frames=pims.ND2_Reader(nd_fh)
     elif nd_fh.endswith('mp4'):
@@ -83,8 +84,8 @@ def nd2msd(nd_fh,
     # #debug
     # t_cor.to_csv('test_t_cor.csv')
     
-    imsd=tp.imsd(t_cor,mpp=0.0645,fps=0.2, max_lagtime=100, statistic='msd')
-    emsd=tp.emsd(t_cor,mpp=0.0645,fps=0.2, max_lagtime=100)
+    imsd=tp.imsd(t_cor,mpp=mpp,fps=fps, max_lagtime=int(max_lagtime), statistic='msd')
+    emsd=tp.emsd(t_cor,mpp=mpp,fps=fps, max_lagtime=int(max_lagtime))
     return imsd,emsd
 
 def expt_dh2expt_info(expt_dh):
@@ -115,7 +116,7 @@ def expt_dh2expt_info(expt_dh):
     del expt_info2["index"]
     return expt_info2
 
-def expt2plots(expt_info,expt_dh,):
+def expt2plots(expt_info,expt_dh,_cfg={}):
     if not exists(expt_dh):
         makedirs(expt_dh)
     expt_data=pd.DataFrame()
@@ -132,10 +133,10 @@ def expt2plots(expt_info,expt_dh,):
     #                 print out_fh
                     plot_fh=out_fh+".imsd.pdf"
                     if not exists(plot_fh):
-                        try:
-                            imsd,emsd=nd2msd(nd_fh)
-                        except:
-                            continue
+                        # try:
+                        imsd,emsd=nd2msd(nd_fh,**_cfg)
+                        # except:
+                        #     continue
                         emsd=pd.DataFrame(emsd)
                         print repn
                         emsd.columns=[repn]
@@ -154,7 +155,7 @@ def expt2plots(expt_info,expt_dh,):
                 if len(test_data)==0:
                     test_data=emsd
                 else:
-        #                 test_data[repn]=emsd[repn]
+#                 test_data[repn]=emsd[repn]
                     test_data=pd.concat([test_data,emsd[repn]],axis=1)
             test_data=set_index(test_data,col_index='lagt')
             test_data.to_csv(expt_dh+test+".emsd")
@@ -208,8 +209,15 @@ def get_params(imsd,fit_type='power',out_fh=None):
             parameters.to_csv(out_fh)
         return parameters
 
-def flt_traj(imsd,l=60,flt_amplitude=True,mn_traj=3,
-            out_fh=None):
+def flt_traj(imsd,flt_amplitude=True,mn_traj=3,
+            out_fh=None,
+            mpp=0.0645,
+            fps=0.2,
+            max_lagtime=100):
+    
+    l=fps*max_lagtime
+    print l #debug
+    l=int(l)
     # for l in range(10,110,10):
     if not out_fh is None:
         params_fh='%s.params' % out_fh
