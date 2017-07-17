@@ -13,6 +13,7 @@ import pandas as pd
 # import numpy as np
 from htsimaging.lib.io_nums import is_numeric
 from htsimaging.lib.io_strs import get_logger
+from os.path import exists,dirname,basename
 logging=get_logger()
 
 def set_index(data,col_index):

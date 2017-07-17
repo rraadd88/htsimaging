@@ -57,16 +57,32 @@ def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
         ax.figure.savefig(plot_fh,format='pdf');plt.clf();plt.close()
     return ax 
 
-def nd2msd(nd_fh):
-    frames=pims.ND2_Reader(nd_fh)
-    if len(np.shape(frames))==4:
-        frames = average_z(frames)
-    f_batch = tp.batch(frames,diameter=11,threshold=np.percentile(frames,75))
+def nd2msd(nd_fh,
+           diameter=11,
+           search_range=11):
+    if nd_fh.endswith('nd2'):
+        frames=pims.ND2_Reader(nd_fh)
+    elif nd_fh.endswith('mp4'):
+        frames=pims.Video(nd_fh)
+        from pimsviewer.utils import wrap_frames_sequence
+        frames=wrap_frames_sequence(frames)
+    if nd_fh.endswith('nd2'):
+        if len(np.shape(frames))==4:
+            frames = average_z(frames)
+    else:
+        frames.default_coords['c'] = 1
+        frames.bundle_axes='yx'
+        frames.iter_axes = 't'
+    f_batch = tp.batch(frames,diameter=diameter,threshold=np.percentile(frames,75))
 
-    t = tp.link_df(f_batch, search_range=11, memory=3)
+    t = tp.link_df(f_batch, search_range=search_range, memory=3)
     t_flt = tp.filter_stubs(t, 3*int(len(frames)/4))
     d = tp.compute_drift(t_flt)
     t_cor = tp.subtract_drift(t_flt, d)
+
+    #debug
+    t_cor.to_csv('test_t_cor.csv')
+    
     imsd=tp.imsd(t_cor,mpp=0.0645,fps=0.2, max_lagtime=100, statistic='msd')
     emsd=tp.emsd(t_cor,mpp=0.0645,fps=0.2, max_lagtime=100)
     return imsd,emsd
