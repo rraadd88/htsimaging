@@ -38,14 +38,17 @@ setup(
 name='htsimaging',
 author='Rohan Dandage',
 author_email='rraadd_8@hotmail.com,rohan@igib.in',
-version='1',
+version='0.0.3',
 url='https://github.com/rraadd88/..',
 download_url='https://github.com/rraadd88/htsimaging/..',
-description='..',
-long_description='https://github.com/rraadd88/../README.md',
+description='For analysis of microscopy images',
+long_description='https://github.com/rraadd88/htsimaging/README.md',
 license='General Public License v. 3',
 install_requires=required,
 platforms='Tested on Linux (Ubuntu 12.04)',
-keywords=['1','1','1'],
+keywords=['microscopy','imaging','trackpy'],
 packages=find_packages(),
 )
+
+# for pypi
+# pandoc -o README.rst README.md
