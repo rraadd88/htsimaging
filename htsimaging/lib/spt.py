@@ -80,8 +80,8 @@ def nd2msd(nd_fh,
     d = tp.compute_drift(t_flt)
     t_cor = tp.subtract_drift(t_flt, d)
 
-    #debug
-    t_cor.to_csv('test_t_cor.csv')
+    # #debug
+    # t_cor.to_csv('test_t_cor.csv')
     
     imsd=tp.imsd(t_cor,mpp=0.0645,fps=0.2, max_lagtime=100, statistic='msd')
     emsd=tp.emsd(t_cor,mpp=0.0645,fps=0.2, max_lagtime=100)
@@ -221,6 +221,8 @@ def flt_traj(imsd,l=60,flt_amplitude=True,mn_traj=3,
                             ,:].index.tolist()
     parameters=parameters.loc[traj_flt1,:]
 #     print parameters.head()
+    #debug
+    imsd.loc[:,traj_flt1].head(l).to_csv('imsd_traj_flt1.csv')    
     if flt_amplitude:
         for i in np.arange(0,1.1,0.1)[::-1]:
             traj_flt=parameters.loc[(parameters.loc[:,'amplitude']<(parameters.loc[:,'amplitude'].mean()+i*parameters.loc[:,'amplitude'].std())) & \
