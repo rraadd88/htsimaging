@@ -1,9 +1,7 @@
-htsimaging
-==========
+``htsimaging``
+==============
 
-|build status|
-
-|PyPI version|
+|build status| |PyPI version|
 
 Python package for analysis of big bunch of images obtained from high
 throughput imaging.
