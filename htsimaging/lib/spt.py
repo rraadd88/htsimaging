@@ -161,6 +161,8 @@ def expt2plots(expt_info,expt_dh,_cfg={}):
                 else:
 #                 test_data[repn]=emsd[repn]
                     test_data=pd.concat([test_data,emsd[repn]],axis=1)
+            else:
+                logging.error('null in info')
             test_data=set_index(test_data,col_index='lagt')
             test_data.to_csv(expt_dh+test+".emsd")
         if len(expt_data)==0:

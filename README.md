@@ -4,6 +4,8 @@
   http://img.shields.io/travis/rraadd88/htsimaging/master.svg?style=flat)](
  https://travis-ci.org/rraadd88/htsimaging)
 
+[![PyPI version](https://badge.fury.io/py/htsimaging.svg)](https://pypi.python.org/pypi/htsimaging)
+
 Python package for analysis of big bunch of images obtained from high throughput imaging.
 
 ## Installation

@@ -51,6 +51,7 @@ packages=find_packages(),
 )
 
 #for git 
+# setup version change -> commit
 # git tag -a v$(python setup.py --ve
 # rsion) -m 'still beta'
 # for pypi
