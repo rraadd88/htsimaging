@@ -166,7 +166,7 @@ def plot_kin_all(expt_dh,imsd_fhs):
     ylimmx=[]
     for i,imsd_fh in enumerate(imsd_fhs):
         imsd_flt_fh='%s.imsd_flt' % imsd_fh
-        imsd_flt=pd.read_csv(imsd_flt_fh).set_index('lagt')
+        imsd_flt=pd.read_csv(imsd_flt_fh).set_index('lag time [s]')
         params_flt_fh='%s.params_flt' % imsd_fh
         params_flt=pd.read_csv(params_flt_fh)
         ax1=plt.subplot(131)

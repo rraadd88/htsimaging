@@ -57,10 +57,12 @@ def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
         ax.figure.savefig(plot_fh,format='pdf');plt.clf();plt.close()
     return ax 
 
+from htsimaging.lib.io_data_files import read_pkl
 def nd2msd(nd_fh,
            diameter=11,
            search_range=11,
-           mpp=0.0645,fps=0.2, max_lagtime=100):
+           mpp=0.0645,fps=0.2, max_lagtime=100,
+          get_coords=True,out_fh=None):
     if nd_fh.endswith('nd2'):
         frames=pims.ND2_Reader(nd_fh)
     elif nd_fh.endswith('mp4'):
@@ -74,18 +76,23 @@ def nd2msd(nd_fh,
         frames.default_coords['c'] = 1
         frames.bundle_axes='yx'
         frames.iter_axes = 't'
+
     f_batch = tp.batch(frames,diameter=diameter,threshold=np.percentile(frames,75))
 
     t = tp.link_df(f_batch, search_range=search_range, memory=3)
     t_flt = tp.filter_stubs(t, 3*int(len(frames)/4))
     d = tp.compute_drift(t_flt)
     t_cor = tp.subtract_drift(t_flt, d)
-
-    # #debug
+    # debug
     # t_cor.to_csv('test_t_cor.csv')
-    
     imsd=tp.imsd(t_cor,mpp=mpp,fps=fps, max_lagtime=int(max_lagtime), statistic='msd')
     emsd=tp.emsd(t_cor,mpp=mpp,fps=fps, max_lagtime=int(max_lagtime))
+    if not out_fh is None:
+        imsd.to_csv(out_fh+".imsd")
+        emsd.to_csv(out_fh+".emsd")
+        frames
+        if get_coords:
+            t_cor.to_csv(out_fh+".coords")
     return imsd,emsd
 
 def expt_dh2expt_info(expt_dh):
@@ -138,17 +145,13 @@ def expt2plots(expt_info,expt_dh,_cfg={}):
                     plot_fh=out_fh+".imsd.pdf"
                     if not exists(plot_fh):
                         # try:
-                        imsd,emsd=nd2msd(nd_fh,**_cfg)
+                        imsd,emsd=nd2msd(nd_fh,out_fh=out_fh,**_cfg)
                         # except:
                         #     continue
                         emsd=pd.DataFrame(emsd)
                         print repn
                         emsd.columns=[repn]
                         imsd.index=emsd.index
-                        # print imsd.head()
-                        # print out_fh+".imsd"
-                        imsd.to_csv(out_fh+".imsd")
-                        emsd.to_csv(out_fh+".emsd")
                         plot_msd(imsd,emsd,scale='linear',plot_fh=plot_fh)
                     else:
                         emsd=pd.read_csv(out_fh+".emsd")
