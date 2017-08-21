@@ -16,14 +16,28 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(
 from htsimaging.lib.spt import expt2plots,expt_dh2expt_info,flt_traj
 from htsimaging.lib.io_dfs import set_index
 
-def main(expt_dh):
-    # expt_dh=expt_dh
+import argparse
+def main():
+    logging.info("start")
+    parser = argparse.ArgumentParser(description='data2ml')
+    parser.add_argument("prj_dh", help="path to project directory", 
+                        action="store", default=False)    
+    parser.add_argument("--test", help="Debug mode on", dest="test", 
+                        action='store_true', default=False)    
+    parser.add_argument("--force", help="Debug mode on", dest="force", 
+                        action='store_true', default=False)    
+    args = parser.parse_args()
+    pipeline(args.prj_dh,
+             test=args.test,
+             force=args.force)
+    logging.shutdown()
+
+def pipeline(expt_dh,test=False,force=False):
     if not exists(expt_dh):    
         if expt_dh.count('/')<2:
             expt_dh='%s/../test_dataset/%s' % (dirname(abspath(__file__)),expt_dh) 
-            print expt_dh     
+            print expt_dh
     if exists(expt_dh):    
-        # print expt_dh
         _cfg_fh='%s/_cfg.json' % expt_dh
         if exists(_cfg_fh):
             if _cfg_fh.endswith('json'):
@@ -40,8 +54,8 @@ def main(expt_dh):
             _cfg={}
             
         print _cfg
-        # print _cfg['get_coords']
-        expt2plots(expt_dh2expt_info(expt_dh),expt_dh,_cfg=_cfg)
+        expt2plots(expt_dh2expt_info(expt_dh),expt_dh,_cfg=_cfg,
+                  test=test,force=force)
         imsd_fhs=glob('%s/*.imsd' % expt_dh)
         for imsd_fh in imsd_fhs:  
             imsd=pd.read_csv(imsd_fh)
@@ -54,4 +68,4 @@ def main(expt_dh):
 
     
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main()

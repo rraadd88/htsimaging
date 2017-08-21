@@ -57,18 +57,14 @@ def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
         ax.figure.savefig(plot_fh,format='pdf');plt.clf();plt.close()
     return ax 
 
-from htsimaging.lib.io_data_files import read_pkl
-def nd2msd(nd_fh,
-           diameter=11,
-           search_range=11,
-           mpp=0.0645,fps=0.2, max_lagtime=100,
-          get_coords=True,out_fh=None):
+def nd2frames(nd_fh):
     if nd_fh.endswith('nd2'):
         frames=pims.ND2_Reader(nd_fh)
     elif nd_fh.endswith('mp4'):
         frames=pims.Video(nd_fh)
         from pimsviewer.utils import wrap_frames_sequence
         frames=wrap_frames_sequence(frames)
+
     if nd_fh.endswith('nd2'):
         if len(np.shape(frames))==4:
             frames = average_z(frames)
@@ -76,21 +72,113 @@ def nd2msd(nd_fh,
         frames.default_coords['c'] = 1
         frames.bundle_axes='yx'
         frames.iter_axes = 't'
+    return frames
 
-    f_batch = tp.batch(frames,diameter=diameter,threshold=np.percentile(frames,75))
+def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None):
+    f = tp.locate(frames[0], diameter, invert=False)
+    minmass=np.percentile(f['mass'],minmass_percentile)
+    logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,minmass))
+                 
+    f = tp.locate(frames[0], diameter, invert=False, minmass=np.percentile(f['mass'],minmass_percentile))
+    logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,
+                                                           np.percentile(f['mass'],minmass_percentile)))
+    
+    if not out_fh is None:
+        logging.info('getting plots annotate')
+        plt.clf()
+        fig=plt.figure()
+        ax=plt.subplot(111)
+        ax=tp.annotate(f, frames[0],ax=ax)
+        plt.savefig('%s.annotate.pdf' % out_fh,format='pdf')
+        plt.clf()
 
-    t = tp.link_df(f_batch, search_range=search_range, memory=3)
-    t_flt = tp.filter_stubs(t, 3*int(len(frames)/4))
+        logging.info('getting plots hist')
+        cols=['mass','size','ecc','signal','raw_mass','ep']
+        fig=plt.figure()
+        ax=plt.subplot(111)
+        _=f.loc[:,cols].hist(ax=ax)
+        plt.savefig('%s.feature_props.pdf' % out_fh,format='pdf')
+        plt.clf()
+
+        logging.info('getting plots bias')
+        fig=plt.figure()
+        tp.subpx_bias(f);
+        plt.savefig('%s.subpx_bias.pdf' % out_fh,format='pdf')
+        plt.clf()
+
+    params_locate={'diameter':diameter,
+                  'minmass':minmass}
+    return params_locate
+
+def frames2coords(frames,params_locate,out_fh=None,flt_mass_size=True):
+    f_batch=tp.batch(frames,engine='numba',**params_locate)
+    # t = tp.link_df(f_batch, search_range=search_range, memory=3)
+    t=tp.link_df(f_batch, search_range=20)
+    t1 = tp.filter_stubs(t, len(frames))
+
+    logging.info('filter_stubs: particle counts: %s to %s' % (t['particle'].nunique(),t1['particle'].nunique()))
+
+    if not out_fh is None:
+        plt.figure()
+        ax=plt.subplot(111)
+        tp.mass_size(t1.groupby('particle').mean(),ax=ax);
+        plt.savefig('%s.mass_size.pdf' % out_fh,format='pdf')        
+        plt.clf()
+    if flt_mass_size:
+        t2 = t1[((t1['mass'] > t1['mass'].median()) & (t1['size'] < t1['size'].median()) &
+                 (t1['ecc'] < 0.1))]
+        logging.info('filter_mass_size: particle counts: %s to %s' % (t1['particle'].nunique(),t2['particle'].nunique()))
+    else:
+        t2 = t1.copy()
+
+    return t2
+
+def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percentile':92},
+                     out_fh=None):
+    params_locate=get_params_locate(frames,out_fh=out_fh,**params_locate_start)
+    logging.info('getting coords')
+    t_flt=frames2coords(frames,params_locate,out_fh=out_fh)    
     d = tp.compute_drift(t_flt)
     t_cor = tp.subtract_drift(t_flt, d)
+    return t_cor
+
+from htsimaging.lib.io_data_files import read_pkl,to_pkl
+def nd2msd(nd_fh,
+           params_locate_start={'diameter':11,'minmass_percentile':92},
+           params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
+          get_coords=True,out_fh=None):
+    frames=nd2frames(nd_fh)
+    t_cor=frames2coords_cor(frames,params_locate_start=params_locate_start,out_fh=out_fh)
     # debug
-    # t_cor.to_csv('test_t_cor.csv')
-    imsd=tp.imsd(t_cor,mpp=mpp,fps=fps, max_lagtime=int(max_lagtime), statistic='msd')
-    emsd=tp.emsd(t_cor,mpp=mpp,fps=fps, max_lagtime=int(max_lagtime))
+    imsd=tp.imsd(t_cor,statistic='msd',**params_msd)
+    emsd=tp.emsd(t_cor,**params_msd)
+    
+    import statsmodels.tsa.stattools as st
+    acf=pd.DataFrame(columns=imsd.columns)
+    for c in imsd:
+        acf[c]=st.acf(imsd.loc[:,c],nlags=len(imsd))
+    acf.index=imsd.index
+    
+    if not out_fh is None:
+        figure=plt.figure()
+        ax=plt.subplot(111)
+        acf.plot(ax=ax)
+        plt.savefig('%s.acf.pdf' % out_fh,format='pdf')
+        plt.clf()
+    
     if not out_fh is None:
         imsd.to_csv(out_fh+".imsd")
         emsd.to_csv(out_fh+".emsd")
-        frames
+        acf.to_csv(out_fh+".acf")
+        dpkl={}
+        dpkl['imsd']=imsd
+        dpkl['emsd']=emsd
+        dpkl['acf']=acf
+#         dpkl['t']=t
+#         dpkl['t_flt']=t_flt
+#         dpkl['f_batch']=f_batch
+        dpkl['t_cor']=t_cor
+        to_pkl(dpkl,out_fh+".pkl")
         if get_coords:
             t_cor.to_csv(out_fh+".coords")
     return imsd,emsd
@@ -123,16 +211,17 @@ def expt_dh2expt_info(expt_dh):
     del expt_info2["index"]
     return expt_info2
 
-def expt2plots(expt_info,expt_dh,_cfg={}):
+def expt2plots(expt_info,expt_dh,_cfg={},
+               test=False,force=False):
     if not exists(expt_dh):
         makedirs(expt_dh)
     expt_data=pd.DataFrame()
-    for test in expt_info:
-        test_info=expt_info.loc[:,test]
-        test_data=pd.DataFrame()    
-        for rep in test_info:
+    for smpl in expt_info:
+        smpl_info=expt_info.loc[:,smpl]
+        smpl_data=pd.DataFrame()    
+        for rep in smpl_info:
             if not pd.isnull(rep[0]):
-                repn="%s %s" % (test,rep[0])
+                repn="%s %s" % (smpl,rep[0])
     #             print repn
                 nd_fh=rep[1]
                 if not exists(nd_fh):    
@@ -143,9 +232,9 @@ def expt2plots(expt_info,expt_dh,_cfg={}):
                     out_fh="%s/%s" % (expt_dh,repn.replace(" ","_"))
     #                 print out_fh
                     plot_fh=out_fh+".imsd.pdf"
-                    if not exists(plot_fh):
+                    if not exists(plot_fh) or force:
                         # try:
-                        imsd,emsd=nd2msd(nd_fh,out_fh=out_fh,**_cfg)
+                        imsd,emsd=nd2msd(nd_fh,out_fh=out_fh,params_msd=_cfg)
                         # except:
                         #     continue
                         emsd=pd.DataFrame(emsd)
@@ -157,22 +246,25 @@ def expt2plots(expt_info,expt_dh,_cfg={}):
                         emsd=pd.read_csv(out_fh+".emsd")
                         if "Unnamed: 0" in emsd.columns.tolist(): 
                             del emsd["Unnamed: 0"]
+                    if test:
+                        break
                 else:
                     print "can not find"
-                if len(test_data)==0:
-                    test_data=emsd
+                if len(smpl_data)==0:
+                    smpl_data=emsd
                 else:
-#                 test_data[repn]=emsd[repn]
-                    test_data=pd.concat([test_data,emsd[repn]],axis=1)
+#                 smpl_data[repn]=emsd[repn]
+                    smpl_data=pd.concat([smpl_data,emsd[repn]],axis=1)
             else:
                 logging.error('null in info')
-            test_data=set_index(test_data,col_index='lagt')
-            test_data.to_csv(expt_dh+test+".emsd")
+            smpl_data=set_index(smpl_data,col_index='lagt')
+            smpl_data.to_csv(expt_dh+smpl+".emsd")
         if len(expt_data)==0:
-            expt_data=test_data
+            expt_data=smpl_data
         else:
-    #             expt_data.loc[:,test_data.columns.tolist()]=test_data.loc[:,test_data.columns.tolist()]
-            expt_data=pd.concat([expt_data,test_data.loc[:,[col for col in test_data.columns.tolist() if col != "lagt"]]],axis=1)
+    #             expt_data.loc[:,smpl_data.columns.tolist()]=smpl_data.loc[:,smpl_data.columns.tolist()]
+            expt_data=pd.concat([expt_data,
+                                 smpl_data.loc[:,[col for col in smpl_data.columns.tolist() if col != "lagt"]]],axis=1)
     #     expt_data=expt_data.drop_duplicates("lagt",keep='first')
     expt_data=set_index(expt_data,col_index='lagt')
     expt_data.to_csv(expt_dh+"expt.emsd")

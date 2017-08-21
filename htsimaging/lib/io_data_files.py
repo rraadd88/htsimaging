@@ -10,6 +10,19 @@ import numpy as np
 import pandas as pd
 from glob import glob
 
+import logging
+
+import pickle
+def to_pkl(data,fh):
+    if not fh is None:
+        with open(fh, 'wb') as f:
+            try:
+                pickle.dump(data, f, -1)
+            except:
+                pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)                
+def read_pkl(fh):
+    with open(fh,'rb') as f:
+        return pickle.load(f) 
 
 
 def expt_dh2expt_info(expt_dh):
