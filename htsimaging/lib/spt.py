@@ -118,14 +118,7 @@ def frames2coords(frames,params_locate,out_fh=None,flt_mass_size=True):
 
     logging.info('filter_stubs: particle counts: %s to %s' % (t['particle'].nunique(),t1['particle'].nunique()))
 
-    if not out_fh is None:
-        fig=plt.figure()        
-        ax=plt.subplot(111)
-        ax.imshow(frames[-1],cmap='binary_r',alpha=0.8)
-        ax = tp.plot_traj(t_cor,label=True,ax=ax)
-        plt.savefig('%s.traj.pdf' % out_fh,format='pdf')        
-        plt.clf()
-        
+    if not out_fh is None:        
         fig=plt.figure()
         ax=plt.subplot(111)
         tp.mass_size(t1.groupby('particle').mean(),ax=ax);
@@ -140,6 +133,14 @@ def frames2coords(frames,params_locate,out_fh=None,flt_mass_size=True):
             logging.warning('filter_mass_size produced 0 particles; using t2=t1.copy()')
     else:
         t2 = t1.copy()
+
+    if not out_fh is None:            
+        fig=plt.figure()        
+        ax=plt.subplot(111)
+        ax.imshow(frames[-1],cmap='binary_r',alpha=0.8)
+        ax = tp.plot_traj(t2,label=True,ax=ax)
+        plt.savefig('%s.traj.pdf' % out_fh,format='pdf')        
+        plt.clf()
 
     return t2
 
@@ -162,12 +163,15 @@ def nd2msd(nd_fh,
     # debug
     imsd=tp.imsd(t_cor,statistic='msd',**params_msd)
     emsd=tp.emsd(t_cor,**params_msd)
+    emsd=pd.DataFrame(emsd)
+    emsd.index.name='lag time [s]'
+    # print emsd
     
     import statsmodels.tsa.stattools as st
-    acf=pd.DataFrame(columns=imsd.columns)
-    for c in imsd:
-        acf[c]=st.acf(emsd.loc[:,c],nlags=len(imsd))
-    acf.index=imsd.index
+    acf=pd.DataFrame(columns=emsd.columns)
+    for c in emsd:
+        acf[c]=st.acf(emsd.loc[:,c],nlags=len(emsd))
+    acf.index=emsd.index
     
     if not out_fh is None:
         figure=plt.figure()
@@ -213,6 +217,7 @@ def expt_dh2expt_info(expt_dh):
         print "duplicate values in index"
     for col in expt_info2.columns.tolist():
         for i in range(len(expt_info2)):
+            # print expt_info2.loc["replicate %d" % (i+1),col]
             if not pd.isnull(expt_info2.loc["replicate %d" % (i+1),col]):
                 expt_info2.loc[("replicate %d" % (i+1)),col]=['replicate %d' % (i+1),expt_info2.loc[("replicate %d" % (i+1)),col]]
             else:
@@ -323,48 +328,57 @@ def get_params(imsd,fit_type='power',out_fh=None):
             parameters.to_csv(out_fh)
         return parameters
 
-def flt_traj(imsd,flt_amplitude=True,mn_traj=3,
+def msd2params(imsd,
+            flt_amplitude=True,mn_traj=3,
             out_fh=None,
             mpp=0.0645,
             fps=0.2,
-            max_lagtime=100):
+            max_lagtime=100,
+            flt_traj=False):
     
     l=fps*max_lagtime
-    print l #debug
+    # print l #debug
     l=int(l)
     # for l in range(10,110,10):
     if not out_fh is None:
         params_fh='%s.params' % out_fh
-        params_flt_fh='%s.params_flt' % out_fh
-        imsd_flt_fh='%s.imsd_flt' % out_fh
-    parameters=get_params(imsd.head(l),fit_type='power',out_fh=params_fh)
-    traj_flt1=parameters.loc[(parameters.loc[:,'power law exponent']<1) & \
-                            (parameters.loc[:,'rsquared of power']>0.95) \
-                            ,:].index.tolist()
-    parameters=parameters.loc[traj_flt1,:]
-#     print parameters.head()
-    #debug
-    imsd.loc[:,traj_flt1].head(l).to_csv('imsd_traj_flt1.csv')    
-    if flt_amplitude:
-        for i in np.arange(0,1.1,0.1)[::-1]:
-            traj_flt=parameters.loc[(parameters.loc[:,'amplitude']<(parameters.loc[:,'amplitude'].mean()+i*parameters.loc[:,'amplitude'].std())) & \
-                                    (parameters.loc[:,'amplitude']>(parameters.loc[:,'amplitude'].mean()-i*parameters.loc[:,'amplitude'].std())) \
-                                    ,:].index.tolist()
-            if len(traj_flt)<mn_traj:
-                if 'traj_flt_prev' in locals():
-                    traj_flt=traj_flt_prev
-                else:
-                    traj_flt=traj_flt1
-                print 'filtered: %s : %s' % (len(traj_flt1),len(traj_flt))
-                break
-            traj_flt_prev=traj_flt                
-    else:
-        traj_flt=traj_flt1
-    print 'filtered: %s : %s' % (len(traj_flt1),len(traj_flt))
-    imsd_flt=imsd.loc[:,traj_flt].head(l)
-#     emsd_flt=pd.DataFrame(imsd_flt.T.mean())
-    params_flt=parameters.loc[traj_flt,:]
-    if not out_fh is None:
-        imsd_flt.to_csv(imsd_flt_fh)
-        params_flt.to_csv(params_flt_fh)
-    return imsd_flt,params_flt
+        if flt_traj:
+            params_flt_fh='%s.params_flt' % out_fh
+            imsd_flt_fh='%s.imsd_flt' % out_fh
+    parameters=get_params(imsd.head(l),fit_type='power',out_fh=None)
+    parameters=parameters.T
+    parameters.index.name='params'
+    # print parameters
+    parameters.to_csv(params_fh)
+
+    if flt_traj:
+        traj_flt1=parameters.loc[(parameters.loc[:,'power law exponent']<1) & \
+                                (parameters.loc[:,'rsquared of power']>0.95) \
+                                ,:].index.tolist()
+        parameters=parameters.loc[traj_flt1,:]
+    #     print parameters.head()
+        #debug
+        imsd.loc[:,traj_flt1].head(l).to_csv('imsd_traj_flt1.csv')    
+        if flt_amplitude:
+            for i in np.arange(0,1.1,0.1)[::-1]:
+                traj_flt=parameters.loc[(parameters.loc[:,'amplitude']<(parameters.loc[:,'amplitude'].mean()+i*parameters.loc[:,'amplitude'].std())) & \
+                                        (parameters.loc[:,'amplitude']>(parameters.loc[:,'amplitude'].mean()-i*parameters.loc[:,'amplitude'].std())) \
+                                        ,:].index.tolist()
+                if len(traj_flt)<mn_traj:
+                    if 'traj_flt_prev' in locals():
+                        traj_flt=traj_flt_prev
+                    else:
+                        traj_flt=traj_flt1
+                    print 'filtered: %s : %s' % (len(traj_flt1),len(traj_flt))
+                    break
+                traj_flt_prev=traj_flt                
+        else:
+            traj_flt=traj_flt1
+        print 'filtered: %s : %s' % (len(traj_flt1),len(traj_flt))
+        imsd_flt=imsd.loc[:,traj_flt].head(l)
+    #     emsd_flt=pd.DataFrame(imsd_flt.T.mean())
+        params_flt=parameters.loc[traj_flt,:]
+        if not out_fh is None:
+            imsd_flt.to_csv(imsd_flt_fh)
+            params_flt.to_csv(params_flt_fh)
+        return imsd_flt,params_flt
