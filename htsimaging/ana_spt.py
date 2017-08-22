@@ -56,11 +56,11 @@ def pipeline(expt_dh,test=False,force=False):
         print _cfg
         expt2plots(expt_dh2expt_info(expt_dh),expt_dh,_cfg=_cfg,
                   test=test,force=force)
-        imsd_fhs=glob('%s/*.imsd' % expt_dh)
-        for imsd_fh in imsd_fhs:  
-            imsd=pd.read_csv(imsd_fh)
-            imsd=set_index(imsd,'lag time [s]')
-            imsd_flt,params_flt=flt_traj(imsd,flt_amplitude=True,out_fh=imsd_fh,**_cfg)
+        # imsd_fhs=glob('%s/*.imsd' % expt_dh)
+        # for imsd_fh in imsd_fhs:  
+        #     imsd=pd.read_csv(imsd_fh)
+        #     imsd=set_index(imsd,'lag time [s]')
+        #     imsd_flt,params_flt=flt_traj(imsd,flt_amplitude=True,out_fh=imsd_fh,**_cfg)
         from htsimaging.lib.fit_kin import plot_kin_all        
         plot_kin_all(expt_dh,imsd_fhs)
     else:

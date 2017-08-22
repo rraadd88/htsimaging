@@ -119,15 +119,25 @@ def frames2coords(frames,params_locate,out_fh=None,flt_mass_size=True):
     logging.info('filter_stubs: particle counts: %s to %s' % (t['particle'].nunique(),t1['particle'].nunique()))
 
     if not out_fh is None:
-        plt.figure()
+        fig=plt.figure()        
+        ax=plt.subplot(111)
+        ax.imshow(frames[-1],cmap='binary_r',alpha=0.8)
+        ax = tp.plot_traj(t_cor,label=True,ax=ax)
+        plt.savefig('%s.traj.pdf' % out_fh,format='pdf')        
+        plt.clf()
+        
+        fig=plt.figure()
         ax=plt.subplot(111)
         tp.mass_size(t1.groupby('particle').mean(),ax=ax);
         plt.savefig('%s.mass_size.pdf' % out_fh,format='pdf')        
         plt.clf()
     if flt_mass_size:
         t2 = t1[((t1['mass'] > t1['mass'].median()) & (t1['size'] < t1['size'].median()) &
-                 (t1['ecc'] < 0.1))]
+                 (t1['ecc'] < 0.5))]
         logging.info('filter_mass_size: particle counts: %s to %s' % (t1['particle'].nunique(),t2['particle'].nunique()))
+        if len(t2)==0:
+            t2 = t1.copy()
+            logging.warning('filter_mass_size produced 0 particles; using t2=t1.copy()')
     else:
         t2 = t1.copy()
 
@@ -156,7 +166,7 @@ def nd2msd(nd_fh,
     import statsmodels.tsa.stattools as st
     acf=pd.DataFrame(columns=imsd.columns)
     for c in imsd:
-        acf[c]=st.acf(imsd.loc[:,c],nlags=len(imsd))
+        acf[c]=st.acf(emsd.loc[:,c],nlags=len(imsd))
     acf.index=imsd.index
     
     if not out_fh is None:
@@ -243,35 +253,38 @@ def expt2plots(expt_info,expt_dh,_cfg={},
                         imsd.index=emsd.index
                         plot_msd(imsd,emsd,scale='linear',plot_fh=plot_fh)
                     else:
-                        emsd=pd.read_csv(out_fh+".emsd")
-                        if "Unnamed: 0" in emsd.columns.tolist(): 
-                            del emsd["Unnamed: 0"]
+                        logging.warning('not exists or already processed: %s' % basename(plot_fh))
+                        # emsd=pd.read_csv(out_fh+".emsd")
+                        # if "Unnamed: 0" in emsd.columns.tolist(): 
+                        #     del emsd["Unnamed: 0"]
                     if test:
                         break
                 else:
                     print "can not find"
-                if len(smpl_data)==0:
-                    smpl_data=emsd
-                else:
-#                 smpl_data[repn]=emsd[repn]
-                    smpl_data=pd.concat([smpl_data,emsd[repn]],axis=1)
+#                 if len(smpl_data)==0:
+#                     smpl_data=emsd
+#                 else:
+# #                 smpl_data[repn]=emsd[repn]
+#                     smpl_data=pd.concat([smpl_data,emsd[repn]],axis=1)
             else:
                 logging.error('null in info')
-            smpl_data=set_index(smpl_data,col_index='lagt')
-            smpl_data.to_csv(expt_dh+smpl+".emsd")
-        if len(expt_data)==0:
-            expt_data=smpl_data
-        else:
-    #             expt_data.loc[:,smpl_data.columns.tolist()]=smpl_data.loc[:,smpl_data.columns.tolist()]
-            expt_data=pd.concat([expt_data,
-                                 smpl_data.loc[:,[col for col in smpl_data.columns.tolist() if col != "lagt"]]],axis=1)
-    #     expt_data=expt_data.drop_duplicates("lagt",keep='first')
-    expt_data=set_index(expt_data,col_index='lagt')
-    expt_data.to_csv(expt_dh+"expt.emsd")
-    plot_fh=expt_dh+"emsd.pdf"
-    plot_emsd(expt_data,scale='linear',plot_fh=plot_fh)
-    expt_data_log10=np.log10(expt_data)
-    expt_data_log10.to_csv(expt_dh+"expt.emsdlog10")
+            # print smpl_data.columns
+            # print smpl_data.index.name
+            # smpl_data=set_index(smpl_data,col_index='lag time [s]')
+            # smpl_data.to_csv(expt_dh+smpl+".emsd")
+    #     if len(expt_data)==0:
+    #         expt_data=smpl_data
+    #     else:
+    # #             expt_data.loc[:,smpl_data.columns.tolist()]=smpl_data.loc[:,smpl_data.columns.tolist()]
+    #         expt_data=pd.concat([expt_data,
+    #                              smpl_data.loc[:,[col for col in smpl_data.columns.tolist() if col != "lagt"]]],axis=1)
+    # #     expt_data=expt_data.drop_duplicates("lagt",keep='first')
+    # expt_data=set_index(expt_data,col_index='lagt')
+    # expt_data.to_csv(expt_dh+"expt.emsd")
+    # plot_fh=expt_dh+"emsd.pdf"
+    # plot_emsd(expt_data,scale='linear',plot_fh=plot_fh)
+    # expt_data_log10=np.log10(expt_data)
+    # expt_data_log10.to_csv(expt_dh+"expt.emsdlog10")
     return expt_data
 
 
