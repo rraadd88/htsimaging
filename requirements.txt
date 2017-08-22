@@ -7,8 +7,10 @@ seaborn >= 0.6.0
 pims == 0.4
 scikit-image == 0.11.3
 nd2reader == 3.0.4
-trackpy == 0.3.3
+trackpy == 0.4
 pims_nd2 == 1.0
+statsmodels == 0.8.0
+numba == 0.34.0
 # xlrd
 # dms2dfe >= 1.0.0
 # https://github.com/rraadd88/dms2dfe/archive/v1.0.6.zip
