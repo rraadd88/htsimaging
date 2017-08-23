@@ -18,10 +18,20 @@ from htsimaging.lib.io_dfs import set_index
 def average_z(image):
     return image.mean(axis=0) 
     
-def plot_msd(imsd,emsd,ax=None,scale="log",plot_fh=None):
+def plot_msd(imsd,emsd,ax=None,scale="log",plot_fh=None,
+    params_msd={"mpp":0.0645,
+                "fps":0.2,
+                "max_lagtime":100
+                }):
     if ax is None:
         plt.figure(figsize=(3, 3))
         ax=plt.subplot(111)
+
+    head=params_msd["fps"]*params_msd["max_lagtime"]
+    head=int(head)
+
+    imsd=imsd.head(head)
+    emsd=emsd.head(head)
 
     imsd.plot(x=imsd.index,legend=None,alpha=0.75,ax=ax)
     ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]',
@@ -110,14 +120,18 @@ def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None):
                   'minmass':minmass}
     return params_locate
 
-def frames2coords(frames,params_locate,out_fh=None,flt_mass_size=True):
+def frames2coords(frames,params_locate,params_msd,out_fh=None,flt_mass_size=True):
     f_batch=tp.batch(frames,engine='numba',**params_locate)
     # t = tp.link_df(f_batch, search_range=search_range, memory=3)
     t=tp.link_df(f_batch, search_range=20)
-    t1 = tp.filter_stubs(t, len(frames))
+    max_lagtime_stubs=params_msd["max_lagtime"]*params_msd["fps"]
 
+    t1 = tp.filter_stubs(t, max_lagtime_stubs*1.25)
     logging.info('filter_stubs: particle counts: %s to %s' % (t['particle'].nunique(),t1['particle'].nunique()))
-
+    if t1['particle'].nunique()==0:
+        logging.error('filter_stubs: particle counts =0; using less stringent conditions')
+        t1 = tp.filter_stubs(t, max_lagtime_stubs*1)
+        
     if not out_fh is None:        
         fig=plt.figure()
         ax=plt.subplot(111)
@@ -145,10 +159,11 @@ def frames2coords(frames,params_locate,out_fh=None,flt_mass_size=True):
     return t2
 
 def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percentile':92},
-                     out_fh=None):
+                     out_fh=None,
+                     params_msd={}):
     params_locate=get_params_locate(frames,out_fh=out_fh,**params_locate_start)
     logging.info('getting coords')
-    t_flt=frames2coords(frames,params_locate,out_fh=out_fh)    
+    t_flt=frames2coords(frames,params_locate,params_msd,out_fh=out_fh)    
     d = tp.compute_drift(t_flt)
     t_cor = tp.subtract_drift(t_flt, d)
     return t_cor
@@ -159,7 +174,7 @@ def nd2msd(nd_fh,
            params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
           get_coords=True,out_fh=None):
     frames=nd2frames(nd_fh)
-    t_cor=frames2coords_cor(frames,params_locate_start=params_locate_start,out_fh=out_fh)
+    t_cor=frames2coords_cor(frames,params_locate_start=params_locate_start,params_msd=params_msd,out_fh=out_fh)
     # debug
     imsd=tp.imsd(t_cor,statistic='msd',**params_msd)
     emsd=tp.emsd(t_cor,**params_msd)
@@ -256,7 +271,7 @@ def expt2plots(expt_info,expt_dh,_cfg={},
                         print repn
                         emsd.columns=[repn]
                         imsd.index=emsd.index
-                        plot_msd(imsd,emsd,scale='linear',plot_fh=plot_fh)
+                        plot_msd(imsd,emsd,scale='linear',plot_fh=plot_fh,params_msd=_cfg)
                     else:
                         logging.warning('not exists or already processed: %s' % basename(plot_fh))
                         # emsd=pd.read_csv(out_fh+".emsd")
