@@ -120,10 +120,25 @@ def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None):
                   'minmass':minmass}
     return params_locate
 
-def frames2coords(frames,params_locate,params_msd,out_fh=None,flt_mass_size=True):
-    f_batch=tp.batch(frames,engine='numba',**params_locate)
-    # t = tp.link_df(f_batch, search_range=search_range, memory=3)
-    t=tp.link_df(f_batch, search_range=20)
+def frames2coords(frames,params_locate,params_msd,
+    out_fh=None,flt_mass_size=True,flt_incomplete_trjs=True,
+    force=False):
+    
+    if (not out_fh is None):
+        f_batch_fh='%s.f_batch' % out_fh
+        t_fh='%s.t' % out_fh
+        if not exists(t_fh) or force:
+            f_batch=tp.batch(frames,engine='numba',**params_locate)
+            # t = tp.link_df(f_batch, search_range=search_range, memory=3)
+            t=tp.link_df(f_batch, search_range=20)
+            # print f_batch.index.name
+            # print t.index.name
+
+            f_batch.to_csv(f_batch_fh)
+            t.to_csv(t_fh)
+        else:
+            t=pd.read_csv(t_fh)
+
     max_lagtime_stubs=params_msd["max_lagtime"]*params_msd["fps"]
 
     t1 = tp.filter_stubs(t, max_lagtime_stubs*1.25)
@@ -148,6 +163,21 @@ def frames2coords(frames,params_locate,params_msd,out_fh=None,flt_mass_size=True
     else:
         t2 = t1.copy()
 
+    if not out_fh is None:            
+        t2_fh='%s.t2' % out_fh
+        t2.to_csv(t2_fh)
+
+    if flt_incomplete_trjs:
+        if 'frame' in t2:
+            del t2['frame']
+        t2=t2.reset_index()
+        # print t2.index.name
+        # print t2.head()
+
+        vals=pd.DataFrame(t2['particle'].value_counts())
+        partis=[i for i in vals.index if vals.loc[i,'particle']>=int(vals.max())*0.95 ]
+        t2=t2.loc[[i for i in t2.index if (t2.loc[i,'particle'] in partis)],:]
+        # t2=t2.set_index(t2,'frame')
     if not out_fh is None:            
         fig=plt.figure()        
         ax=plt.subplot(111)
