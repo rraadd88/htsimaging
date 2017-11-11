@@ -84,7 +84,7 @@ def fit_line(x,y,p0=[0, 1],plot=False):
 from htsimaging.lib.io_dfs import set_index
 from os.path import basename
 import matplotlib.cm as cm
-def plot_kin(traj,params,ctime='time (s)',
+def plot_kin(traj,dparams=None,ctime='time (s)',
              fit_eqn=None,
              smp_ctrl=None,
              plot_parami=1,
@@ -97,8 +97,6 @@ def plot_kin(traj,params,ctime='time (s)',
     traj_mean=set_index(traj,col_index=ctime)
     traj_mean=traj.T.mean()
     traj_std=traj.T.std()
-    params_mean=params.mean()
-    params_std=params.std()
     if fit_eqn=="logistic4":
         params=["Minimum asymptote","Hill's slope","Inflection point","Maximum asymptote"]
     elif fit_eqn=="logistic5":
@@ -121,8 +119,13 @@ def plot_kin(traj,params,ctime='time (s)',
                      traj_mean-traj_std, \
                      traj_mean+traj_std, \
                      color=color, alpha=0.2,zorder=0)
-
-    p0=params_mean
+    
+    if not dparams is None:
+        params_mean=dparams.mean()
+        params_std=dparams.std()
+        p0=params_mean
+    else:
+        p0=np.zeros(len(params))
     if fit_eqn=="logistic4":
         plsq = leastsq(logistic4_residuals, p0, args=(traj_mean, traj_mean.index))
         ax1.plot(traj_mean.index.tolist(),logistic4_peval(traj_mean.index,plsq[0]),label=label,color=color,zorder=2)        

@@ -34,6 +34,7 @@ deploy:
   provider: pypi
   user: rraadd88
   distributions: sdist bdist_wheel
+  server: https://upload.pypi.org/legacy/
   password:
     secure: jv6ZE7KYoAJN+pjwFoDXwI/emTeo/Ysue+UHwt83Qjd3C5DREBWbHrvZtll55xCG98f3fkEkUxH0vju+QY26Eo++qFMoozbeGqtrRUhV+ithTXMVjEXcQxPOzN/cfqay6gqr89i7rjdQVzEj76rX5akixoSTJTrEwXKy0swBCwIDZW3zZ+uDMnElagVLCrCtG0HASpXfmxuTyM9XczolKIqQOG/9MNtQv96DE032K/1lY6XJ+uGCeIdQ/HutgGxAhHp9CUAZztPk9CmNRGoUGcFocyQiaCJckWifd9HgRz65vN+P602GRUBEY0xm8hJpm6vrKfKUL1bEvYkEHqzbDJesJCPcUwUODzDP046Ozkv5iYqBGmJI269f7yYVyVrbG8eRoVF7DHEznWeQL9njMdR4DzY9M4M+lPCJ2AqgAqQyml/V5Ntq30RRU8Lor749slAPDzMfmYjiHPO+AVrfIL2YugNLVMmUWVWWnJjT3W9EhXmlxPyheQiksyBP8eqZLrpAxzoWTVVCfacilNRd85NEtV02YOiEQkOmx1fixF8LWLuTU0chByfOvNTLRbiF+n0vKz+9NRjwJbYLE9e+0MvFPU9f3dZ9bLvQEHBCPAPXoTPHF1aSl14CQFdRk6u9qFXDzf/HSBWCB9DC2Ru8p+IliGWx5DJy602Bqm14VP8=
   on:
