@@ -1,0 +1,17 @@
+name: dms2dfe
+channels:
+- conda-forge
+- biocore
+- bioconda
+dependencies:
+- python=2.7
+- flake8
+- pytest
+- numpy==1.13.1
+- scipy
+- matplotlib
+- pandas
+- biopython==1.70
+- bioconductor-deseq2=1.14.1=r3.3.2_0
+- pip:
+  - scikit-bio==0.4.1

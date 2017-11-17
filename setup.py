@@ -45,7 +45,7 @@ description='For analysis of microscopy images',
 long_description='https://github.com/rraadd88/htsimaging/README.md',
 license='General Public License v. 3',
 install_requires=required,
-platforms='Tested on Linux (Ubuntu 12.04)',
+platforms='Tested on Ubuntu 12.04',
 keywords=['microscopy','imaging','trackpy'],
 packages=find_packages(),
 )
