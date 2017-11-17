@@ -38,7 +38,7 @@ setup(
 name='htsimaging',
 author='Rohan Dandage',
 author_email='rraadd_8@hotmail.com,rohan@igib.in',
-version='0.0.5',
+version='0.0.6',
 url='https://github.com/rraadd88/..',
 download_url='https://github.com/rraadd88/htsimaging/..',
 description='For analysis of microscopy images',
