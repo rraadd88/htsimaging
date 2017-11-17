@@ -22,7 +22,7 @@ before_install:
 - conda config --add channels conda-forge
 - conda install python=$TRAVIS_PYTHON_VERSION $CONDA_DEPS
 - travis_retry pip install $PIP_DEPS
-- conda env create -f https://raw.githubusercontent.com/rraadd88/dms2dfe/master/environment.yml
+- conda env create -f environment.yml
 - pip install dms2dfe
 - pip install https://github.com/soft-matter/pims_nd2/archive/v1.0.zip
 install:
