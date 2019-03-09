@@ -27,8 +27,8 @@ except ImportError:
     from distutils.core import setup, find_packages, Extension
 
 
-if (sys.version_info[0], sys.version_info[1]) != (2, 7):
-    raise RuntimeError('Python 2.7 required ')
+if (sys.version_info[0], sys.version_info[1]) != (3, 6):
+    raise RuntimeError('Python 3.6 required ')
                
 with open('requirements.txt') as f:
     required = f.read().splitlines()
@@ -37,7 +37,7 @@ with open('requirements.txt') as f:
 setup(
 name='htsimaging',
 author='Rohan Dandage',
-author_email='rraadd_8@hotmail.com,rohan@igib.in',
+author_email='rraadd_8@hotmail.com',
 version='0.0.6.1',
 url='https://github.com/rraadd88/..',
 download_url='https://github.com/rraadd88/htsimaging/..',
