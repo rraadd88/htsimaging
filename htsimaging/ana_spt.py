@@ -14,7 +14,7 @@ from glob import glob
 logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..): %(message)s',level=logging.DEBUG) # 
 # from htsimaging.lib import spt #.expt2plots,spt.fit_power,spt.fit_line
 from htsimaging.lib.spt import expt2plots,expt_dh2expt_info,msd2params
-from htsimaging.lib.io_dfs import set_index
+from rohan.dandage.io_dfs import set_index
 
 import argparse
 def main():

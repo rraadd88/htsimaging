@@ -10,7 +10,7 @@ import pims_nd2
 from glob import glob
 import logging
 import pandas as pd
-from htsimaging.lib.io_dfs import set_index 
+from rohan.dandage.io_dfs import set_index 
 
 # %matplotlib inline
 
@@ -48,7 +48,8 @@ def plot_msd(imsd,emsd,ax=None,scale="log",plot_fh=None,
            xlabel='lag time $t$')
     plt.tight_layout()
     if not plot_fh is None: 
-        ax.figure.savefig(plot_fh,format='pdf');plt.clf();plt.close()
+        ax.figure.savefig(plot_fh,format='pdf');
+#         plt.clf();plt.close()
     return ax
 
 def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
@@ -64,7 +65,8 @@ def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
     ax.legend(loc = 'center left', bbox_to_anchor = (1.0, 0.5)) #bbox_to_anchor=(2.2, 1.0)
     plt.tight_layout()
     if not plot_fh is None: 
-        ax.figure.savefig(plot_fh,format='pdf');plt.clf();plt.close()
+        ax.figure.savefig(plot_fh,format='pdf');
+#         plt.clf();plt.close()
     return ax 
 
 def nd2frames(nd_fh):
@@ -84,7 +86,7 @@ def nd2frames(nd_fh):
         frames.iter_axes = 't'
     return frames
 
-def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None):
+def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None,test=True):
     f = tp.locate(frames[0], diameter, invert=False)
     minmass=np.percentile(f['mass'],minmass_percentile)
     logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,minmass))
@@ -93,107 +95,112 @@ def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None):
     logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,
                                                            np.percentile(f['mass'],minmass_percentile)))
     
-    if not out_fh is None:
+    if test:
         logging.info('getting plots annotate')
-        plt.clf()
+#         plt.clf()
         fig=plt.figure()
         ax=plt.subplot(111)
         ax=tp.annotate(f, frames[0],ax=ax)
-        plt.savefig('%s.annotate.pdf' % out_fh,format='pdf')
-        plt.clf()
+        if not out_fh is None:
+            plt.savefig('%s.annotate.pdf' % out_fh,format='pdf')
+#             plt.clf()
 
         logging.info('getting plots hist')
         cols=['mass','size','ecc','signal','raw_mass','ep']
         fig=plt.figure()
         ax=plt.subplot(111)
         _=f.loc[:,cols].hist(ax=ax)
-        plt.savefig('%s.feature_props.pdf' % out_fh,format='pdf')
-        plt.clf()
+        if not out_fh is None:
+            plt.savefig('%s.feature_props.pdf' % out_fh,format='pdf')
+#             plt.clf()
 
         logging.info('getting plots bias')
         fig=plt.figure()
         tp.subpx_bias(f);
-        plt.savefig('%s.subpx_bias.pdf' % out_fh,format='pdf')
-        plt.clf()
+        if not out_fh is None:
+            plt.savefig('%s.subpx_bias.pdf' % out_fh,format='pdf')
+#             plt.clf()
 
     params_locate={'diameter':diameter,
                   'minmass':minmass}
     return params_locate
 
 def frames2coords(frames,params_locate,params_msd,
-    out_fh=None,flt_mass_size=True,flt_incomplete_trjs=True,
-    force=False):
-    
+                  mass_cutoff=0.5,size_cutoff=0.5,ecc_cutoff=0.5,
+    out_fh=None,filter_stubs=True,flt_mass_size=True,flt_incomplete_trjs=True,
+    force=False,test=False):
     if (not out_fh is None):
         f_batch_fh='%s.f_batch' % out_fh
         t_fh='%s.t' % out_fh
         if not exists(t_fh) or force:
             f_batch=tp.batch(frames,engine='numba',**params_locate)
-            # t = tp.link_df(f_batch, search_range=search_range, memory=3)
             t=tp.link_df(f_batch, search_range=20)
-            # print f_batch.index.name
-            # print t.index.name
-
             f_batch.to_csv(f_batch_fh)
             t.to_csv(t_fh)
         else:
             t=pd.read_csv(t_fh)
 
     max_lagtime_stubs=params_msd["max_lagtime"]*params_msd["fps"]
-
-    t1 = tp.filter_stubs(t, max_lagtime_stubs*1.25)
-    logging.info('filter_stubs: particle counts: %s to %s' % (t['particle'].nunique(),t1['particle'].nunique()))
-    if t1['particle'].nunique()==0:
-        logging.error('filter_stubs: particle counts =0; using less stringent conditions')
-        t1 = tp.filter_stubs(t, max_lagtime_stubs*1)
-        
-    if not out_fh is None:        
+    if filter_stubs:
+        t1 = tp.filter_stubs(t, max_lagtime_stubs*1.25)
+        logging.info('filter_stubs: particle counts: %s to %s' % (t['particle'].nunique(),t1['particle'].nunique()))
+        if t1['particle'].nunique()==0:
+            logging.error('filter_stubs: particle counts =0; using less stringent conditions')
+            t1 = tp.filter_stubs(t, max_lagtime_stubs*1)
+    else:
+        t1 = t.copy()
+    if test:        
         fig=plt.figure()
         ax=plt.subplot(111)
         tp.mass_size(t1.groupby('particle').mean(),ax=ax);
-        plt.savefig('%s.mass_size.pdf' % out_fh,format='pdf')        
-        plt.clf()
+        if not out_fh is None: 
+            plt.savefig('%s.mass_size.pdf' % out_fh,format='pdf')        
     if flt_mass_size:
-        t2 = t1[((t1['mass'] > t1['mass'].median()) & (t1['size'] < t1['size'].median()) &
-                 (t1['ecc'] < 0.5))]
+        t2 = t1[((t1['mass'] > t1['mass'].quantile(mass_cutoff)) & (t1['size'] < t1['size'].quantile(size_cutoff)) &
+                 (t1['ecc'] < ecc_cutoff))]
         logging.info('filter_mass_size: particle counts: %s to %s' % (t1['particle'].nunique(),t2['particle'].nunique()))
         if len(t2)==0:
             t2 = t1.copy()
             logging.warning('filter_mass_size produced 0 particles; using t2=t1.copy()')
     else:
         t2 = t1.copy()
-
+    if test:        
+        fig=plt.figure()
+        ax=plt.subplot(111)
+        tp.mass_size(t2.groupby('particle').mean(),ax=ax);
+        if not out_fh is None: 
+            plt.savefig('%s.mass_size_post_filtering.pdf' % out_fh,format='pdf')        
     if not out_fh is None:            
         t2_fh='%s.t2' % out_fh
         t2.to_csv(t2_fh)
-
     if flt_incomplete_trjs:
-        if 'frame' in t2:
-            del t2['frame']
         t2=t2.reset_index()
-        # print t2.index.name
-        # print t2.head()
-
         vals=pd.DataFrame(t2['particle'].value_counts())
         partis=[i for i in vals.index if vals.loc[i,'particle']>=int(vals.max())*0.95 ]
         t2=t2.loc[[i for i in t2.index if (t2.loc[i,'particle'] in partis)],:]
-        # t2=t2.set_index(t2,'frame')
-    if not out_fh is None:            
+    if test:            
         fig=plt.figure()        
         ax=plt.subplot(111)
         ax.imshow(frames[-1],cmap='binary_r',alpha=0.8)
         ax = tp.plot_traj(t2,label=True,ax=ax)
-        plt.savefig('%s.traj.pdf' % out_fh,format='pdf')        
-        plt.clf()
-
+        if not out_fh is None:        
+            plt.savefig('%s.traj.pdf' % out_fh,format='pdf')  
+    if test:
+        logging.info('getting plots hist')
+        cols=['mass','size','ecc','signal','raw_mass','ep']
+        fig=plt.figure()
+        ax=plt.subplot(111)
+        _=t2.loc[:,cols].hist(ax=ax)
+        
     return t2
 
 def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percentile':92},
+                      params_filter={},
                      out_fh=None,
                      params_msd={}):
     params_locate=get_params_locate(frames,out_fh=out_fh,**params_locate_start)
     logging.info('getting coords')
-    t_flt=frames2coords(frames,params_locate,params_msd,out_fh=out_fh)    
+    t_flt=frames2coords(frames,params_locate,params_msd,out_fh=out_fh,**params_filter)    
     d = tp.compute_drift(t_flt)
     t_cor = tp.subtract_drift(t_flt, d)
     return t_cor
@@ -223,7 +230,7 @@ def nd2msd(nd_fh,
         ax=plt.subplot(111)
         acf.plot(ax=ax)
         plt.savefig('%s.acf.pdf' % out_fh,format='pdf')
-        plt.clf()
+#         plt.clf()
     
     if not out_fh is None:
         imsd.to_csv(out_fh+".imsd")
@@ -259,7 +266,7 @@ def expt_dh2expt_info(expt_dh):
 
     expt_info2=expt_info2.loc[row_2_keep,:]
     if len(expt_info2.index) != len(set(expt_info2.index)):
-        print "duplicate values in index"
+        print("duplicate values in index")
     for col in expt_info2.columns.tolist():
         for i in range(len(expt_info2)):
             # print expt_info2.loc["replicate %d" % (i+1),col]
@@ -287,7 +294,7 @@ def expt2plots(expt_info,expt_dh,_cfg={},
                 if not exists(nd_fh):    
                     if nd_fh.count('/')<2:
                         nd_fh='%s/%s' % (expt_dh,nd_fh)
-                        print nd_fh
+                        print(nd_fh)
                 if exists(nd_fh):
                     out_fh="%s/%s" % (expt_dh,repn.replace(" ","_"))
     #                 print out_fh
@@ -298,7 +305,7 @@ def expt2plots(expt_info,expt_dh,_cfg={},
                         # except:
                         #     continue
                         emsd=pd.DataFrame(emsd)
-                        print repn
+                        print(repn)
                         emsd.columns=[repn]
                         imsd.index=emsd.index
                         plot_msd(imsd,emsd,scale='linear',plot_fh=plot_fh,params_msd=_cfg)
@@ -310,7 +317,7 @@ def expt2plots(expt_info,expt_dh,_cfg={},
                     if test:
                         break
                 else:
-                    print "can not find"
+                    print("can not find")
 #                 if len(smpl_data)==0:
 #                     smpl_data=emsd
 #                 else:
@@ -414,12 +421,12 @@ def msd2params(imsd,
                         traj_flt=traj_flt_prev
                     else:
                         traj_flt=traj_flt1
-                    print 'filtered: %s : %s' % (len(traj_flt1),len(traj_flt))
+                    print('filtered: %s : %s' % (len(traj_flt1),len(traj_flt)))
                     break
                 traj_flt_prev=traj_flt                
         else:
             traj_flt=traj_flt1
-        print 'filtered: %s : %s' % (len(traj_flt1),len(traj_flt))
+        print('filtered: %s : %s' % (len(traj_flt1),len(traj_flt)))
         imsd_flt=imsd.loc[:,traj_flt].head(l)
     #     emsd_flt=pd.DataFrame(imsd_flt.T.mean())
         params_flt=parameters.loc[traj_flt,:]

@@ -81,7 +81,7 @@ def fit_line(x,y,p0=[0, 1],plot=False):
         plt.plot(x,line_peval(x,plsq)) 
     return plsq[0], plsq[1],rsquared
 
-from htsimaging.lib.io_dfs import set_index
+from rohan.dandage.io_dfs import set_index
 from os.path import basename
 import matplotlib.cm as cm
 def plot_kin(traj,dparams=None,ctime='time (s)',
@@ -159,7 +159,8 @@ def plot_kin(traj,dparams=None,ctime='time (s)',
         plt.savefig(plot_fh, format='pdf')
     return ax1
 
-from htsimaging.lib.io_strs import get_dir
+#from htsimaging.lib.io_strs import get_dir
+from os.path import dirname
 from htsimaging.lib.fit_kin import plot_kin
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
@@ -187,4 +188,4 @@ def plot_kin_all(expt_dh,imsd_fhs):
         ylimmx.append(np.max(imsd_flt.max()))
     ax1.set_ylim([0,np.max(ylimmx)])
     ax1.legend(bbox_to_anchor=[1,1,0,0],loc=2)
-    fig.savefig('%s/plot_flt_%s.pdf' % (expt_dh,get_dir(expt_dh)))
+    fig.savefig('%s/plot_flt_%s.pdf' % (expt_dh,dirname(expt_dh)))
