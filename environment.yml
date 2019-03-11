@@ -4,7 +4,7 @@ channels:
 - biocore
 - bioconda
 dependencies:
-- python=2.7
+- python=3.6
 - flake8
 - pytest
 - numpy==1.13.1
