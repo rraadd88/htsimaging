@@ -1,4 +1,4 @@
-name: dms2dfe
+name: htsimaging
 channels:
 - conda-forge
 - biocore

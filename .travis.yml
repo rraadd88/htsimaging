@@ -18,7 +18,7 @@ before_install:
 - conda update conda
 - conda info -a
 - conda env create -f environment.yml
-- source activate beditor
+- source activate htsimaging
 install:
 - python setup.py install --record installed_files.txt
 script:
