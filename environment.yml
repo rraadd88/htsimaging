@@ -5,13 +5,11 @@ channels:
 - bioconda
 dependencies:
 - python=3.6
-- flake8
-- pytest
-- numpy==1.13.1
+- numpy
 - scipy
-- matplotlib
 - pandas
-- biopython==1.70
-- bioconductor-deseq2=1.14.1=r3.3.2_0
+- matplotlib
+- seaborn
 - pip:
-  - scikit-bio==0.4.1
+  - scikit-bio
+  - git+git+https://github.com/rraadd88/rohan

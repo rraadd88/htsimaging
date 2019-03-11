@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2016, Rohan Dandage <rohan@igib.in,rraadd_8@hotmail.com>
+# Copyright 2019, Rohan Dandage <rohanadandage@gmail.com,rraadd_8@hotmail.com>
 # This program is distributed under General Public License v. 3.    
 
 
@@ -38,14 +38,14 @@ setup(
 name='htsimaging',
 author='Rohan Dandage',
 author_email='rraadd_8@hotmail.com',
-version='0.0.6.1',
+version='1.0.0',
 url='https://github.com/rraadd88/..',
-download_url='https://github.com/rraadd88/htsimaging/..',
+download_url='https://github.com/rraadd88/htsimaging',
 description='For analysis of microscopy images',
 long_description='https://github.com/rraadd88/htsimaging/README.md',
 license='General Public License v. 3',
 install_requires=required,
-platforms='Tested on Ubuntu 12.04',
+platforms='Tested on Ubuntu 16.04',
 keywords=['microscopy','imaging','trackpy'],
 packages=find_packages(),
 )
