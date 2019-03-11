@@ -12,4 +12,4 @@ dependencies:
 - seaborn
 - pip:
   - scikit-bio
-  - git+git+https://github.com/rraadd88/rohan
+  - git+https://github.com/rraadd88/rohan
