@@ -125,7 +125,7 @@ def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None,test=
                   'minmass':minmass}
     return params_locate
 
-def frames2coords(frames,params_locate,params_msd,
+def frames2coords(frames,params_locate,params_msd,params_link_df={'search_range':20,},
                   mass_cutoff=0.5,size_cutoff=0.5,ecc_cutoff=0.5,
     out_fh=None,filter_stubs=True,flt_mass_size=True,flt_incomplete_trjs=True,
     force=False,test=False):
@@ -134,7 +134,8 @@ def frames2coords(frames,params_locate,params_msd,
         t_fh='%s.t' % out_fh
         if not exists(t_fh) or force:
             f_batch=tp.batch(frames,engine='numba',**params_locate)
-            t=tp.link_df(f_batch, search_range=20)
+            t=tp.link_df(f_batch, **params_link_df)
+            print(params_link_df)
             f_batch.to_csv(f_batch_fh)
             t.to_csv(t_fh)
         else:
@@ -179,10 +180,10 @@ def frames2coords(frames,params_locate,params_msd,
         partis=[i for i in vals.index if vals.loc[i,'particle']>=int(vals.max())*0.95 ]
         t2=t2.loc[[i for i in t2.index if (t2.loc[i,'particle'] in partis)],:]
     if test:            
-        fig=plt.figure()        
+        fig=plt.figure(figsize=[20,20])        
         ax=plt.subplot(111)
         ax.imshow(frames[-1],cmap='binary_r',alpha=0.8)
-        ax = tp.plot_traj(t2,label=True,ax=ax)
+        ax = tp.plot_traj(t2,label=False,ax=ax,lw=2)
         if not out_fh is None:        
             plt.savefig('%s.traj.pdf' % out_fh,format='pdf')  
     if test:
@@ -196,11 +197,13 @@ def frames2coords(frames,params_locate,params_msd,
 
 def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percentile':92},
                       params_filter={},
+                      params_link_df={},
                      out_fh=None,
-                     params_msd={}):
+                     params_msd={},force=False):
     params_locate=get_params_locate(frames,out_fh=out_fh,**params_locate_start)
     logging.info('getting coords')
-    t_flt=frames2coords(frames,params_locate,params_msd,out_fh=out_fh,**params_filter)    
+    t_flt=frames2coords(frames,params_locate,params_msd,params_link_df,
+                        out_fh=out_fh,force=force,**params_filter)    
     d = tp.compute_drift(t_flt)
     t_cor = tp.subtract_drift(t_flt, d)
     return t_cor
