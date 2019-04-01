@@ -86,23 +86,24 @@ def nd2frames(nd_fh):
         frames.iter_axes = 't'
     return frames
 
-def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None,test=True):
-    f = tp.locate(frames[0], diameter, invert=False)
+def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=True,figsize=None):
+    f = tp.locate(frame, diameter, invert=False)
     minmass=np.percentile(f['mass'],minmass_percentile)
     logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,minmass))
                  
-    f = tp.locate(frames[0], diameter, invert=False, minmass=np.percentile(f['mass'],minmass_percentile))
+    f = tp.locate(frame, diameter, invert=False, minmass=np.percentile(f['mass'],minmass_percentile))
     logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,
                                                            np.percentile(f['mass'],minmass_percentile)))
     
     if test:
         logging.info('getting plots annotate')
 #         plt.clf()
-        fig=plt.figure()
+        fig=plt.figure(figsize=figsize)
         ax=plt.subplot(111)
-        ax=tp.annotate(f, frames[0],ax=ax)
+        ax=tp.annotate(f, frame,ax=ax)
         if not out_fh is None:
-            plt.savefig('%s.annotate.pdf' % out_fh,format='pdf')
+#             plt.savefig('%s.annotate.pdf' % out_fh,format='pdf')
+            plt.savefig('%s.annotate.svg' % out_fh,format='svg')
 #             plt.clf()
 
         logging.info('getting plots hist')
@@ -111,14 +112,14 @@ def get_params_locate(frames,diameter=15,minmass_percentile=92,out_fh=None,test=
         ax=plt.subplot(111)
         _=f.loc[:,cols].hist(ax=ax)
         if not out_fh is None:
-            plt.savefig('%s.feature_props.pdf' % out_fh,format='pdf')
+            plt.savefig('%s.feature_props.svg' % out_fh,format='svg')
 #             plt.clf()
 
         logging.info('getting plots bias')
         fig=plt.figure()
         tp.subpx_bias(f);
         if not out_fh is None:
-            plt.savefig('%s.subpx_bias.pdf' % out_fh,format='pdf')
+            plt.savefig('%s.subpx_bias.svg' % out_fh,format='svg')
 #             plt.clf()
 
     params_locate={'diameter':diameter,
@@ -200,7 +201,7 @@ def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percent
                       params_link_df={},
                      out_fh=None,
                      params_msd={},force=False):
-    params_locate=get_params_locate(frames,out_fh=out_fh,**params_locate_start)
+    params_locate=get_params_locate(frames[0],out_fh=out_fh,**params_locate_start)
     logging.info('getting coords')
     t_flt=frames2coords(frames,params_locate,params_msd,params_link_df,
                         out_fh=out_fh,force=force,**params_filter)    

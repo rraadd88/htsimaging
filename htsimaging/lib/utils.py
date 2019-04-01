@@ -46,14 +46,21 @@ def filter_regions(img,regions,prop_type='area',mn=0,mx=0,check=False):
     elif prop_type=='extent':
         regions_props_selected = np.array([prop.extent  for prop in regions_props])        
 
-    if not check:
-        regions_filtered_lbls = regions_lbls[np.where((regions_props_selected<mx) & (regions_props_selected>mn))[0]]
-        regions_filtered=np.zeros(regions.shape)
-        for lbli in regions_filtered_lbls:
-            regions_filtered[np.where(regions==lbli)]=lbli
-        return regions_filtered
-    elif check:
-        plt.hist(regions_props_selected)
+#     if not check:
+    regions_filtered_lbls = regions_lbls[np.where((regions_props_selected<mx) & (regions_props_selected>mn))[0]]
+    regions_filtered=np.zeros(regions.shape)
+    for lbli in regions_filtered_lbls:
+        regions_filtered[np.where(regions==lbli)]=lbli
+    if check:
+        plt.figure()
+        ax=plt.subplot(111)        
+        ax.hist(regions_props_selected)
+        plt.figure()
+        ax=plt.subplot(111)
+        ax.imshow(img, cmap=plt.cm.gray, interpolation='nearest')        
+        ax.contour(regions, [0.5], linewidths=1.2, colors='r')
+        ax.contour(regions_filtered, [0.5], linewidths=1.2, colors='g')
+    return regions_filtered
 
 def smoothen(img):
     denoised=restoration.denoise_bilateral(img.astype('uint16'), sigma_range=0.01, sigma_spatial=15)
@@ -67,11 +74,18 @@ def smoothenframes(frames):
     return frames_cleaned
         
 def get_regions(img):
-    denoised=restoration.denoise_bilateral(img.astype('uint16'), sigma_range=0.01, sigma_spatial=15)
+    denoised=restoration.denoise_bilateral(img.astype('uint16'), 
+#                                            sigma_range=0.01, 
+                                           sigma_spatial=15,
+                                          multichannel=False)
     smoothened = filters.median(denoised,np.ones((4,4)))
     markers = np.zeros(smoothened.shape, dtype=np.uint)
-    markers[smoothened < filters.threshold_otsu(smoothened)] = 1
-    markers[smoothened > filters.threshold_otsu(smoothened)] = 2
+# otsu works only for only for multi-channel images     
+#     markers[smoothened < filters.threshold_otsu(smoothened)] = 1
+#     markers[smoothened > filters.threshold_otsu(smoothened)] = 2
+    markers[smoothened < filters.median(smoothened)] = 1
+    markers[smoothened > filters.median(smoothened)] = 2
+
     labels = random_walker(smoothened, markers, beta=10, mode='bf')
     regions= measure.label(labels)
     return regions, denoised, smoothened,markers
