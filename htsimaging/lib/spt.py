@@ -126,22 +126,31 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
                   'minmass':minmass}
     return params_locate
 
+def plot_traj(frame,traj,figsize=[20,20]):
+    fig=plt.figure(figsize=figsize)        
+    ax=plt.subplot(111)
+    ax.imshow(frame,cmap='binary_r',alpha=0.8)
+    ax = tp.plot_traj(traj,label=False,ax=ax,lw=2)
+    return ax
+
 def frames2coords(frames,params_locate,params_msd,params_link_df={'search_range':20,},
                   mass_cutoff=0.5,size_cutoff=0.5,ecc_cutoff=0.5,
     out_fh=None,filter_stubs=True,flt_mass_size=True,flt_incomplete_trjs=True,
     force=False,test=False):
+    dn2df={}
     if (not out_fh is None):
-        f_batch_fh='%s.f_batch' % out_fh
-        t_fh='%s.t' % out_fh
+        f_batch_fh='%s.f_batch.tsv' % out_fh
+        t_fh='%s.t.tsv' % out_fh
         if not exists(t_fh) or force:
             f_batch=tp.batch(frames,engine='numba',**params_locate)
             t=tp.link_df(f_batch, **params_link_df)
+            dn2df['f_batch']=f_batch
             print(params_link_df)
-            f_batch.to_csv(f_batch_fh)
-            t.to_csv(t_fh)
+            f_batch.to_csv(f_batch_fh,sep='\t')
+            t.to_csv(t_fh,sep='\t')
         else:
             t=pd.read_csv(t_fh)
-
+    dn2df['t']=t
     max_lagtime_stubs=params_msd["max_lagtime"]*params_msd["fps"]
     if filter_stubs:
         t1 = tp.filter_stubs(t, max_lagtime_stubs*1.25)
@@ -151,12 +160,14 @@ def frames2coords(frames,params_locate,params_msd,params_link_df={'search_range'
             t1 = tp.filter_stubs(t, max_lagtime_stubs*1)
     else:
         t1 = t.copy()
+    dn2df['t1']=t1
+        
     if test:        
         fig=plt.figure()
         ax=plt.subplot(111)
         tp.mass_size(t1.groupby('particle').mean(),ax=ax);
         if not out_fh is None: 
-            plt.savefig('%s.mass_size.pdf' % out_fh,format='pdf')        
+            plt.savefig('%s.mass_size.svg' % out_fh,format='svg')        
     if flt_mass_size:
         t2 = t1[((t1['mass'] > t1['mass'].quantile(mass_cutoff)) & (t1['size'] < t1['size'].quantile(size_cutoff)) &
                  (t1['ecc'] < ecc_cutoff))]
@@ -166,34 +177,32 @@ def frames2coords(frames,params_locate,params_msd,params_link_df={'search_range'
             logging.warning('filter_mass_size produced 0 particles; using t2=t1.copy()')
     else:
         t2 = t1.copy()
+    dn2df['t2']=t2        
     if test:        
         fig=plt.figure()
         ax=plt.subplot(111)
         tp.mass_size(t2.groupby('particle').mean(),ax=ax);
         if not out_fh is None: 
-            plt.savefig('%s.mass_size_post_filtering.pdf' % out_fh,format='pdf')        
+            plt.savefig('%s.mass_size_post_filtering.svg' % out_fh,format='svg')        
     if not out_fh is None:            
-        t2_fh='%s.t2' % out_fh
-        t2.to_csv(t2_fh)
+        t2_fh='%s.t2.tsv' % out_fh
+        t2.to_csv(t2_fh,sep='\t')
     if flt_incomplete_trjs:
         t2=t2.reset_index()
         vals=pd.DataFrame(t2['particle'].value_counts())
         partis=[i for i in vals.index if vals.loc[i,'particle']>=int(vals.max())*0.95 ]
         t2=t2.loc[[i for i in t2.index if (t2.loc[i,'particle'] in partis)],:]
-    if test:            
-        fig=plt.figure(figsize=[20,20])        
-        ax=plt.subplot(111)
-        ax.imshow(frames[-1],cmap='binary_r',alpha=0.8)
-        ax = tp.plot_traj(t2,label=False,ax=ax,lw=2)
-        if not out_fh is None:        
-            plt.savefig('%s.traj.pdf' % out_fh,format='pdf')  
+    if test:
+        for traj in ['t','t1','t2']:
+            plot_traj(frames[-1],traj=dn2df[traj])
+            if not out_fh is None:        
+                plt.savefig(f'{out_fh}.traj_{traj}.svg',format='svg')  
     if test:
         logging.info('getting plots hist')
         cols=['mass','size','ecc','signal','raw_mass','ep']
         fig=plt.figure()
         ax=plt.subplot(111)
-        _=t2.loc[:,cols].hist(ax=ax)
-        
+        _=t2.loc[:,cols].hist(ax=ax)        
     return t2
 
 def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percentile':92},
