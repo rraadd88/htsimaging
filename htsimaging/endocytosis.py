@@ -161,11 +161,14 @@ def run_trials(prjd,test=False,force=False):
     if not 'flag_distances_done' in cfg:    
         for trial in cfg['trials']:
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
-            cellboxes=get_cellboxes(regions,test=False)
-            for celli,cellbox in enumerate(cellboxes):
-                cellframes=[f[cellbox[0]:cellbox[1],cellbox[2]:cellbox[3]] for f in frames]
-                cellframes2distances(cellframes,out_fh=f"{cfg['trials'][trial]['plotd']}/cell{celli:08d}/plot_check",
-                                     test=test,force=force)
+            for cellsp in cfg['trials'][trial]['bright_segmented_cells']:
+                cells=np.load(cellsp)
+                cellboxes=get_cellboxes(cells,test=test)
+                for celli,cellbox in enumerate(cellboxes):
+                    cellframes=[f[cellbox[0]:cellbox[1],cellbox[2]:cellbox[3]] for f in frames]
+                    cellframes2distances(cellframes,out_fh=f"{cfg['trials'][trial]['plotd']}/cell{celli:08d}/plot_check",
+                                         test=test,force=force)
+                    break
                 break                                               
             break
 
