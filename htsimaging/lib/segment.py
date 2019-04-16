@@ -1,3 +1,9 @@
+import os
+from rohan.dandage.io_strs import get_datetime
+from rohan.dandage.io_files import copy
+from rohan.dandage.io_sys import runbashcmd
+from rohan.global_imports import *
+
 def set_opts(indp,outdp,yeast_segmentation_srcdp):
     cfg={'input_directory':abspath(indp),
     'output_directory':abspath(outdp),
@@ -13,11 +19,7 @@ def set_opts(indp,outdp,yeast_segmentation_srcdp):
             if isinstance(cfg[k],str):
                 cfg[k]=f"'{cfg[k]}'"
             f.write(f"{k}={cfg[k]}\n")
-import os
-from rohan.dandage.io_strs import get_datetime
-from rohan.dandage.io_files import copy
-from rohan.dandage.io_sys import runbashcmd
-def run_yeastspotter(cfg,yeast_segmentation_srcdp,indp,outdp):
+def run_yeastspotter(cfg,yeast_segmentation_srcdp,indp,outdp,test=False):
     brightps=[]
     for trial in cfg['trials'].keys():
         if 'bright' in cfg['trials'][trial]:
@@ -36,7 +38,8 @@ def run_yeastspotter(cfg,yeast_segmentation_srcdp,indp,outdp):
         os.rename('/'+outdp.strip('/'),f"{outdp}_{get_datetime()}")
     set_opts(indp,outdp,
              yeast_segmentation_srcdp=yeast_segmentation_srcdp)
-
+    if test:
+        print(np.ravel(brightps))  
     for p in list(np.ravel(brightps)):
         copy(p,f"{indp}/{basename(p)}")
 
