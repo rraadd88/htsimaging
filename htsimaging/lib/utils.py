@@ -44,7 +44,11 @@ def filter_regions(img,regions,prop_type='area',mn=0,mx=0,check=False):
     elif prop_type=='eccentricity':
         regions_props_selected = np.array([prop.eccentricity  for prop in regions_props])        
     elif prop_type=='extent':
-        regions_props_selected = np.array([prop.extent  for prop in regions_props])        
+        regions_props_selected = np.array([prop.extent  for prop in regions_props])     
+    elif prop_type=='centroid_x':
+        regions_props_selected = np.array([prop.centroid[0] for prop in regions_props])     
+    elif prop_type=='centroid_y':
+        regions_props_selected = np.array([prop.centroid[1] for prop in regions_props])     
 
 #     if not check:
     regions_filtered_lbls = regions_lbls[np.where((regions_props_selected<mx) & (regions_props_selected>mn))[0]]

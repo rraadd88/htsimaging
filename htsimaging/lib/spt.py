@@ -126,8 +126,8 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
                   'minmass':minmass}
     return params_locate
 
-def plot_traj(frame,traj,figsize=[20,20]):
-    fig=plt.figure(figsize=figsize)        
+def plot_traj(frame,traj):
+    fig=plt.figure(figsize=[frame.shape[0]*0.02,frame.shape[1]*0.02])        
     ax=plt.subplot(111)
     ax.imshow(frame,cmap='binary_r',alpha=0.8)
     ax = tp.plot_traj(traj,label=False,ax=ax,lw=2)
