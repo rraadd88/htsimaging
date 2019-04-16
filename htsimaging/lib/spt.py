@@ -131,6 +131,7 @@ def plot_traj(frame,traj):
     ax=plt.subplot(111)
     ax.imshow(frame,cmap='binary_r',alpha=0.8)
     ax = tp.plot_traj(traj,label=False,ax=ax,lw=2)
+    plt.tight_layout()
     return ax
 
 def frames2coords(frames,params_locate,params_msd,params_link_df={'search_range':20,},
@@ -194,7 +195,7 @@ def frames2coords(frames,params_locate,params_msd,params_link_df={'search_range'
         t2=t2.loc[[i for i in t2.index if (t2.loc[i,'particle'] in partis)],:]
     if test:
         for traj in ['t','t1','t2']:
-            plot_traj(frames[-1],traj=dn2df[traj])
+            ax=plot_traj(frames[-1],traj=dn2df[traj])
             if not out_fh is None:        
                 plt.savefig(f'{out_fh}.traj_{traj}.svg',format='svg')  
     if test:

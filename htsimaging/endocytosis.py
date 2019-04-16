@@ -3,15 +3,17 @@ from skimage import io
 from skimage import io,exposure,restoration,filters,morphology,measure
 from glob import glob,iglob
 from rohan.global_imports import *
+from rohan.dandage.io_sys import runbashcmd
+from htsimaging.lib.global_vars import *
 from os.path import isdir
 import pims
 import trackpy as tp
 import logging
 import yaml
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-
+# logger.setLevel(logging.DEBUG)
 from htsimaging.lib.utils import filter_regions
+
 def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,plotp=None):
     im=io.imread(imp,as_gray=True)
     imseg=io.imread(imsegp,as_gray=True)
@@ -26,7 +28,7 @@ def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,plotp=None):
     return regions
 
 def get_distance_travelled(frames,t_cor,out_fh):
-    t_cor=f_batch=read_table(f"{out_fh}.t2.tsv")
+    t_cor=read_table(f"{out_fh}.t2.tsv")
     from scipy.spatial import distance
     for f1,f2 in zip(list(range(0,t_cor['frame'].max())),
                 list(range(1,t_cor['frame'].max()+1))):
@@ -56,7 +58,7 @@ def get_distance_travelled(frames,t_cor,out_fh):
 
     t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
     # print([t_cor_distance['distance'].quantile(q) for q in np.arange(0,1,0.1)])
-
+    to_table(t_cor,f"{out_fh}_distances.tsv")
     plotp=f"{out_fh}_trajectories.png"
     # t_cor_distance['move']=t_cor_distance['distance'].apply(lambda x : 1 if x>t_cor_distance['distance'].quantile(0.8) else 0 )
     plt.figure(figsize=[20,20])
@@ -89,13 +91,40 @@ def get_cellboxes(regions,test=False):
             ax.add_patch(rect)
     return cellboxes
 
+def make_gif(frames,t_cor,outd):
+    makedirs(outd,exist_ok=True)
+    gifp="{dirname(outd)}/vid.gif"
+    for framei,frame in enumerate(frames):
+        plotp=f'{outd}/{framei:02d}.png'
+        plt.figure(figsize=[5,5])
+        ax=plt.subplot(111)
+        ax.imshow(frame,cmap='binary_r',alpha=0.8)
+        ax.text(frame.shape[0],frame.shape[1],f"frame={framei:02d}",ha='right',va='top',size='10',color='y')
+        for p in t_cor['particle'].unique():
+            df=t_cor.loc[((t_cor['particle']==p) \
+                          & (t_cor['x'].between(0,frame.shape[0]))\
+                          & (t_cor['y'].between(0,frame.shape[1]))),:]
+            if len(df)!=0:
+                df.plot.line(x='x',y='y',lw=1,
+                                  c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
+                                  legend=False,ax=ax)
+        ax.set_xlim(0,frame.shape[1])
+        ax.set_ylim(0,frame.shape[1])
+        plt.axis('off')
+        makedirs(dirname(plotp),exist_ok=True)
+        plt.savefig(plotp)
+    plt.close('all')
+    com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
+    runbashcmd(com)
+    return gifp
+
 def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
     makedirs(dirname(out_fh),exist_ok=True)
     params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100}
     # for 170x170 images
-    params_locate_start={'diameter':5,'minmass_percentile':90} # for larger images increase the diameter
+    params_locate_start={'diameter':7,'minmass_percentile':90} # for larger images increase the diameter
     params_link_df={'search_range':5,'memory':0,'link_strategy':'drop',}
-    params_filter={'mass_cutoff':0.6,'size_cutoff':1,'ecc_cutoff':1,
+    params_filter={'mass_cutoff':0.5,'size_cutoff':1,'ecc_cutoff':1,
                   'filter_stubs':False,'flt_mass_size':False,'flt_incomplete_trjs':False,
                   'test':test}
     makedirs(dirname(out_fh),exist_ok=True)
@@ -105,7 +134,9 @@ def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
                             params_filter=params_filter,
                             out_fh=out_fh,force=force)
     get_distance_travelled(frames=cellframes,t_cor=t_cor,out_fh=out_fh)
-        
+    if not out_fh is None:
+        make_gif(cellframes,t_cor,f"{dirname(out_fh)}/vid")
+    
 def run_trials(prjd,test=False,force=False):
     cfgp=f"{prjd}/cfg.yml"
     if not exists(cfgp):
@@ -172,12 +203,12 @@ def run_trials(prjd,test=False,force=False):
                 break                                               
             break
 
-# # assembling:
-# parser = argh.ArghParser()
-# parser.add_commands([run_trials])
+# assembling:
+parser = argh.ArghParser()
+parser.add_commands([run_trials])
 
-# if __name__ == '__main__':
-#     logging.info('start')
-#     parser.dispatch()
-#     logging.info('done')
+if __name__ == '__main__':
+    logging.info('start')
+    parser.dispatch()
+    logging.info('done')
                                                         
