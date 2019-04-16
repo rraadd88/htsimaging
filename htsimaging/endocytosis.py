@@ -90,7 +90,7 @@ def get_cellboxes(regions,test=False):
     return cellboxes
 
 def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
-    makedir(dirname(out_fh),exist_ok=True)
+    makedirs(dirname(out_fh),exist_ok=True)
     params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100}
     # for 170x170 images
     params_locate_start={'diameter':5,'minmass_percentile':90} # for larger images increase the diameter
@@ -165,19 +165,19 @@ def run_trials(prjd,test=False,force=False):
                 cells=np.load(cellsp)
                 cellboxes=get_cellboxes(cells,test=test)
                 for celli,cellbox in enumerate(cellboxes):
-                    cellframes=[f[cellbox[0]:cellbox[1],cellbox[2]:cellbox[3]] for f in frames]
+                    cellframes=[f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]] for f in frames]
                     cellframes2distances(cellframes,out_fh=f"{cfg['trials'][trial]['plotd']}/cell{celli:08d}/plot_check",
                                          test=test,force=force)
                     break
                 break                                               
             break
 
-# assembling:
-parser = argh.ArghParser()
-parser.add_commands([run_trials])
+# # assembling:
+# parser = argh.ArghParser()
+# parser.add_commands([run_trials])
 
-if __name__ == '__main__':
-    logging.info('start')
-    parser.dispatch()
-    logging.info('done')
+# if __name__ == '__main__':
+#     logging.info('start')
+#     parser.dispatch()
+#     logging.info('done')
                                                         
