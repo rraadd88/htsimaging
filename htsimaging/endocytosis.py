@@ -57,7 +57,7 @@ def get_distance_travelled(frames,t_cor,out_fh):
     t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
     # print([t_cor_distance['distance'].quantile(q) for q in np.arange(0,1,0.1)])
 
-    plotp=f"{cfg['trials'][k]['plotd']}/plot_check_trajectories.png"
+    plotp=f"{out_fh}_trajectories.png"
     # t_cor_distance['move']=t_cor_distance['distance'].apply(lambda x : 1 if x>t_cor_distance['distance'].quantile(0.8) else 0 )
     plt.figure(figsize=[20,20])
     ax=plt.subplot(111)
@@ -106,7 +106,7 @@ def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
                             out_fh=out_fh,force=force)
     get_distance_travelled(frames=cellframes,t_cor=t_cor,out_fh=out_fh)
         
-def run_trials(prjd):
+def run_trials(prjd,test=False,force=False):
     cfgp=f"{prjd}/cfg.yml"
     if not exists(cfgp):
         cfg={'prjd':prjd}
@@ -157,6 +157,17 @@ def run_trials(prjd):
                 cfg['trials'][trial]['bright_segmented_cells']=cellsps                                        
         cfg['flag_cells_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
+
+    if not 'flag_distances_done' in cfg:    
+        for trial in cfg['trials']:
+            frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
+            cellboxes=get_cellboxes(regions,test=False)
+            for celli,cellbox in enumerate(cellboxes):
+                cellframes=[f[cellbox[0]:cellbox[1],cellbox[2]:cellbox[3]] for f in frames]
+                cellframes2distances(cellframes,out_fh=f"{cfg['trials'][trial]['plotd']}/cell{celli:08d}/plot_check",
+                                     test=test,force=force)
+                break                                               
+            break
 
 # assembling:
 parser = argh.ArghParser()
