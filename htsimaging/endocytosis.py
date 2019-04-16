@@ -71,7 +71,41 @@ def get_distance_travelled(frames,t_cor,out_fh):
                           legend=False,ax=ax)
     plt.savefig(plotp)    
 
+from htsimaging.lib.spt import frames2coords_cor
+from skimage.measure import label, regionprops
+def get_cellboxes(regions,test=False):
+    import matplotlib.patches as mpatches
+    if test:
+        fig, ax = plt.subplots(figsize=(10, 6))
+        plt.imshow(regions)
+    cellboxes=[]
+    for region in regionprops(regions.astype(int)):
+        box_xmnxmxymnymx=[region.centroid[1]-50,region.centroid[1]+50,region.centroid[0]-50,region.centroid[0]+50]
+        cellboxes.append([int(i) for i in box_xmnxmxymnymx])
+        if test:
+            rect = mpatches.Rectangle([box_xmnxmxymnymx[0],box_xmnxmxymnymx[2]], 100, 100,
+                                      fill=False, edgecolor='red', linewidth=2)
+            ax.text(region.centroid[1],region.centroid[0],f"{region.extent:.2f}",color='g')
+            ax.add_patch(rect)
+    return cellboxes
 
+def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
+    makedir(dirname(out_fh),exist_ok=True)
+    params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100}
+    # for 170x170 images
+    params_locate_start={'diameter':5,'minmass_percentile':90} # for larger images increase the diameter
+    params_link_df={'search_range':5,'memory':0,'link_strategy':'drop',}
+    params_filter={'mass_cutoff':0.6,'size_cutoff':1,'ecc_cutoff':1,
+                  'filter_stubs':False,'flt_mass_size':False,'flt_incomplete_trjs':False,
+                  'test':test}
+    makedirs(dirname(out_fh),exist_ok=True)
+    t_cor=frames2coords_cor(frames=cellframes,
+                            params_locate_start=params_locate_start,
+                            params_msd=params_msd,params_link_df=params_link_df,
+                            params_filter=params_filter,
+                            out_fh=out_fh,force=force)
+    get_distance_travelled(frames=cellframes,t_cor=t_cor,out_fh=out_fh)
+        
 def run_trials(prjd):
     cfgp=f"{prjd}/cfg.yml"
     if not exists(cfgp):
