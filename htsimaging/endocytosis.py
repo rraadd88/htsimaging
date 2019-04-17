@@ -1,4 +1,4 @@
-import argh
+import argh                                               
 from skimage import io 
 from skimage import io,exposure,restoration,filters,morphology,measure
 from glob import glob,iglob
@@ -62,10 +62,9 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False):
         plt.tight_layout()
         plt.savefig(plotp)    
 
-    t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
     to_table(t_cor,f"{out_fh}_distances.tsv")
-
     if test:
+        t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
         plotp=f"{out_fh}_trajectories.png"    
         plt.figure(figsize=[20,20])
         ax=plt.subplot(111)
@@ -203,6 +202,7 @@ def run_trials(prjd,test=False,force=False):
                 cells=np.load(cellsp)
                 cellboxes=get_cellboxes(cells,test=test)
                 for celli,cellbox in enumerate(cellboxes):
+                    logging.info(f"{trial};cell{celli:08d}")
                     cellframes=[f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]] for f in frames]
                     cellframes2distances(cellframes,out_fh=f"{cfg['trials'][trial]['plotd']}/cell{celli:08d}/plot_check",
                                          test=test,force=force)
@@ -210,12 +210,13 @@ def run_trials(prjd,test=False,force=False):
 #                 break                                               
 #             break
 
-# assembling:
-parser = argh.ArghParser()
-parser.add_commands([run_trials])
+import sys
+if not sys.argv[0].endswith('ipykernel_launcher.py'):
+    # assembling:
+    parser = argh.ArghParser()
+    parser.add_commands([run_trials])
 
-if __name__ == '__main__':
-    logging.info('start')
-    parser.dispatch()
-    logging.info('done')
-                                                        
+    if __name__ == '__main__':
+        logging.info('start')
+        parser.dispatch()
+        logging.info('done')
