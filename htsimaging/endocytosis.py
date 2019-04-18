@@ -63,20 +63,14 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False):
         plt.savefig(plotp)    
 
     to_table(t_cor,f"{out_fh}_distances.tsv")
+#     for p in t_cor['particle'].unique():
+#         t_cor.loc[(t_cor['particle']==p),:].plot.line(x='x',y='y',lw=3,
+#                           c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
+#                           legend=False,ax=ax)
+#     t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
     if test:
-        t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
+        plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':False})
         plotp=f"{out_fh}_trajectories.png"    
-        plt.figure(figsize=[20,20])
-        ax=plt.subplot(111)
-        ax.imshow(frames[-1],cmap='binary_r',alpha=0.8)
-        ax = tp.plot_traj(t_cor,label=False,ax=ax,
-                          colorby='move',
-                         )
-        for p in t_cor['particle'].unique():
-            t_cor.loc[(t_cor['particle']==p),:].plot.line(x='x',y='y',lw=3,
-                              c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-                              legend=False,ax=ax)
-        plt.tight_layout()
         plt.savefig(plotp)    
 
 from htsimaging.lib.spt import frames2coords_cor
@@ -97,7 +91,18 @@ def get_cellboxes(regions,test=False):
             ax.add_patch(rect)
     return cellboxes
 
-def make_gif(frames,t_cor,outd):
+def plot_trajectories(img,dtraj,params_plot_traj={'label':False}):
+    plt.figure()
+    ax=plt.subplot(111)
+    ax.imshow(img,cmap='binary_r',alpha=0.8,zorder=-1)
+    ax = tp.plot_traj(dtraj,ax=ax,**params_plot_traj)
+    ax.set_xlim(0,img.shape[0])
+    ax.set_ylim(0,img.shape[1])
+    plt.tight_layout()
+
+def make_gif(frames,t_cor,outd=None,test=False):
+    if outd is None:
+        test=True            
     makedirs(outd,exist_ok=True)
     gifp=f"{dirname(outd)}/vid.gif"
     for framei,frame in enumerate(frames):
@@ -117,6 +122,8 @@ def make_gif(frames,t_cor,outd):
         ax.set_xlim(0,frame.shape[1])
         ax.set_ylim(0,frame.shape[1])
         plt.axis('off')
+        if test:
+            return ax
         makedirs(dirname(plotp),exist_ok=True)
         plt.savefig(plotp)
     plt.close('all')
@@ -138,6 +145,7 @@ def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
                             params_locate_start=params_locate_start,
                             params_msd=params_msd,params_link_df=params_link_df,
                             params_filter=params_filter,
+                            subtract_drift=False,
                             force=force)
     get_distance_travelled(frames=cellframes,t_cor=t_cor,out_fh=out_fh,test=test)
     if not out_fh is None:

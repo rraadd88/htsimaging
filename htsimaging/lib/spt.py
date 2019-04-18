@@ -166,7 +166,7 @@ def frames2coords(frames,out_fh,
             ax=plt.subplot(111)
             tp.mass_size(dn2df['t1'].groupby('particle').mean(),ax=ax);
             plt.tight_layout()
-            plt.savefig('%s.mass_size.png' % out_fh,format='svg')        
+            plt.savefig('%s.mass_size.svg' % out_fh,format='svg')        
         if flt_mass_size:
             dn2df['t2'] = dn2df['t1'][((dn2df['t1']['mass'] > dn2df['t1']['mass'].quantile(mass_cutoff)) & (dn2df['t1']['size'] < dn2df['t1']['size'].quantile(size_cutoff)) &
                      (dn2df['t1']['ecc'] < ecc_cutoff))]
@@ -204,16 +204,21 @@ def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percent
                       params_filter={},
                       params_link_df={},
                      out_fh=None,
-                     params_msd={},force=False):
+                     params_msd={},
+                      subtract_drift=False,
+                      force=False):
     params_locate=get_params_locate(frames[0],out_fh=out_fh,**params_locate_start)
     print(params_locate)
     logging.info('getting coords')
     t_flt=frames2coords(frames=frames,out_fh=out_fh,
                         params_locate=params_locate,params_msd=params_msd,params_link_df=params_link_df,
                         force=force,**params_filter)        
-    d = tp.compute_drift(t_flt)
-    t_cor = tp.subtract_drift(t_flt, d)
-    return t_cor
+    if subtract_drift:
+        d = tp.compute_drift(t_flt)
+        t_cor = tp.subtract_drift(t_flt, d)
+        return t_cor
+    else:
+        return t_flt        
 
 from htsimaging.lib.io_data_files import read_pkl,to_pkl
 def nd2msd(nd_fh,
