@@ -134,77 +134,71 @@ def plot_traj(frame,traj):
     plt.tight_layout()
     return ax
 
-def frames2coords(frames,out_fh,params_locate,params_msd,params_link_df={'search_range':20,},
+def frames2coords(frames,out_fh,
+                  params_locate,params_msd,params_link_df={'search_range':20,},
                   mass_cutoff=0.5,size_cutoff=0.5,ecc_cutoff=0.5,
-    filter_stubs=True,flt_mass_size=True,flt_incomplete_trjs=True,
-    force=False,test=False):
+                    filter_stubs=True,flt_mass_size=True,flt_incomplete_trjs=True,
+                    force=False,test=False):
     dns=['f_batch','t','t1','t2']
-    dn2dp={f'{out_fh}.{dn}.tsv' for dn in dns}
+    dn2dp={dn:f'{out_fh}.{dn}.tsv' for dn in dns}
     dn2df={}
-    if not exists(dn2dp['t2']):
-        f_batch_fh='%s.f_batch.tsv' % out_fh
+    if not exists(dn2dp['t2']) or force:
         if not exists(dn2dp['t']) or force:
-            f_batch=tp.batch(frames,engine='numba',**params_locate)
-            t=tp.link_df(f_batch, **params_link_df)
-            dn2df['f_batch']=f_batch
+            dn2df['f_batch']=tp.batch(frames,engine='numba',**params_locate)
+            dn2df['t']=tp.link_df(dn2df['f_batch'], **params_link_df)
             print(params_link_df)
-            f_batch.to_csv(f_batch_fh,sep='\t')
-            t.to_csv(t_fh,sep='\t')
+            dn2df['f_batch'].to_csv(dn2dp['f_batch'],sep='\t')
+            dn2df['t'].to_csv(dn2dp['t'],sep='\t')
         else:
-            t=pd.read_csv(t_fh)
-        dn2df['t']=t
+            dn2df['t']=pd.read_csv(dn2dp['t'])
         max_lagtime_stubs=params_msd["max_lagtime"]*params_msd["fps"]
         if filter_stubs:
-            t1 = tp.filter_stubs(t, max_lagtime_stubs*1.25)
-            logging.info('filter_stubs: particle counts: %s to %s' % (t['particle'].nunique(),t1['particle'].nunique()))
+            dn2df['t1'] = tp.filter_stubs(dn2df['t'], max_lagtime_stubs*1.25)
+            logging.info('filter_stubs: particle counts: %s to %s' % (dn2df['t']['particle'].nunique(),dn2df['t1']['particle'].nunique()))
             if t1['particle'].nunique()==0:
                 logging.error('filter_stubs: particle counts =0; using less stringent conditions')
-                t1 = tp.filter_stubs(t, max_lagtime_stubs*1)
+                dn2df['t1'] = tp.filter_stubs(dn2df['t'], max_lagtime_stubs*1)
         else:
-            t1 = t.copy()
-        dn2df['t1']=t1
+            dn2df['t1'] = dn2df['t'].copy()
 
         if test:        
             fig=plt.figure()
             ax=plt.subplot(111)
-            tp.mass_size(t1.groupby('particle').mean(),ax=ax);
-            if not out_fh is None: 
-                plt.savefig('%s.mass_size.svg' % out_fh,format='svg')        
+            tp.mass_size(dn2df['t1'].groupby('particle').mean(),ax=ax);
+            plt.tight_layout()
+            plt.savefig('%s.mass_size.png' % out_fh,format='svg')        
         if flt_mass_size:
-            t2 = t1[((t1['mass'] > t1['mass'].quantile(mass_cutoff)) & (t1['size'] < t1['size'].quantile(size_cutoff)) &
-                     (t1['ecc'] < ecc_cutoff))]
-            logging.info('filter_mass_size: particle counts: %s to %s' % (t1['particle'].nunique(),t2['particle'].nunique()))
+            dn2df['t2'] = dn2df['t1'][((dn2df['t1']['mass'] > dn2df['t1']['mass'].quantile(mass_cutoff)) & (dn2df['t1']['size'] < dn2df['t1']['size'].quantile(size_cutoff)) &
+                     (dn2df['t1']['ecc'] < ecc_cutoff))]
+            logging.info('filter_mass_size: particle counts: %s to %s' % (dn2df['t1']['particle'].nunique(),dn2df['t2']['particle'].nunique()))
             if len(t2)==0:
-                t2 = t1.copy()
+                dn2df['t2'] = dn2df['t1'].copy()
                 logging.warning('filter_mass_size produced 0 particles; using t2=t1.copy()')
         else:
-            t2 = t1.copy()
-        dn2df['t2']=t2        
+            dn2df['t2'] = dn2df['t1'].copy()
         if test:        
             fig=plt.figure()
             ax=plt.subplot(111)
-            tp.mass_size(t2.groupby('particle').mean(),ax=ax);
-            if not out_fh is None: 
-                plt.savefig('%s.mass_size_post_filtering.svg' % out_fh,format='svg')        
+            tp.mass_size(dn2df['t2'].groupby('particle').mean(),ax=ax);
+            plt.tight_layout()
+            plt.savefig('%s.mass_size_post_filtering.svg' % out_fh,format='svg')        
         if flt_incomplete_trjs:
-            t2=t2.reset_index()
-            vals=pd.DataFrame(t2['particle'].value_counts())
+            dn2df['t2']=dn2df['t2'].reset_index()
+            vals=pd.DataFrame(dn2df['t2']['particle'].value_counts())
             partis=[i for i in vals.index if vals.loc[i,'particle']>=int(vals.max())*0.95 ]
-            t2=t2.loc[[i for i in t2.index if (t2.loc[i,'particle'] in partis)],:]
-        t2.to_csv(t2_fh,sep='\t')
+            dn2df['t2']=dn2df['t2'].loc[[i for i in dn2df['t2'].index if (dn2df['t2'].loc[i,'particle'] in partis)],:]
+        dn2df['t2'].to_csv(dn2dp['t2'],sep='\t')
     else:
-        t2=pd.read_csv(t2_fh,sep='\t')
+        dn2df['t2']=pd.read_csv(dn2dp['t2'],sep='\t')
     if test:
         for traj in ['t','t1','t2']:
             ax=plot_traj(frames[-1],traj=dn2df[traj])
-            if not out_fh is None:        
-                plt.savefig(f'{out_fh}.traj_{traj}.svg',format='svg')  
         logging.info('getting plots hist')
         cols=['mass','size','ecc','signal','raw_mass','ep']
         fig=plt.figure()
         ax=plt.subplot(111)
-        _=t2.loc[:,cols].hist(ax=ax)        
-    return t2
+        _=dn2df['t2'].loc[:,cols].hist(ax=ax)        
+    return dn2df['t2']
 
 def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percentile':92},
                       params_filter={},
@@ -212,9 +206,11 @@ def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percent
                      out_fh=None,
                      params_msd={},force=False):
     params_locate=get_params_locate(frames[0],out_fh=out_fh,**params_locate_start)
+    print(params_locate)
     logging.info('getting coords')
-    t_flt=frames2coords(frames,params_locate,params_msd,params_link_df,
-                        out_fh=out_fh,force=force,**params_filter)    
+    t_flt=frames2coords(frames=frames,out_fh=out_fh,
+                        params_locate=params_locate,params_msd=params_msd,params_link_df=params_link_df,
+                        force=force,**params_filter)        
     d = tp.compute_drift(t_flt)
     t_cor = tp.subtract_drift(t_flt, d)
     return t_cor

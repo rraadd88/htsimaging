@@ -134,11 +134,11 @@ def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
                   'filter_stubs':False,'flt_mass_size':False,'flt_incomplete_trjs':False,
                   'test':test}
     makedirs(dirname(out_fh),exist_ok=True)
-    t_cor=frames2coords_cor(frames=cellframes,
+    t_cor=frames2coords_cor(frames=cellframes,out_fh=out_fh,
                             params_locate_start=params_locate_start,
                             params_msd=params_msd,params_link_df=params_link_df,
                             params_filter=params_filter,
-                            out_fh=out_fh,force=force)
+                            force=force)
     get_distance_travelled(frames=cellframes,t_cor=t_cor,out_fh=out_fh,test=test)
     if not out_fh is None:
         make_gif(cellframes,t_cor,f"{dirname(out_fh)}/vid")
@@ -206,12 +206,10 @@ def run_trials(prjd,test=False,force=False):
                     cellframes=[f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]] for f in frames]
                     cellframes2distances(cellframes,out_fh=f"{cfg['trials'][trial]['plotd']}/cell{celli:08d}/plot_check",
                                          test=test,force=force)
-#                     break
-#                 break                                               
-#             break
 
 import sys
-if not sys.argv[0].endswith('ipykernel_launcher.py'):
+exfromnotebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
+if not exfromnotebook:
     # assembling:
     parser = argh.ArghParser()
     parser.add_commands([run_trials])

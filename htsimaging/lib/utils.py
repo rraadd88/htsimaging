@@ -34,8 +34,10 @@ def filterframe(frame,cutoff=0):
     frame_cleand[frame_cleandi<cutoff]=0
     return frame_cleaned
 
-def filter_regions(img,regions,prop_type='area',mn=0,mx=0,check=False,plotp=None):
-    regions_props       = measure.regionprops(regions.astype(int),img)
+def filter_regions(regions,img=None,prop_type='area',mn=0,mx=0,check=False,plotp=None):
+    if prop_type=='mean_intensity':
+        ValueError("arg img is required")
+    regions_props       = measure.regionprops(regions.astype(int),intensity_image=img)
     regions_lbls        = np.array([prop.label for prop in regions_props])
     if prop_type=='area':
         regions_props_selected = np.array([prop.area  for prop in regions_props])
@@ -61,7 +63,8 @@ def filter_regions(img,regions,prop_type='area',mn=0,mx=0,check=False,plotp=None
         ax.hist(regions_props_selected)
         plt.figure()
         ax=plt.subplot(111)
-        ax.imshow(img, cmap=plt.cm.gray, interpolation='nearest')        
+        if not img is None:
+            ax.imshow(img, cmap=plt.cm.gray, interpolation='nearest')        
         ax.contour(regions, [0.5], linewidths=1.2, colors='r')
         ax.contour(regions_filtered, [0.5], linewidths=1.2, colors='g')
         plt.tight_layout()
