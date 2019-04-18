@@ -44,34 +44,35 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False):
                 t_cor.loc[((t_cor['particle']==p) & (t_cor['frame']==f2)),'distance']=distance.euclidean(a.values, b.values)
     if test:        
         print(t_cor.head())
-    t_cor_distance=t_cor.groupby('particle').agg({'distance':sum})
+    if 'distance' in t_cor:
+        t_cor_distance=t_cor.groupby('particle').agg({'distance':sum})
 
-    t_cor_rangeframes=t_cor.groupby('particle').agg({'frame':[min,max]})
-    t_cor_rangeframes.columns=coltuples2str(t_cor_rangeframes.columns)
-    t_cor_rangeframes['distance effective']=t_cor_rangeframes.apply(lambda x : distance_effective(x.name,x['frame min'],x['frame max'],t_cor) ,axis=1)
+        t_cor_rangeframes=t_cor.groupby('particle').agg({'frame':[min,max]})
+        t_cor_rangeframes.columns=coltuples2str(t_cor_rangeframes.columns)
+        t_cor_rangeframes['distance effective']=t_cor_rangeframes.apply(lambda x : distance_effective(x.name,x['frame min'],x['frame max'],t_cor) ,axis=1)
 
-    t_cor=t_cor.merge(t_cor_distance,
-                left_on='particle',right_index=True,suffixes=[' delta',' total'])
-    t_cor=t_cor.merge(t_cor_rangeframes,
-                left_on='particle',right_index=True)
-    if test:
-        plotp=f"{out_fh}_hist_distances.png"
-        plt.figure()
-        ax=plt.subplot()
-        t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
-        plt.tight_layout()
-        plt.savefig(plotp)    
+        t_cor=t_cor.merge(t_cor_distance,
+                    left_on='particle',right_index=True,suffixes=[' delta',' total'])
+        t_cor=t_cor.merge(t_cor_rangeframes,
+                    left_on='particle',right_index=True)
+        if test:
+            plotp=f"{out_fh}_hist_distances.png"
+            plt.figure()
+            ax=plt.subplot()
+            t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
+            plt.tight_layout()
+            plt.savefig(plotp)    
 
-    to_table(t_cor,f"{out_fh}_distances.tsv")
-#     for p in t_cor['particle'].unique():
-#         t_cor.loc[(t_cor['particle']==p),:].plot.line(x='x',y='y',lw=3,
-#                           c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-#                           legend=False,ax=ax)
-#     t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
-    if test:
-        plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':False})
-        plotp=f"{out_fh}_trajectories.png"    
-        plt.savefig(plotp)    
+        to_table(t_cor,f"{out_fh}_distances.tsv")
+    #     for p in t_cor['particle'].unique():
+    #         t_cor.loc[(t_cor['particle']==p),:].plot.line(x='x',y='y',lw=3,
+    #                           c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
+    #                           legend=False,ax=ax)
+    #     t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
+        if test:
+            plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':False})
+            plotp=f"{out_fh}_trajectories.png"    
+            plt.savefig(plotp)    
 
 from htsimaging.lib.spt import frames2coords_cor
 from skimage.measure import label, regionprops
