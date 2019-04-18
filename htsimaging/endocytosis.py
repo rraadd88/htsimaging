@@ -210,11 +210,18 @@ def run_trials(prjd,test=False,force=False):
                 cells=np.load(cellsp)
                 cellboxes=get_cellboxes(cells,test=test)
                 for celli,cellbox in enumerate(cellboxes):
-                    logging.info(f"{trial};cell{celli:08d}")
-                    cellframes=[f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]] for f in frames]
-                    cellframes2distances(cellframes,out_fh=f"{cfg['trials'][trial]['plotd']}/cell{celli:08d}/plot_check",
+                    logging.info(f"{trial};cell{celli+1:08d}")
+                    cellbright=cells[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
+                    # only one cell per box
+                    cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=45,mx=55)==0
+                    cellframes=[]
+                    for f in frames:
+                        f=f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
+                        f[cellbrightmask]=0
+                        cellframes.append(f)
+                    cellframes2distances(cellframes,
+                                         out_fh=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/plot_check",
                                          test=test,force=force)
-
 import sys
 exfromnotebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
 if not exfromnotebook:
