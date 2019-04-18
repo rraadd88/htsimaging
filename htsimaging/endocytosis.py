@@ -10,8 +10,6 @@ import pims
 import trackpy as tp
 import logging
 import yaml
-logger = logging.getLogger()
-# logger.setLevel(logging.DEBUG)
 from htsimaging.lib.utils import filter_regions
 
 def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,plotp=None):
@@ -27,52 +25,55 @@ def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,plotp=None):
                            mn=fiterby_border_thickness,mx=im.shape[1]+fiterby_border_thickness,check=False)
     return regions
 
-def get_distance_travelled(frames,t_cor,out_fh,test=False):
-    from scipy.spatial import distance
-    def distance_effective(particle,frame1,frame2,t_cor):
-        a=t_cor.loc[((t_cor['particle']==particle) & (t_cor['frame']==frame1)),['x','y']]
-        b=t_cor.loc[((t_cor['particle']==particle) & (t_cor['frame']==frame2)),['x','y']]
-        return distance.euclidean(a.values, b.values)
-    
-    t_cor=read_table(f"{out_fh}.t2.tsv")
-    for f1,f2 in zip(list(range(0,t_cor['frame'].max())),
-                list(range(1,t_cor['frame'].max()+1))):
-        for p in t_cor['particle'].unique():
-            a=t_cor.loc[((t_cor['particle']==p) & (t_cor['frame']==f1)),['x','y']]
-            b=t_cor.loc[((t_cor['particle']==p) & (t_cor['frame']==f2)),['x','y']]
-            if len(a)!=0 and len(b)!=0:
-                t_cor.loc[((t_cor['particle']==p) & (t_cor['frame']==f2)),'distance']=distance.euclidean(a.values, b.values)
-    if test:        
-        print(t_cor.head())
-    if 'distance' in t_cor:
-        t_cor_distance=t_cor.groupby('particle').agg({'distance':sum})
+from scipy.spatial import distance
+def distance_effective(particle,frame1,frame2,t_cor):
+    a=t_cor.loc[((t_cor['particle']==particle) & (t_cor['frame']==frame1)),['x','y']]
+    b=t_cor.loc[((t_cor['particle']==particle) & (t_cor['frame']==frame2)),['x','y']]
+    return distance.euclidean(a.values, b.values)
 
-        t_cor_rangeframes=t_cor.groupby('particle').agg({'frame':[min,max]})
-        t_cor_rangeframes.columns=coltuples2str(t_cor_rangeframes.columns)
-        t_cor_rangeframes['distance effective']=t_cor_rangeframes.apply(lambda x : distance_effective(x.name,x['frame min'],x['frame max'],t_cor) ,axis=1)
+def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
+    ddistancesp=f"{out_fh}_distances.tsv"
+    if not exists(ddistancesp) or force:    
+        t_cor=read_table(f"{out_fh}.t2.tsv")
+        for f1,f2 in zip(list(range(0,t_cor['frame'].max())),
+                    list(range(1,t_cor['frame'].max()+1))):
+            for p in t_cor['particle'].unique():
+                a=t_cor.loc[((t_cor['particle']==p) & (t_cor['frame']==f1)),['x','y']]
+                b=t_cor.loc[((t_cor['particle']==p) & (t_cor['frame']==f2)),['x','y']]
+                if len(a)!=0 and len(b)!=0:
+                    t_cor.loc[((t_cor['particle']==p) & (t_cor['frame']==f2)),'distance']=distance.euclidean(a.values, b.values)
+        if test:        
+            print(t_cor.head())
+        if 'distance' in t_cor:
+            t_cor_distance=t_cor.groupby('particle').agg({'distance':sum})
 
-        t_cor=t_cor.merge(t_cor_distance,
-                    left_on='particle',right_index=True,suffixes=[' delta',' total'])
-        t_cor=t_cor.merge(t_cor_rangeframes,
-                    left_on='particle',right_index=True)
-        if test:
-            plotp=f"{out_fh}_hist_distances.png"
-            plt.figure()
-            ax=plt.subplot()
-            t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
-            plt.tight_layout()
-            plt.savefig(plotp)    
+            t_cor_rangeframes=t_cor.groupby('particle').agg({'frame':[min,max]})
+            t_cor_rangeframes.columns=coltuples2str(t_cor_rangeframes.columns)
+            t_cor_rangeframes['distance effective']=t_cor_rangeframes.apply(lambda x : distance_effective(x.name,x['frame min'],x['frame max'],t_cor) ,axis=1)
 
-        to_table(t_cor,f"{out_fh}_distances.tsv")
-    #     for p in t_cor['particle'].unique():
-    #         t_cor.loc[(t_cor['particle']==p),:].plot.line(x='x',y='y',lw=3,
-    #                           c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-    #                           legend=False,ax=ax)
-    #     t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
-        if test:
-            plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':False})
-            plotp=f"{out_fh}_trajectories.png"    
-            plt.savefig(plotp)    
+            t_cor=t_cor.merge(t_cor_distance,
+                        left_on='particle',right_index=True,suffixes=[' delta',' total'])
+            t_cor=t_cor.merge(t_cor_rangeframes,
+                        left_on='particle',right_index=True)
+            to_table(t_cor,ddistancesp)
+            if test:
+                plotp=f"{out_fh}_hist_distances.png"
+                plt.figure()
+                ax=plt.subplot()
+                t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
+                plt.tight_layout()
+                plt.savefig(plotp)   
+        #     for p in t_cor['particle'].unique():
+        #         t_cor.loc[(t_cor['particle']==p),:].plot.line(x='x',y='y',lw=3,
+        #                           c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
+        #                           legend=False,ax=ax)
+        #     t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
+            if test:
+                plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':False})
+                plotp=f"{out_fh}_trajectories.png"    
+                plt.savefig(plotp)    
+        else:
+            to_table(pd.DataFrame(columns=t_cor.columns),ddistancesp)
 
 from htsimaging.lib.spt import frames2coords_cor
 from skimage.measure import label, regionprops
@@ -101,38 +102,39 @@ def plot_trajectories(img,dtraj,params_plot_traj={'label':False}):
     ax.set_ylim(0,img.shape[1])
     plt.tight_layout()
 
-def make_gif(frames,t_cor,outd=None,test=False):
+def make_gif(frames,t_cor,outd=None,test=False,force=False):
     if outd is None:
         test=True            
     makedirs(outd,exist_ok=True)
     gifp=f"{dirname(outd)}/vid.gif"
-    for framei,frame in enumerate(frames):
-        plotp=f'{outd}/{framei:02d}.png'
-        plt.figure(figsize=[5,5])
-        ax=plt.subplot(111)
-        ax.imshow(frame,cmap='binary_r',alpha=0.8)
-        ax.text(frame.shape[0],frame.shape[1],f"frame={framei:02d}",ha='right',va='top',size='10',color='y')
-        for p in t_cor['particle'].unique():
-            df=t_cor.loc[((t_cor['particle']==p) \
-                          & (t_cor['x'].between(0,frame.shape[0]))\
-                          & (t_cor['y'].between(0,frame.shape[1]))),:]
-            if len(df)!=0:
-                df.plot.line(x='x',y='y',lw=1,
-                                  c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-                                  legend=False,ax=ax)
-        ax.set_xlim(0,frame.shape[1])
-        ax.set_ylim(0,frame.shape[1])
-        plt.axis('off')
-        if test:
-            return ax
-        makedirs(dirname(plotp),exist_ok=True)
-        plt.savefig(plotp)
-    plt.close('all')
-    com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
-    runbashcmd(com)
+    if not exists(gifp) or force:
+        for framei,frame in enumerate(frames):
+            plotp=f'{outd}/{framei:02d}.png'
+            plt.figure(figsize=[5,5])
+            ax=plt.subplot(111)
+            ax.imshow(frame,cmap='binary_r',alpha=0.8)
+            ax.text(frame.shape[0],frame.shape[1],f"frame={framei:02d}",ha='right',va='top',size='10',color='y')
+            for p in t_cor['particle'].unique():
+                df=t_cor.loc[((t_cor['particle']==p) \
+                              & (t_cor['x'].between(0,frame.shape[0]))\
+                              & (t_cor['y'].between(0,frame.shape[1]))),:]
+                if len(df)!=0:
+                    df.plot.line(x='x',y='y',lw=1,
+                                      c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
+                                      legend=False,ax=ax)
+            ax.set_xlim(0,frame.shape[1])
+            ax.set_ylim(0,frame.shape[1])
+            plt.axis('off')
+            if test:
+                return ax
+            makedirs(dirname(plotp),exist_ok=True)
+            plt.savefig(plotp)
+        plt.close('all')
+        com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
+        runbashcmd(com)
     return gifp
 
-def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
+def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,force=False):
     makedirs(dirname(out_fh),exist_ok=True)
     params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100}
     # for 170x170 images
@@ -142,19 +144,20 @@ def cellframes2distances(cellframes,out_fh=None,test=False,force=False):
                   'filter_stubs':False,'flt_mass_size':False,'flt_incomplete_trjs':False,
                   'test':test}
     makedirs(dirname(out_fh),exist_ok=True)
-    t_cor=frames2coords_cor(frames=cellframes,out_fh=out_fh,
+    t_cor=frames2coords_cor(frames=cellframesmasked,out_fh=out_fh,
                             params_locate_start=params_locate_start,
                             params_msd=params_msd,params_link_df=params_link_df,
                             params_filter=params_filter,
                             subtract_drift=False,
                             force=force)
-    get_distance_travelled(frames=cellframes,t_cor=t_cor,out_fh=out_fh,test=test)
+    get_distance_travelled(frames=cellframesmasked,t_cor=t_cor,out_fh=out_fh,test=test,force=force)
     if not out_fh is None:
-        make_gif(cellframes,t_cor,f"{dirname(out_fh)}/vid")
+        make_gif(cellframes,t_cor,f"{dirname(out_fh)}/vid",force=force)
     
 def run_trials(prjd,test=False,force=False):
     cfgp=f"{prjd}/cfg.yml"
     if not exists(cfgp):
+        print('making cfg')
         cfg={'prjd':prjd}
         cfg['cfgp']=cfgp
         cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell')}
@@ -181,6 +184,7 @@ def run_trials(prjd,test=False,force=False):
         cfg=yaml.load(open(cfgp,'r'))
     ## get segments from brightfield images
     if not 'flag_segmentation_done' in cfg:
+        print('flag_segmentation_done')
         from htsimaging.lib.segment import run_yeastspotter
         cfg['yeastspotter_srcd']=f"{dirname(realpath(__file__))}/../deps/yeast_segmentation"
         print(cfg.keys())
@@ -191,6 +195,7 @@ def run_trials(prjd,test=False,force=False):
 #     if not '' in cfg:
     ## get and filter cells from segments images
     if not 'flag_cells_done' in cfg:
+        print('flag_cells_done')
         for trial in cfg['trials']:
             if len(cfg['trials'][trial]['bright'])!=0:
                 cellsps=[]
@@ -205,22 +210,26 @@ def run_trials(prjd,test=False,force=False):
         yaml.dump(cfg,open(cfgp,'w'))
 
     if not 'flag_distances_done' in cfg:    
+        print('flag_distances_done')
         for trial in cfg['trials']:
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
             for cellsp in cfg['trials'][trial]['bright_segmented_cells']:
                 cells=np.load(cellsp)
                 cellboxes=get_cellboxes(cells,test=test)
                 for celli,cellbox in enumerate(cellboxes):
+                    print(f"{trial};cell{celli+1:08d}")
                     logging.info(f"{trial};cell{celli+1:08d}")
                     cellbright=cells[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
                     # only one cell per box
                     cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=45,mx=55)==0
                     cellframes=[]
+                    cellframesmasked=[]
                     for f in frames:
                         f=f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
-                        f[cellbrightmask]=0
                         cellframes.append(f)
-                    cellframes2distances(cellframes,
+                        f[cellbrightmask]=0
+                        cellframesmasked.append(f)
+                    cellframes2distances(cellframes,cellframesmasked,
                                          out_fh=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/plot_check",
                                          test=test,force=force)
 import sys
@@ -230,6 +239,14 @@ if not exfromnotebook:
     parser = argh.ArghParser()
     parser.add_commands([run_trials])
 
+    from rohan.dandage.io_strs import get_logger,get_datetime
+    level=logging.ERROR
+    logp=get_logger(program='beditor',
+               argv=[get_datetime()],
+               level=level,
+               dp=None)        
+    logging.info(f"start. log file: {logp}")
+    print(f"start. log file: {logp}")    
     if __name__ == '__main__':
         logging.info('start')
         parser.dispatch()

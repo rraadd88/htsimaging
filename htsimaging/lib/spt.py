@@ -207,12 +207,16 @@ def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percent
                      params_msd={},
                       subtract_drift=False,
                       force=False):
-    params_locate=get_params_locate(frames[0],out_fh=out_fh,**params_locate_start)
-    print(params_locate)
-    logging.info('getting coords')
-    t_flt=frames2coords(frames=frames,out_fh=out_fh,
-                        params_locate=params_locate,params_msd=params_msd,params_link_df=params_link_df,
-                        force=force,**params_filter)        
+    t_fltp=f'{out_fh}.t2.tsv'
+    if not exists(t_fltp) or force:
+        params_locate=get_params_locate(frames[0],out_fh=out_fh,**params_locate_start)
+        print(params_locate)
+        logging.info('getting coords')
+        t_flt=frames2coords(frames=frames,out_fh=out_fh,
+                            params_locate=params_locate,params_msd=params_msd,params_link_df=params_link_df,
+                            force=force,**params_filter)        
+    else:
+        t_flt=pd.read_csv(t_fltp,sep='\t')
     if subtract_drift:
         d = tp.compute_drift(t_flt)
         t_cor = tp.subtract_drift(t_flt, d)
