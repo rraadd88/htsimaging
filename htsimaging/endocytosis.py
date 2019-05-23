@@ -1,5 +1,4 @@
 import argh                                               
-from skimage import io 
 from skimage import io,exposure,restoration,filters,morphology,measure
 from glob import glob,iglob
 from rohan.global_imports import *
@@ -16,12 +15,12 @@ def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,plotp=None):
     im=io.imread(imp,as_gray=True)
     imseg=io.imread(imsegp,as_gray=True)
     regions=measure.label(imseg)
-    fiterby_border_thickness,im.shape[1]+fiterby_border_thickness
-    regions=filter_regions(im,regions,prop_type='area',mn=1000,mx=8000,check=True,plotp=plotp)
-    regions=filter_regions(im,regions,prop_type='eccentricity',mn=0,mx=0.8,check=False)
-    regions=filter_regions(im,regions,prop_type='centroid_x',
+#     fiterby_border_thickness,im.shape[1]+fiterby_border_thickness
+    regions=filter_regions(regions,im,prop_type='area',mn=1000,mx=8000,check=True,plotp=plotp)
+    regions=filter_regions(regions,im,prop_type='eccentricity',mn=0,mx=0.8,check=False)
+    regions=filter_regions(regions,im,prop_type='centroid_x',
                            mn=fiterby_border_thickness,mx=im.shape[0]+fiterby_border_thickness,check=False)
-    regions=filter_regions(im,regions,prop_type='centroid_y',
+    regions=filter_regions(regions,im,prop_type='centroid_y',
                            mn=fiterby_border_thickness,mx=im.shape[1]+fiterby_border_thickness,check=False)
     return regions
 
@@ -63,11 +62,6 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
                 t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
                 plt.tight_layout()
                 plt.savefig(plotp)   
-        #     for p in t_cor['particle'].unique():
-        #         t_cor.loc[(t_cor['particle']==p),:].plot.line(x='x',y='y',lw=3,
-        #                           c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-        #                           legend=False,ax=ax)
-        #     t_cor['move']=t_cor['distance effective'].apply(lambda x : 1 if x>t_cor['distance effective'].quantile(0.6) else 0 )
             if test:
                 plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':False})
                 plotp=f"{out_fh}_trajectories.png"    
@@ -155,17 +149,17 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
         make_gif(cellframes,t_cor,f"{dirname(out_fh)}/vid",force=force)
     
 def run_trials(prjd,test=False,force=False):
+    prjd=abspath(prjd)
     cfgp=f"{prjd}/cfg.yml"
-    if not exists(cfgp):
+    if not exists(cfgp) or force:
         print('making cfg')
         cfg={'prjd':prjd}
         cfg['cfgp']=cfgp
-        cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell' and not basename(p).startswith('_'))}
+        cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell' and not basename(d).startswith('_'))}
         for k in cfg['trials']:
-            cfg['trials'][k]['gfp']=[p for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if '_t' in p]
-            cfg['trials'][k]['bright']=[p for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not '_t' in p]
+            cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if '_t' in p]
+            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not '_t' in p]
             cfg['trials'][k]['plotd']=f"{cfg['trials'][k]['datad']}/plot"
-                                                        
         # QC
         ## 1 CHECK BLEACHING
         from rohan.dandage.plot.line import plot_mean_std                                                        

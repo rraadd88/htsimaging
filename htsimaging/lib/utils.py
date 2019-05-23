@@ -37,8 +37,8 @@ def filterframe(frame,cutoff=0):
 def filter_regions(regions,img=None,prop_type='area',mn=0,mx=0,check=False,plotp=None):
     if prop_type=='mean_intensity':
         ValueError("arg img is required")
-    regions_props       = measure.regionprops(regions.astype(int),intensity_image=img)
-    regions_lbls        = np.array([prop.label for prop in regions_props])
+    regions_props= measure.regionprops(regions.astype(int),intensity_image=img)
+    regions_lbls = np.array([prop.label for prop in regions_props])
     if prop_type=='area':
         regions_props_selected = np.array([prop.area  for prop in regions_props])
     elif prop_type=='mean_intensity':
@@ -52,7 +52,10 @@ def filter_regions(regions,img=None,prop_type='area',mn=0,mx=0,check=False,plotp
     elif prop_type=='centroid_y':
         regions_props_selected = np.array([prop.centroid[1] for prop in regions_props])     
 
-#     if not check:
+    if check:
+        print(regions_props_selected)
+        print(regions_lbls)
+        
     regions_filtered_lbls = regions_lbls[np.where((regions_props_selected<mx) & (regions_props_selected>mn))[0]]
     regions_filtered=np.zeros(regions.shape)
     for lbli in regions_filtered_lbls:

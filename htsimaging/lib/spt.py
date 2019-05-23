@@ -98,27 +98,27 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
     if test:
         logging.info('getting plots annotate')
 #         plt.clf()
-        fig=plt.figure(figsize=figsize)
-        ax=plt.subplot(111)
-        ax=tp.annotate(f, frame,ax=ax)
         if not out_fh is None:
+            fig=plt.figure(figsize=figsize)
+            ax=plt.subplot(111)
+            ax=tp.annotate(f, frame,ax=ax)
 #             plt.savefig('%s.annotate.pdf' % out_fh,format='pdf')
             plt.savefig('%s.annotate.svg' % out_fh,format='svg')
 #             plt.clf()
 
-        logging.info('getting plots hist')
-        cols=['mass','size','ecc','signal','raw_mass','ep']
-        fig=plt.figure()
-        ax=plt.subplot(111)
-        _=f.loc[:,cols].hist(ax=ax)
         if not out_fh is None:
+            logging.info('getting plots hist')
+            cols=['mass','size','ecc','signal','raw_mass','ep']
+            fig=plt.figure()
+            ax=plt.subplot(111)
+            _=f.loc[:,cols].hist(ax=ax)
             plt.savefig('%s.feature_props.svg' % out_fh,format='svg')
 #             plt.clf()
 
-        logging.info('getting plots bias')
-        fig=plt.figure()
-        tp.subpx_bias(f);
         if not out_fh is None:
+            logging.info('getting plots bias')
+            fig=plt.figure()
+            tp.subpx_bias(f);
             plt.savefig('%s.subpx_bias.svg' % out_fh,format='svg')
 #             plt.clf()
 

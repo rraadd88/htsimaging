@@ -21,6 +21,7 @@ def set_opts(indp,outdp,yeast_segmentation_srcdp):
             f.write(f"{k}={cfg[k]}\n")
             
 from os import symlink
+from rohan.dandage.io_files import cp
 from rohan.global_imports import *
 def run_yeastspotter(cfg,test=False):
     cfg['segmentation_cell']={}
@@ -41,14 +42,15 @@ def run_yeastspotter(cfg,test=False):
     for p in brightp2copyfromto:
         top=f"{cfg['segmentation_cell']['inputd']}/{basename(p)}"
         if not exists(top):
-            print(p,top)        
-            symlink(p,top)        
+#             print(p,top)   
+            cp(p,top)
+#             symlink(p,top)        
         else:
             logging.warning(f"exists: {top}")
     set_opts(cfg['segmentation_cell']['inputd'],cfg['segmentation_cell']['outputd'],
              yeast_segmentation_srcdp=cfg['yeastspotter_srcd'])
 
-    runbashcmd(f"source activate htsimaging;python {cfg['yeastspotter_srcd']}/segmentation.py")
+    runbashcmd(f"source activate htsimaging;python {cfg['yeastspotter_srcd']}/segmentation.py",test=test)
     for p in brightp2copyfromto:
         copy(brightp2copyfromto[p][0],brightp2copyfromto[p][1]) 
     return cfg
