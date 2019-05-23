@@ -213,18 +213,34 @@ def run_trials(prjd,test=False,force=False):
                 for celli,cellbox in enumerate(cellboxes):
                     print(f"{trial};cell{celli+1:08d}")
                     logging.info(f"{trial};cell{celli+1:08d}")
+                    outp=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
+
+                    cellbrightp=f"{outp}/cellbright.npy"
                     cellbright=cells[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
+                    if not exists(dirname(cellbrightp)): 
+                        makedirs(dirname(cellbrightp),exist_ok=True)
+                    np.save(cellbrightp, cellbright) 
                     # only one cell per box
+                    cellbrightmaskp=f"{outp}/cellbrightmask.npy"
                     cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=45,mx=55)==0
+                    np.save(cellbrightmaskp, cellbrightmask)
+                    
                     cellframes=[]
                     cellframesmasked=[]
-                    for f in frames:
-                        f=f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
+                    for fi,f in enumerate(frames):
+                        cellframe=f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
                         cellframes.append(f)
-                        f[cellbrightmask]=0
+                        cellframep=f"{outp}/cellframe/frame{fi:08d}.npy"
+                        if not exists(dirname(cellframep)): 
+                            makedirs(dirname(cellframep),exist_ok=True)
+                        np.save(cellframep, cellframe)
+                        cellframe[cellbrightmask]=0
                         cellframesmasked.append(f)
+                        cellframesmaskedp=f"{outp}/cellframesmasked/frame{fi:08d}.npy"
+                        np.save(cellframesmaskedp, cellframesmasked)
+                        
                     cellframes2distances(cellframes,cellframesmasked,
-                                         out_fh=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/plot_check",
+                                         out_fh=f"{outp}/plot_check",
                                          test=test,force=force)
 import sys
 exfromnotebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
