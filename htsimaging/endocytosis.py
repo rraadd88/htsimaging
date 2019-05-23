@@ -160,7 +160,7 @@ def run_trials(prjd,test=False,force=False):
         print('making cfg')
         cfg={'prjd':prjd}
         cfg['cfgp']=cfgp
-        cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell')}
+        cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell' and not basename(p).startswith('_'))}
         for k in cfg['trials']:
             cfg['trials'][k]['gfp']=[p for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if '_t' in p]
             cfg['trials'][k]['bright']=[p for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not '_t' in p]
@@ -241,7 +241,7 @@ if not exfromnotebook:
 
     from rohan.dandage.io_strs import get_logger,get_datetime
     level=logging.ERROR
-    logp=get_logger(program='beditor',
+    logp=get_logger(program='htsimaging',
                argv=[get_datetime()],
                level=level,
                dp=None)        
