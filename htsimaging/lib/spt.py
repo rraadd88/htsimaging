@@ -1,16 +1,10 @@
 from os.path import splitext, join, exists, isdir,basename,abspath,dirname
-from os import makedirs
+from rohan.global_imports import *
 import trackpy as tp
 # import nd2reader
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import pims
 import pims_nd2
-from glob import glob
 import logging
-import pandas as pd
-from rohan.dandage.io_dfs import set_index 
 
 # %matplotlib inline
 
@@ -147,10 +141,10 @@ def frames2coords(frames,out_fh,
             dn2df['f_batch']=tp.batch(frames,engine='numba',**params_locate)
             dn2df['t']=tp.link_df(dn2df['f_batch'], **params_link_df)
             print(params_link_df)
-            dn2df['f_batch'].to_csv(dn2dp['f_batch'],sep='\t')
-            dn2df['t'].to_csv(dn2dp['t'],sep='\t')
+            to_table(dn2df['f_batch'],dn2dp['f_batch'])
+            to_table(dn2df['t'],dn2dp['t'])
         else:
-            dn2df['t']=pd.read_csv(dn2dp['t'])
+            dn2df['t']=read_table(dn2dp['t'])
         max_lagtime_stubs=params_msd["max_lagtime"]*params_msd["fps"]
         if filter_stubs:
             dn2df['t1'] = tp.filter_stubs(dn2df['t'], max_lagtime_stubs*1.25)
@@ -187,11 +181,16 @@ def frames2coords(frames,out_fh,
             vals=pd.DataFrame(dn2df['t2']['particle'].value_counts())
             partis=[i for i in vals.index if vals.loc[i,'particle']>=int(vals.max())*0.95 ]
             dn2df['t2']=dn2df['t2'].loc[[i for i in dn2df['t2'].index if (dn2df['t2'].loc[i,'particle'] in partis)],:]
-        ## remove 
-        
-        dn2df['t2'].to_csv(dn2dp['t2'],sep='\t')
+        _particles=dn2df['t2']['particle'].unique()
+        df=dn2df['t2'].groupby('particle').agg({'frame':lambda x : len(unique_dropna(x))>1})
+        particles=df.loc[df['frame'],:].index.tolist()
+        dn2df['t2']=dn2df['t2'].loc[dn2df['t2']['particle'].isin(particles),:]
+        print(f"removed single frame particles: {len(_particles)} to {len(particles)}")
+        if len(dn2df['t2'])==0:
+            return None
+        to_table(dn2df['t2'],dn2dp['t2'])
     else:
-        dn2df['t2']=pd.read_csv(dn2dp['t2'],sep='\t')
+        dn2df['t2']=read_table(dn2dp['t2'])
     if test:
         for traj in ['t','t1','t2']:
             ax=plot_traj(frames[-1],traj=dn2df[traj])
@@ -217,6 +216,8 @@ def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percent
         t_flt=frames2coords(frames=frames,out_fh=out_fh,
                             params_locate=params_locate,params_msd=params_msd,params_link_df=params_link_df,
                             force=force,**params_filter)        
+        if t_flt is None:
+            return None
     else:
         t_flt=pd.read_csv(t_fltp,sep='\t')
     if subtract_drift:

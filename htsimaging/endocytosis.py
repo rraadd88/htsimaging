@@ -64,14 +64,14 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
                 plt.savefig(plotp)   
             if test:
                 fig=plt.figure(figsize=[10,10])
-                ax=plot_trajectories(t, image=frames[0],label=True,colorby='frame',cmap='hsv',
+                ax=plot_trajectories(t_cor, image=frames[0],label=True,colorby='frame',cmap='hsv',
                             ax=ax,
 #                             params_text={'size':5},
                             )
             #plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True,'colorby':'frame','cmap':'hsv'})
                 plotp=f"{out_fh}_trajectories.svg"
                 plt.tight_layout()
-                plt.savefig(plotp)    
+                plt.savefig(plotp,format='svg')    
         else:
             to_table(pd.DataFrame(columns=t_cor.columns),ddistancesp)
 
@@ -92,15 +92,6 @@ def get_cellboxes(regions,test=False):
             ax.text(region.centroid[1],region.centroid[0],f"{region.extent:.2f}",color='g')
             ax.add_patch(rect)
     return cellboxes
-
-# def plot_trajectories(img,dtraj,params_plot_traj={'label':False}):
-#     plt.figure()
-#     ax=plt.subplot(111)
-#     ax.imshow(img,cmap='binary_r',alpha=0.8,zorder=-1)
-#     ax = tp.plot_traj(dtraj,ax=ax,**params_plot_traj)
-#     ax.set_xlim(0,img.shape[0])
-#     ax.set_ylim(0,img.shape[1])
-#     plt.tight_layout()
     
 def _plot(ax, coords, pos_columns, **plot_style):
     """ This function wraps Axes.plot to make its call signature the same for
@@ -129,8 +120,9 @@ def _plot(ax, coords, pos_columns, **plot_style):
         return ax.plot(coords[pos_columns[0]], coords[pos_columns[1]],
                        **plot_style)
 def plot_trajectories(traj,image, colorby='particle', mpp=None, label=False,
-              cmap=None, ax=None, t_column=None,
-              pos_columns=None, plot_style={},params_text={'ha':'center','va':'center'}, **kwargs):
+                        cmap=None, ax=None, t_column=None,
+                        pos_columns=None, plot_style={},
+                        params_text={'ha':'center','va':'center'}, **kwargs):
     """Plot traces of trajectories for each particle.
     Optionally image it on a frame from the video.
 
@@ -264,6 +256,8 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
                             params_filter=params_filter,
                             subtract_drift=False,
                             force=force)
+    if len(t_cor)==0:
+        return None
     get_distance_travelled(frames=cellframesmasked,t_cor=t_cor,out_fh=out_fh,test=test,force=force)
     if not out_fh is None:
         make_gif(cellframes,t_cor,f"{dirname(out_fh)}/vid",force=force)
@@ -366,7 +360,7 @@ def run_trials(prjd,test=False,force=False):
                     cellframes2distances(cellframes,cellframesmasked,
                                          out_fh=f"{outp}/plot_check",
                                          test=test,force=force)
-    cfg['flag_distances_done']=True
+        cfg['flag_distances_done']=True
     
 ## begin    
 import sys
