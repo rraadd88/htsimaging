@@ -237,6 +237,8 @@ def run_trials(prjd,test=False,force=False):
                         cellframe[cellbrightmask]=0
                         cellframesmasked.append(f)
                         cellframesmaskedp=f"{outp}/cellframesmasked/frame{fi:08d}.npy"
+                        if not exists(dirname(cellframesmaskedp)): 
+                            makedirs(dirname(cellframesmaskedp),exist_ok=True)
                         np.save(cellframesmaskedp, cellframesmasked)
                         
                     cellframes2distances(cellframes,cellframesmasked,
