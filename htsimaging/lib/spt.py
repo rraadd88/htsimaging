@@ -187,6 +187,8 @@ def frames2coords(frames,out_fh,
             vals=pd.DataFrame(dn2df['t2']['particle'].value_counts())
             partis=[i for i in vals.index if vals.loc[i,'particle']>=int(vals.max())*0.95 ]
             dn2df['t2']=dn2df['t2'].loc[[i for i in dn2df['t2'].index if (dn2df['t2'].loc[i,'particle'] in partis)],:]
+        ## remove 
+        
         dn2df['t2'].to_csv(dn2dp['t2'],sep='\t')
     else:
         dn2df['t2']=pd.read_csv(dn2dp['t2'],sep='\t')
