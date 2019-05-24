@@ -63,7 +63,7 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
                 plt.tight_layout()
                 plt.savefig(plotp)   
             if test:
-                plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':False})
+                plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True})
                 plotp=f"{out_fh}_trajectories.png"    
                 plt.savefig(plotp)    
         else:
@@ -114,8 +114,8 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
                               & (t_cor['y'].between(0,frame.shape[1]))),:]
                 if len(df)!=0:
                     df.plot.line(x='x',y='y',lw=1,
-                                      c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-                                      legend=False,ax=ax)
+                        c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
+                        legend=False,ax=ax)
             ax.set_xlim(0,frame.shape[1])
             ax.set_ylim(0,frame.shape[1])
             plt.axis('off')
@@ -158,7 +158,7 @@ def run_trials(prjd,test=False,force=False):
         cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell' and not basename(d).startswith('_'))}
         for k in cfg['trials']:
             cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if '_t' in p]
-            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not '_t' in p]
+            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not ('_t' in p or 'segmented' in p) ]
             cfg['trials'][k]['plotd']=f"{cfg['trials'][k]['datad']}/plot"
         # QC
         ## 1 CHECK BLEACHING
@@ -177,7 +177,7 @@ def run_trials(prjd,test=False,force=False):
     else:
         cfg=yaml.load(open(cfgp,'r'))
     ## get segments from brightfield images
-    if not 'flag_segmentation_done' in cfg:
+    if not 'flag_segmentation_done' in cfg or force:
         print('flag_segmentation_done')
         from htsimaging.lib.segment import run_yeastspotter
         cfg['yeastspotter_srcd']=f"{dirname(realpath(__file__))}/../deps/yeast_segmentation"
@@ -188,7 +188,7 @@ def run_trials(prjd,test=False,force=False):
 
 #     if not '' in cfg:
     ## get and filter cells from segments images
-    if not 'flag_cells_done' in cfg:
+    if not 'flag_cells_done' in cfg or force:
         print('flag_cells_done')
         for trial in cfg['trials']:
             if len(cfg['trials'][trial]['bright'])!=0:
@@ -203,7 +203,7 @@ def run_trials(prjd,test=False,force=False):
         cfg['flag_cells_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
 
-    if not 'flag_distances_done' in cfg:    
+    if not 'flag_distances_done' in cfg or force:    
         print('flag_distances_done')
         for trial in cfg['trials']:
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
@@ -246,6 +246,9 @@ def run_trials(prjd,test=False,force=False):
                     cellframes2distances(cellframes,cellframesmasked,
                                          out_fh=f"{outp}/plot_check",
                                          test=test,force=force)
+    cfg['flag_distances_done']=True
+    
+## begin    
 import sys
 exfromnotebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
 if not exfromnotebook:
