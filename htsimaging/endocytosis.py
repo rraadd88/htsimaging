@@ -227,19 +227,21 @@ def run_trials(prjd,test=False,force=False):
                     
                     cellframes=[]
                     cellframesmasked=[]
-                    for fi,f in enumerate(frames):
-                        cellframe=f[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
-                        cellframes.append(f)
-                        cellframep=f"{outp}/cellframe/frame{fi:08d}.npy"
+                    for framei,frame in enumerate(frames):
+                        cellframe=frame[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
+                        cellframep=f"{outp}/cellframe/frame{framei:08d}.npy"
                         if not exists(dirname(cellframep)): 
                             makedirs(dirname(cellframep),exist_ok=True)
                         np.save(cellframep, cellframe)
-                        cellframe[cellbrightmask]=0
-                        cellframesmasked.append(f)
-                        cellframesmaskedp=f"{outp}/cellframesmasked/frame{fi:08d}.npy"
-                        if not exists(dirname(cellframesmaskedp)): 
-                            makedirs(dirname(cellframesmaskedp),exist_ok=True)
-                        np.save(cellframesmaskedp, cellframesmasked)
+                        cellframes.append(cellframe)
+
+                        cellframemasked=cellframe.copy()
+                        cellframemasked[cellbrightmask]=0
+                        cellframemaskedp=f"{outp}/cellframesmasked/frame{framei:08d}.npy"
+                        if not exists(dirname(cellframemaskedp)): 
+                            makedirs(dirname(cellframemaskedp),exist_ok=True)
+                        np.save(cellframemaskedp, cellframemasked)
+                        cellframesmasked.append(cellframemasked)
                         
                     cellframes2distances(cellframes,cellframesmasked,
                                          out_fh=f"{outp}/plot_check",
