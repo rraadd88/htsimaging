@@ -67,9 +67,9 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
             ax=plt.subplot()
             ax=plot_trajectories(t_cor, image=frames[0],label=True,colorby='frame',cmap='hsv',
                         ax=ax,
-#                             params_text={'size':5},
+#params_text={'size':5},
                         )
-        #plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True,'colorby':'frame','cmap':'hsv'})
+#plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True,'colorby':'frame','cmap':'hsv'})
             plotp=f"{out_fh}_trajectories.svg"
             plt.tight_layout()
             plt.savefig(plotp,format='svg')    
@@ -351,7 +351,9 @@ def run_trials(prjd,test=False,force=False):
                     print(f"{trial};cell{celli+1:08d}")
                     logging.info(f"{trial};cell{celli+1:08d}")
                     outp=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
-
+                    cellcfgp=f"{outp}/cfg.yml"
+                    cellcfg
+                    cell
                     cellbrightp=f"{outp}/cellbright.npy"
                     cellbright=cells[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
                     if not exists(dirname(cellbrightp)): 
