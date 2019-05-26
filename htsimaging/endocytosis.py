@@ -255,6 +255,7 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
                 if not test:    
                     makedirs(dirname(plotp),exist_ok=True)
                     plt.savefig(plotp)
+                plt.clf();plt.close();
             _framei=framei
         if not test:    
             plt.close('all')
@@ -276,7 +277,7 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
                             params_locate_start=params_locate_start,
                             params_msd=params_msd,params_link_df=params_link_df,
                             params_filter=params_filter,
-                            subtract_drift=False,
+                            subtract_drift=True,
                             force=force)
     if t_cor is None:
         return None
@@ -287,8 +288,8 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
 from multiprocessing import Pool
 def multiprocess_cellframes2distances(cellcfgp):
     cellcfg=yaml.load(open(cellcfgp,'r'))
-    cellframes2distances(cellcfg['cellframes'],
-                         cellcfg['cellframesmasked'],
+    cellframes2distances([np.load(p) for p in cellcfg['cellframeps']],
+                         [np.load(p) for p cellcfg['cellframesmaskedps']],
                          out_fh=f"{cellcfg['outp']}/plot_check",
                          test=cellcfg['test'],force=cellcfg['force'])
 
@@ -356,65 +357,67 @@ def run_trials(prjd,test=False,force=False,cores=4):
 
     if not 'flag_cellframes_done' in cfg or force:    
         print('flag_cellframes_done')
+        cellcfgps=[]
         for trial in cfg['trials']:
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
             cellsp=np.sort(cfg['trials'][trial]['bright_segmented_cells'])[0] # only bright field at the start
             cells=np.load(cellsp)
             cellboxes=get_cellboxes(cells,test=test)
-            cellcfgps=[]
             for celli,cellbox in enumerate(cellboxes):
                 print(f"{trial};cell{celli+1:08d}")
                 logging.info(f"{trial};cell{celli+1:08d}")
                 cellcfg={}
-                cellcfg['test']=test
-                cellcfg['force']=force
                 cellcfg['outp']=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
                 cellcfg['cfgp']=f"{cellcfg['outp']}/cfg.yml"
-                cellcfg['cellbrightp']=f"{cellcfg['outp']}/cellbright.npy"
-                cellbright=cells[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
+                if not exists(cellcfg['cfgp']) or force:
+                    cellcfg['test']=test
+                    cellcfg['force']=force
+                    cellcfg['cellbrightp']=f"{cellcfg['outp']}/cellbright.npy"
+                    cellbright=cells[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
 
-                if not exists(dirname(cellcfg['cellbrightp'])): 
-                    makedirs(dirname(cellcfg['cellbrightp']),exist_ok=True)
-                np.save(cellcfg['cellbrightp'], cellbright) 
-                # only one cell per box
-                cellcfg['cellbrightmaskp']=f"{cellcfg['outp']}/cellbrightmask.npy"
-                cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=45,mx=55)==0
-                np.save(cellcfg['cellbrightmaskp'], cellbrightmask)
+                    if not exists(dirname(cellcfg['cellbrightp'])): 
+                        makedirs(dirname(cellcfg['cellbrightp']),exist_ok=True)
+                    np.save(cellcfg['cellbrightp'], cellbright) 
+                    # only one cell per box
+                    cellcfg['cellbrightmaskp']=f"{cellcfg['outp']}/cellbrightmask.npy"
+                    cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=45,mx=55)==0
+                    np.save(cellcfg['cellbrightmaskp'], cellbrightmask)
 
-                cellframes=[]
-                cellframesmasked=[]
-                for framei,frame in enumerate(frames):
-                    cellframe=frame[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
-                    cellframep=f"{cellcfg['outp']}/cellframe/frame{framei:08d}.npy"
-                    if not exists(dirname(cellframep)): 
-                        makedirs(dirname(cellframep),exist_ok=True)
-                    np.save(cellframep, cellframe)
-                    cellframes.append(cellframe)
+                    cellframeps=[]
+                    cellframesmaskedps=[]
+                    for framei,frame in enumerate(frames):
+                        cellframe=frame[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
+                        cellframep=f"{cellcfg['outp']}/cellframe/frame{framei:08d}.npy"
+                        if not exists(dirname(cellframep)): 
+                            makedirs(dirname(cellframep),exist_ok=True)
+                        np.save(cellframep, cellframe)
+                        cellframeps.append(cellframep)
 
-                    cellframemasked=cellframe.copy()
-                    cellframemasked[cellbrightmask]=0
-                    cellframemaskedp=f"{cellcfg['outp']}/cellframesmasked/frame{framei:08d}.npy"
-                    if not exists(dirname(cellframemaskedp)): 
-                        makedirs(dirname(cellframemaskedp),exist_ok=True)
-                    np.save(cellframemaskedp, cellframemasked)
-                    cellframesmasked.append(cellframemasked)
+                        cellframemasked=cellframe.copy()
+                        cellframemasked[cellbrightmask]=0
+                        cellframemaskedp=f"{cellcfg['outp']}/cellframesmasked/frame{framei:08d}.npy"
+                        if not exists(dirname(cellframemaskedp)): 
+                            makedirs(dirname(cellframemaskedp),exist_ok=True)
+                        np.save(cellframemaskedp, cellframemasked)
+                        cellframesmaskedps.append(cellframemaskedp)
 
-                cellcfg['cellframes']=cellframes
-                cellcfg['cellframesmasked']=cellframesmasked
-                yaml.dump(cellcfg,open(cellcfg['cfgp'],'w'))
+                    cellcfg['cellframeps']=cellframeps
+                    cellcfg['cellframesmaskedps']=cellframesmaskedps
+                    yaml.dump(cellcfg,open(cellcfg['cfgp'],'w'))
+    #                 multiprocess_cellframes2distances(cellcfgp)
                 cellcfgps.append(cellcfg['cfgp'])
         cfg['cellcfgps']=cellcfgps        
         cfg['flag_cellframes_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
         
         # parallel processing
-    if not 'flag_cellframes_done' in cfg or force:    
+    if not 'flag_distances_done' in cfg or force:    
         print('flag_distances_done')
-        cellcfgps=np.sort(cellcfgps)
+        cellcfgps=np.sort(cfg['cellcfgps'])
         if len(cellcfgps)!=0:
             print(f"{get_datetime()}: processing: {len(cellcfgps)} cells.")
-#             if test:
             for cellcfgp in cellcfgps:
+                logging.info(f'processing {cellcfgp}')
                 multiprocess_cellframes2distances(cellcfgp)
 #             else:
 #                 pool=Pool(processes=cfg['cores']) 
