@@ -64,6 +64,7 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
                 plt.savefig(plotp)   
             if test:
                 fig=plt.figure(figsize=[10,10])
+                ax=plt.subplot()
                 ax=plot_trajectories(t_cor, image=frames[0],label=True,colorby='frame',cmap='hsv',
                             ax=ax,
 #                             params_text={'size':5},
@@ -73,7 +74,9 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
                 plt.tight_layout()
                 plt.savefig(plotp,format='svg')    
         else:
-            to_table(pd.DataFrame(columns=t_cor.columns),ddistancesp)
+            t_cor=pd.DataFrame(columns=t_cor.columns)
+            to_table(t_cor,ddistancesp)
+        return t_cor
 
 from htsimaging.lib.spt import frames2coords_cor
 from skimage.measure import label, regionprops
@@ -160,7 +163,6 @@ def plot_trajectories(traj,image, colorby='particle', mpp=None, label=False,
     import matplotlib.pyplot as plt
     from matplotlib.collections import LineCollection
     from rohan.dandage.plot.colors import get_cmap_subset
-
 #     if cmap is None:
 #         cmap = get_cmap_subset('binary',vmin=0.15,vmax=0.05)
     if t_column is None:
@@ -173,7 +175,7 @@ def plot_trajectories(traj,image, colorby='particle', mpp=None, label=False,
     # Background image
     ax=plt.subplot() if ax is None else ax
     ax.imshow(image,
-       cmap=get_cmap_subset('binary',vmin=0.15,vmax=0.05))
+       cmap=get_cmap_subset('binary',vmin=0.2,vmax=0))
     # Trajectories
     if colorby == 'particle':
         # Unstack particles into columns.
@@ -209,35 +211,55 @@ def plot_trajectories(traj,image, colorby='particle', mpp=None, label=False,
     return ax    
 
 def make_gif(frames,t_cor,outd=None,test=False,force=False):
-    if outd is None:
-        test=True            
-    makedirs(outd,exist_ok=True)
-    gifp=f"{dirname(outd)}/vid.gif"
+    from rohan.dandage.plot.colors import get_cmap_subset
+    if not outd is None:
+        makedirs(outd,exist_ok=True)
+        gifp=f"{dirname(outd)}/vid.gif"
+    else:
+        test=True
+        gifp=''
     if not exists(gifp) or force:
         for framei,frame in enumerate(frames):
             plotp=f'{outd}/{framei:02d}.png'
-            plt.figure(figsize=[5,5])
+            plt.figure(figsize=[10,10])
             ax=plt.subplot(111)
-            ax.imshow(frame,cmap='binary_r',alpha=0.8)
-            ax.text(frame.shape[0],frame.shape[1],f"frame={framei:02d}",ha='right',va='top',size='10',color='y')
-            for p in t_cor['particle'].unique():
-                df=t_cor.loc[((t_cor['particle']==p) \
-                              & (t_cor['x'].between(0,frame.shape[0]))\
-                              & (t_cor['y'].between(0,frame.shape[1]))),:]
-                if len(df)!=0:
-                    df.plot.line(x='x',y='y',lw=1,
-                        c='limegreen' if t_cor.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-                        legend=False,ax=ax)
-            ax.set_xlim(0,frame.shape[1])
-            ax.set_ylim(0,frame.shape[1])
-            plt.axis('off')
-            if test:
-                return ax
-            makedirs(dirname(plotp),exist_ok=True)
-            plt.savefig(plotp)
-        plt.close('all')
-        com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
-        runbashcmd(com)
+            ax.imshow(frame,cmap=get_cmap_subset('binary_r',vmin=0.2,vmax=1),alpha=0.8,
+                     )
+            ax.text(frame.shape[0],frame.shape[1],f"frame={framei:02d}",ha='right',va='bottom',size='20',color='y')
+            if not framei==0:
+                # traj of particle
+                for p in t_cor.loc[(t_cor['frame']==framei),'particle'].unique():
+                    # traj of particle
+                    framei_min=t_cor['frame min'].unique()[0]
+                    df=t_cor.loc[((t_cor['particle']==p) \
+                                  & (t_cor['frame'].isin(range(framei_min,framei+1)))\
+                                  & (t_cor['x'].between(0,frame.shape[0]))\
+                                  & (t_cor['y'].between(0,frame.shape[1]))),:].sort_values(by=['frame','particle'])
+                    if test:
+                        print(df['frame'])
+                    if len(df)!=0:
+                        if not 'move' in df:
+                            df.plot.line(x='x',y='y',lw=3,
+                                c='limegreen',
+                                legend=False,ax=ax)                        
+                        else:
+                            df.plot.line(x='x',y='y',lw=3,
+                                c='limegreen' if df.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
+                                legend=False,ax=ax)
+                ax.set_xlim(0,frame.shape[1])
+                ax.set_ylim(0,frame.shape[1])
+                plt.axis('off')
+                if test:
+                    if framei==3:
+                        return ax
+                if not test:    
+                    makedirs(dirname(plotp),exist_ok=True)
+                    plt.savefig(plotp)
+            _framei=framei
+        if not test:    
+            plt.close('all')
+            com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
+            runbashcmd(com)
     return gifp
 
 def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,force=False):
@@ -256,11 +278,11 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
                             params_filter=params_filter,
                             subtract_drift=False,
                             force=force)
-    if len(t_cor)==0:
+    if t_cor is None:
         return None
-    get_distance_travelled(frames=cellframesmasked,t_cor=t_cor,out_fh=out_fh,test=test,force=force)
-    if not out_fh is None:
-        make_gif(cellframes,t_cor,f"{dirname(out_fh)}/vid",force=force)
+    ddist=get_distance_travelled(frames=cellframesmasked,t_cor=t_cor,out_fh=out_fh,test=test,force=force)
+    if not (out_fh is None or ddist is None):
+        make_gif(cellframes,ddist,f"{dirname(out_fh)}/vid",force=force)
     
 def run_trials(prjd,test=False,force=False):
     prjd=abspath(prjd)
@@ -361,7 +383,7 @@ def run_trials(prjd,test=False,force=False):
                                          out_fh=f"{outp}/plot_check",
                                          test=test,force=force)
         cfg['flag_distances_done']=True
-    
+        yaml.dump(cfg,open(cfgp,'w'))
 ## begin    
 import sys
 exfromnotebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
