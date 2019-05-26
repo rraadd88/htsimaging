@@ -239,11 +239,11 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
                         print(df['frame'])
                     if len(df)!=0:
                         if not 'move' in df:
-                            df.plot.line(x='x',y='y',lw=3,
+                            df.plot.line(x='x',y='y',lw=7,
                                 c='limegreen',
                                 legend=False,ax=ax)                        
                         else:
-                            df.plot.line(x='x',y='y',lw=3,
+                            df.plot.line(x='x',y='y',lw=7,
                                 c='limegreen' if df.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
                                 legend=False,ax=ax)
                 ax.set_xlim(0,frame.shape[1])
