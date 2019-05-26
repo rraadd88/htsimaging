@@ -301,10 +301,15 @@ def run_trials(prjd,test=False,force=False,cores=4):
         cfg['cfgp']=cfgp
         cfg['cores']=cores
         cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell' and not basename(d).startswith('_'))}
+        trials_bad=[]
         for k in cfg['trials']:
             cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if '_t' in p]
             cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not ('_t' in p or 'segmented' in p) ]
             cfg['trials'][k]['plotd']=f"{cfg['trials'][k]['datad']}/plot"
+            if len(cfg['trials'][k]['bright'])==0 or len(cfg['trials'][k]['gfp'])==0:
+                trials_bad.append(k)
+        for trial in trials_bad:
+            del cfg['trials'][trial]
         yaml.dump(cfg,open(cfgp,'w'))   
         # QC
         ## 1 CHECK BLEACHING
@@ -417,6 +422,7 @@ def run_trials(prjd,test=False,force=False,cores=4):
 #                 pool.close(); pool.join()         
         cfg['flag_distances_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
+    logging.info('finished')
 
 ## begin    
 import sys
@@ -437,4 +443,3 @@ if not exfromnotebook:
     if __name__ == '__main__':
         logging.info('start')
         parser.dispatch()
-        logging.info('done')
