@@ -55,24 +55,24 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
             t_cor=t_cor.merge(t_cor_rangeframes,
                         left_on='particle',right_index=True)
             to_table(t_cor,ddistancesp)
-            if test:
-                plotp=f"{out_fh}_hist_distances.png"
-                plt.figure()
-                ax=plt.subplot()
-                t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
-                plt.tight_layout()
-                plt.savefig(plotp)   
-            if test:
-                fig=plt.figure(figsize=[10,10])
-                ax=plt.subplot()
-                ax=plot_trajectories(t_cor, image=frames[0],label=True,colorby='frame',cmap='hsv',
-                            ax=ax,
+            ## dist distances
+            plotp=f"{out_fh}_hist_distances.png"
+            plt.figure()
+            ax=plt.subplot()
+            t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
+            plt.tight_layout()
+            plt.savefig(plotp)   
+            ## image labeled particles
+            fig=plt.figure(figsize=[10,10])
+            ax=plt.subplot()
+            ax=plot_trajectories(t_cor, image=frames[0],label=True,colorby='frame',cmap='hsv',
+                        ax=ax,
 #                             params_text={'size':5},
-                            )
-            #plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True,'colorby':'frame','cmap':'hsv'})
-                plotp=f"{out_fh}_trajectories.svg"
-                plt.tight_layout()
-                plt.savefig(plotp,format='svg')    
+                        )
+        #plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True,'colorby':'frame','cmap':'hsv'})
+            plotp=f"{out_fh}_trajectories.svg"
+            plt.tight_layout()
+            plt.savefig(plotp,format='svg')    
         else:
             t_cor=pd.DataFrame(columns=t_cor.columns)
             to_table(t_cor,ddistancesp)
@@ -296,6 +296,7 @@ def run_trials(prjd,test=False,force=False):
             cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if '_t' in p]
             cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not ('_t' in p or 'segmented' in p) ]
             cfg['trials'][k]['plotd']=f"{cfg['trials'][k]['datad']}/plot"
+        yaml.dump(cfg,open(cfgp,'w'))   
         # QC
         ## 1 CHECK BLEACHING
         from rohan.dandage.plot.line import plot_mean_std                                                        
@@ -309,7 +310,7 @@ def run_trials(prjd,test=False,force=False):
             ax=plot_mean_std(df,cols=['mean','min','50%'])
             ax.set_xlabel('time points');ax.set_ylabel('intensity')
             plt.savefig(plotp)
-        yaml.dump(cfg,open(cfgp,'w'))   
+#         yaml.dump(cfg,open(cfgp,'w'))   
     else:
         cfg=yaml.load(open(cfgp,'r'))
     ## get segments from brightfield images
