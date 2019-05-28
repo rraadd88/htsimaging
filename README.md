@@ -4,10 +4,37 @@
 
 Python package for analysis of big bunch of images obtained from high throughput imaging.
 
-## Installation
+Table of Contents
+-----------------
 
-	cd htsimaging_master
-	pip install .
+1. [Installation](#installation)
+2. [Configuration](#configuration-file)
+3. [Input format](#input-format)
+4. [Output format](#output-format)
+5. [API](#api)
+
+Installation
+------------
+Basic requirements: [`Anaconda package manager`](https://www.anaconda.com/download/#linux). See [requirements.md](https://github.com/rraadd88/test_htsimaging/blob/master/requirements.md) for set of bash commands that would install it.
+
+1.  Once all the requirements are satisfied, create a python 3.6 virtual environment.
+
+``` {.sourceCode .text}
+wget https://raw.githubusercontent.com/rraadd88/htsimaging/master/environment.yml
+conda env create -f environment.yml
+```
+
+2.  Activate the virtual environment.
+
+``` {.sourceCode .text}
+source activate htsimaging
+```
+
+3. Install `htsimaging` python package from pypi.
+
+``` {.sourceCode .text}
+pip install htsimaging
+```
 
 ## Contents of the package
 
