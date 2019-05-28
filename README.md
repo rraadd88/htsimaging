@@ -15,7 +15,7 @@ Table of Contents
 
 Installation
 ------------
-Basic requirements: [`Anaconda package manager`](https://www.anaconda.com/download/#linux). See [requirements.md](https://github.com/rraadd88/test_htsimaging/blob/master/requirements.md) for set of bash commands that would install it.
+Basic requirements: [`Anaconda package manager`](https://www.anaconda.com/download/#linux). See [requirements.md](https://github.com/rraadd88/test_beditor/blob/master/requirements.md) for set of bash commands that would install it.
 
 1.  Once all the requirements are satisfied, create a python 3.6 virtual environment.
 
@@ -30,10 +30,10 @@ conda env create -f environment.yml
 source activate htsimaging
 ```
 
-3. Install `htsimaging` python package from pypi.
+3. Install `htsimaging` python package from github.
 
 ``` {.sourceCode .text}
-pip install htsimaging
+pip install git+https://github.com/rraadd88/pyensembl
 ```
 
 ## Contents of the package
