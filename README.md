@@ -33,19 +33,16 @@ source activate htsimaging
 3. Install `htsimaging` python package from github.
 
 ``` {.sourceCode .text}
-pip install git+https://github.com/rraadd88/pyensembl
+pip install git+https://github.com/rraadd88/htsimaging
 ```
 
-## Contents of the package
+Dependencies 
+-------------
 
-	htsimaging/  
-	|-- bleach_chase2kins.py (bleach-chase images to kinetics)  
-	|-- bleach_chase2vid.py (bleach-chase images to video)  
-	|-- trackinginfo2emsd.py (single particle tracking analysis)  
-	|-- __init__.py  
-	`-- lib (under-the-hood libraries)  
-	    |-- bleach_chase.py   
-	    |-- diffusion.py  
-	    |-- __init__.py  
-	    |-- io_data_files.py  
-	    `-- io_nd_files.py  
+1. `yeastspotter`: 
+
+``` {.sourceCode .bash}
+mkdir htsimaging
+mkdir deps; cd deps
+git clone https://github.com/alexxijielu/yeast_segmentation.git
+```
