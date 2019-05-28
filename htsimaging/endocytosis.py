@@ -289,7 +289,7 @@ from multiprocessing import Pool
 def multiprocess_cellframes2distances(cellcfgp):
     cellcfg=yaml.load(open(cellcfgp,'r'))
     cellframes2distances([np.load(p) for p in cellcfg['cellframeps']],
-                         [np.load(p) for p cellcfg['cellframesmaskedps']],
+                         [np.load(p) for p in cellcfg['cellframesmaskedps']],
                          out_fh=f"{cellcfg['outp']}/plot_check",
                          test=cellcfg['test'],force=cellcfg['force'])
 
