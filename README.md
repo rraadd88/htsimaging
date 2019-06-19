@@ -45,5 +45,5 @@ Dependencies
 ``` {.sourceCode .bash}
 # go to htsimaging repo (`cd htsimaging`)
 mkdir deps; cd deps
-git clone https://github.com/alexxijielu/yeast_segmentation.git
+git clone https://github.com/rraadd88/yeast_segmentation.git
 ```
