@@ -15,7 +15,6 @@ string
 subprocess
 trackpy==0.4.1
 yaml
-git+https://github.com/rraadd88/rohan.git
 scikit-image
 numba
 tensorflow==1.5
