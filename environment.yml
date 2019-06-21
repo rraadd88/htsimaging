@@ -18,7 +18,7 @@ dependencies:
     - pims
     - pims_nd2
     - pimsviewer
-    - rohan
+    - git+https://github.com/rraadd88/rohan.git
     - #setuptools
     - skimage
     - statsmodels

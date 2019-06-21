@@ -33,16 +33,17 @@ source activate htsimaging
 3. Install `htsimaging` python package from github.
 
 ``` {.sourceCode .text}
-pip install git+https://github.com/rraadd88/htsimaging
+git clone https://github.com/rraadd88/htsimaging.git
+cd htsimaging;pip install -e .
 ```
 
 Dependencies 
 -------------
 
-1. `yeastspotter`: 
+1. `yeastspotter`: for segmentation of bright field images
 
 ``` {.sourceCode .bash}
-mkdir htsimaging
+# go to htsimaging repo (`cd htsimaging`)
 mkdir deps; cd deps
-git clone https://github.com/alexxijielu/yeast_segmentation.git
+git clone https://github.com/rraadd88/yeast_segmentation.git
 ```
