@@ -11,3 +11,4 @@ rohan
 numba
 argh
 pims_nd2
+tensorflow==1.5
