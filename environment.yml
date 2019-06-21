@@ -5,6 +5,7 @@ channels:
   - defaults
 dependencies:
   - python=3.6.5
+  - imagemagick
   - pip:
     - argh                                               
     - argparse
