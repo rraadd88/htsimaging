@@ -1,4 +1,4 @@
-name: base
+name: htsimaging
 channels:
   - conda-forge
   - bioconda
@@ -7,23 +7,24 @@ dependencies:
   - python=3.6.5
   - imagemagick
   - pip:
-    - argh                                               
+    - argh                                          
     - argparse
     - cv2
     - glob
     - json
     - logging
     - multiprocessing
-    - #nd2reader
     - pickle
     - pims
     - pims_nd2
     - pimsviewer
-    - git+https://github.com/rraadd88/rohan.git
-    - #setuptools
     - skimage
     - statsmodels
     - string
     - subprocess
     - trackpy=0.4.1
     - yaml
+    - git+https://github.com/rraadd88/rohan.git
+    - scikit-image
+    - numba
+    - tensorflow==1.5
