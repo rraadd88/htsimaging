@@ -29,9 +29,14 @@ except ImportError:
 
 if (sys.version_info[0], sys.version_info[1]) != (3, 6):
     raise RuntimeError('Python 3.6 required ')
-               
+    
+# update requirements.txt from environment.yml
+# with open('requirements.txt','w') as f:
+#     f.write('\n'.join(dropna(yaml.load(open('environment.yml','r'))['dependencies'][2]['pip'])))
+
 with open('requirements.txt') as f:
     required = f.read().splitlines()
+
     
 # main setup command
 setup(
