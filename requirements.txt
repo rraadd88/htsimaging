@@ -13,7 +13,7 @@ skimage
 statsmodels
 string
 subprocess
-trackpy=0.4.1
+trackpy==0.4.1
 yaml
 git+https://github.com/rraadd88/rohan.git
 scikit-image
