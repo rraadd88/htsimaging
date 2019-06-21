@@ -50,7 +50,7 @@ def run_yeastspotter(cfg,test=False):
     set_opts(cfg['segmentation_cell']['inputd'],cfg['segmentation_cell']['outputd'],
              yeast_segmentation_srcdp=cfg['yeastspotter_srcd'])
 
-    runbashcmd(f"source activate htsimaging;python {cfg['yeastspotter_srcd']}/segmentation.py",test=test)
+    runbashcmd(f"conda activate htsimaging;python {cfg['yeastspotter_srcd']}/segmentation.py",test=test)
     print(brightp2copyfromto)
     for p in brightp2copyfromto:
         copy(brightp2copyfromto[p][0],brightp2copyfromto[p][1]) 
