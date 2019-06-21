@@ -72,6 +72,7 @@ def filter_regions(regions,img=None,prop_type='area',mn=0,mx=0,check=False,plotp
         ax.contour(regions_filtered, [0.5], linewidths=1.2, colors='g')
         plt.tight_layout()
         if not plotp is None:
+            makedirs(dirname(plotp),exist_ok=True)
             plt.savefig(plotp)
     return regions_filtered
 
