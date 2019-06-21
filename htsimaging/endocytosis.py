@@ -307,6 +307,7 @@ def run_trials(prjd,test=False,force=False,cores=4):
             cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if '_t' in p]
             cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not ('_t' in p or 'segmented' in p) ]
             cfg['trials'][k]['plotd']=f"{cfg['trials'][k]['datad']}/plot"
+            makedirs(cfg['trials'][k]['plotd'],exist_ok=True)
             if len(cfg['trials'][k]['bright'])==0 or len(cfg['trials'][k]['gfp'])==0:
                 trials_bad.append(k)
         for trial in trials_bad:
