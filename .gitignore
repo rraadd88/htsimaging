@@ -1,6 +1,7 @@
 *.ipynb
 *.pyc
 *.ipynb_checkpoints
+deps/
 
 docs
 #docs/*.rst
