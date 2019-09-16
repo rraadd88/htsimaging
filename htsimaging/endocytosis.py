@@ -293,7 +293,11 @@ def multiprocess_cellframes2distances(cellcfgp):
                          out_fh=f"{cellcfg['outp']}/plot_check",
                          test=cellcfg['test'],force=cellcfg['force'])
 
-def run_trials(prjd,test=False,force=False,cores=4):
+def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
+    """
+        bright_fn_marker='_t'
+        bright_fn_marker='_T1C1'
+    """    
     prjd=abspath(prjd)
     cfgp=f"{prjd}/cfg.yml"
     if not exists(cfgp) or force:
@@ -301,11 +305,12 @@ def run_trials(prjd,test=False,force=False,cores=4):
         cfg={'prjd':prjd}
         cfg['cfgp']=cfgp
         cfg['cores']=cores
+        cfg['bright_fn_marker']=bright_fn_marker
         cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell' and not basename(d).startswith('_'))}
         trials_bad=[]
         for k in cfg['trials']:
-            cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if '_t' in p]
-            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not ('_t' in p or 'segmented' in p) ]
+            cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if cfg['bright_fn_marker'] in p]
+            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not (cfg['bright_fn_marker'] in p or 'segmented' in p) ]
             cfg['trials'][k]['plotd']=f"{cfg['trials'][k]['datad']}/plot"
             makedirs(cfg['trials'][k]['plotd'],exist_ok=True)
             if len(cfg['trials'][k]['bright'])==0 or len(cfg['trials'][k]['gfp'])==0:
