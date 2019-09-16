@@ -295,8 +295,9 @@ def multiprocess_cellframes2distances(cellcfgp):
 
 def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
     """
-        bright_fn_marker='_t'
-        bright_fn_marker='_T1C1'
+    runs the analysiss
+    
+    :param bright_fn_marker: '_t' if inhouse microscope else if chul: '_T1C1'
     """    
     prjd=abspath(prjd)
     cfgp=f"{prjd}/cfg.yml"
