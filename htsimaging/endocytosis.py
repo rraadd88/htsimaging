@@ -295,9 +295,11 @@ def multiprocess_cellframes2distances(cellcfgp):
 
 def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
     """
-    runs the analysiss
+    runs the analysis.   
     
-    :param bright_fn_marker: '_t' if inhouse microscope else if chul: '_T1C1'
+    'prjd':'path to (project) directory containing individual runs of images'
+    'bright_fn_marker':"'_t' if inhouse microscope else if chul: '_T1C1'"    
+    
     """    
     prjd=abspath(prjd)
     cfgp=f"{prjd}/cfg.yml"
@@ -441,7 +443,6 @@ if not exfromnotebook:
     # assembling:
     parser = argh.ArghParser()
     parser.add_commands([run_trials])
-
     from rohan.dandage.io_strs import get_logger,get_datetime
     level=logging.ERROR
     logp=get_logger(program='htsimaging',
@@ -453,3 +454,5 @@ if not exfromnotebook:
     if __name__ == '__main__':
         logging.info('start')
         parser.dispatch()
+else:
+    print("can not run from notebook")
