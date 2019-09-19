@@ -44,6 +44,14 @@ git clone https://github.com/rraadd88/htsimaging.git
 cd htsimaging;pip install -e .
 ```
 
+Installation
+------------
+`htsimaging` is constantly under development. In order to update local repo to the latest version, run following command:
+
+```
+git pull origin master
+```
+
 Dependencies 
 -------------
 
