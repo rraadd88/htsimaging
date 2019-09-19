@@ -1,4 +1,5 @@
-import argh                                               
+import sys
+import argh                                       
 from skimage import io,exposure,restoration,filters,morphology,measure
 from glob import glob,iglob
 from rohan.global_imports import *
@@ -11,12 +12,19 @@ import logging
 import yaml
 from htsimaging.lib.utils import filter_regions
 
-def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,plotp=None):
+def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,magnification=100,plotp=None):
+    """
+    prop_type='area',mn=100,mx=8000
+    at 1.5X
+    prop_type='area',mn=1500,mx=12000
+    """
     im=io.imread(imp,as_gray=True)
     imseg=io.imread(imsegp,as_gray=True)
     regions=measure.label(imseg)
 #     fiterby_border_thickness,im.shape[1]+fiterby_border_thickness
-    regions=filter_regions(regions,im,prop_type='area',mn=1000,mx=8000,check=True,plotp=plotp)
+    regions=filter_regions(regions,im,prop_type='area',
+                           mn=1000*magnification/100,mx=8000*magnification/100,
+                           check=True,plotp=plotp)
     regions=filter_regions(regions,im,prop_type='eccentricity',mn=0,mx=0.8,check=False)
     regions=filter_regions(regions,im,prop_type='centroid_x',
                            mn=fiterby_border_thickness,mx=im.shape[0]+fiterby_border_thickness,check=False)
@@ -297,8 +305,22 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
     """
     runs the analysis.   
     
-    'prjd':'path to (project) directory containing individual runs of images'
-    'bright_fn_marker':"'_t' if inhouse microscope else if chul: '_T1C1'"    
+    :param prjd: path to (project) directory containing individual runs of images
+        eg. if the images are stored in such a way
+        images_190919
+            WT-WT_001
+                tif ..
+            WT-WT_002
+                tif ..
+            WT-WT_003
+                tif ..
+            WT-WT_004
+                tif ..
+        images_190919 will be prjd
+        so the correct command will be
+        python endocytosis.py run-trials /path/to/images_190919 _T1C1
+
+    :param bright_fn_marker: _t if inhouse microscope else if chul: _T1C1    
     
     """    
     prjd=abspath(prjd)
@@ -309,11 +331,18 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         cfg['cfgp']=cfgp
         cfg['cores']=cores
         cfg['bright_fn_marker']=bright_fn_marker
+        if cfg['bright_fn_marker']=='_T1C1':
+            cfg['magnification']=150
+        elif cfg['bright_fn_marker']=='_t':
+            cfg['magnification']=100
+        else:
+            logging.error("unknown bright_fn_marker {cfg['bright_fn_marker']}")
+            sys.exit()
         cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell' and not basename(d).startswith('_'))}
         trials_bad=[]
         for k in cfg['trials']:
-            cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if cfg['bright_fn_marker'] in p]
-            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not (cfg['bright_fn_marker'] in p or 'segmented' in p) ]
+            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if cfg['bright_fn_marker'] in p]
+            cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not (cfg['bright_fn_marker'] in p or 'segmented' in p) ]
             cfg['trials'][k]['plotd']=f"{cfg['trials'][k]['datad']}/plot"
             makedirs(cfg['trials'][k]['plotd'],exist_ok=True)
             if len(cfg['trials'][k]['bright'])==0 or len(cfg['trials'][k]['gfp'])==0:
@@ -333,7 +362,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
             df=dframes.describe().T
             ax=plot_mean_std(df,cols=['mean','min','50%'])
             ax.set_xlabel('time points');ax.set_ylabel('intensity')
-            plt.savefig(plotp)
+            savefig(plotp)
 #         yaml.dump(cfg,open(cfgp,'w'))   
     else:
         cfg=yaml.load(open(cfgp,'r'))
@@ -356,7 +385,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
                 cellsps=[]
                 for imp,imsegp in zip(cfg['trials'][trial]['bright'],cfg['trials'][trial]['bright_segmented']):
                     cellsp=f'{imsegp}.npy'
-                    regions=segmentation2cells(imp,imsegp,
+                    regions=segmentation2cells(imp,imsegp,magnification=cfg['magnification'],
                        plotp=f"{cfg['trials'][trial]['plotd']}/image_segmentation2cells.png")
                     np.save(cellsp, regions)
                     cellsps.append(cellsp)
