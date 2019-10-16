@@ -17,4 +17,4 @@ trackpy==0.4.1
 yaml
 scikit-image
 numba
-tensorflow==1.5
+tensorflow==1.12.2
