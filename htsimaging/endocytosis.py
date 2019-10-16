@@ -62,15 +62,19 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
                         left_on='particle',right_index=True,suffixes=[' delta',' total'])
             t_cor=t_cor.merge(t_cor_rangeframes,
                         left_on='particle',right_index=True)
+            t_cor['distance delta']=t_cor['distance delta'].fillna(0)
+            t_cor['distance total per frame']=t_cor.apply(lambda x : t_cor.set_index(['frame','particle']).loc[[(i,x['particle']) for i in range(int(x['frame'])+1)],'distance delta'].sum() ,axis=1)
+            t_cor['distance effective per frame']=t_cor.apply(lambda x : distance_effective(particle=x['particle'],frame1=x['frame min'],frame2=x['frame'],t_cor=t_cor) ,axis=1)
+            t_cor['intensity']=t_cor['mass']            
             to_table(t_cor,ddistancesp)
-            ## dist distances
+            ## plot dist distances
             plotp=f"{out_fh}_hist_distances.png"
             plt.figure()
             ax=plt.subplot()
             t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
             plt.tight_layout()
             plt.savefig(plotp)   
-            ## image labeled particles
+            ## plot image labeled particles
             fig=plt.figure(figsize=[10,10])
             ax=plt.subplot()
             ax=plot_trajectories(t_cor, image=frames[0],label=True,colorby='frame',cmap='hsv',
@@ -88,20 +92,23 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
 
 from htsimaging.lib.spt import frames2coords_cor
 from skimage.measure import label, regionprops
-def get_cellboxes(regions,test=False):
+def get_cellboxes(regions,plotp=None):
     import matplotlib.patches as mpatches
-    if test:
+    if not plotp is None:
         fig, ax = plt.subplots(figsize=(10, 6))
-        plt.imshow(regions)
+        plt.imshow(regions,cmap='binary')
     cellboxes=[]
-    for region in regionprops(regions.astype(int)):
+    for regioni,region in enumerate(regionprops(regions.astype(int))):
         box_xmnxmxymnymx=[region.centroid[1]-50,region.centroid[1]+50,region.centroid[0]-50,region.centroid[0]+50]
         cellboxes.append([int(i) for i in box_xmnxmxymnymx])
-        if test:
+        if not plotp is None:
             rect = mpatches.Rectangle([box_xmnxmxymnymx[0],box_xmnxmxymnymx[2]], 100, 100,
                                       fill=False, edgecolor='red', linewidth=2)
-            ax.text(region.centroid[1],region.centroid[0],f"{region.extent:.2f}",color='g')
+            ax.text(region.centroid[1],region.centroid[0],f"{regioni+1:d}",color='g')
+#             ax.text(region.centroid[1],region.centroid[0],f"{region.extent:.2f}",color='g')
             ax.add_patch(rect)
+    if not plotp is None:
+        savefig(plotp)
     return cellboxes
     
 def _plot(ax, coords, pos_columns, **plot_style):
@@ -400,7 +407,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
             cellsp=np.sort(cfg['trials'][trial]['bright_segmented_cells'])[0] # only bright field at the start
             cells=np.load(cellsp)
-            cellboxes=get_cellboxes(cells,test=test)
+            cellboxes=get_cellboxes(cells,plotp=f"{cfg['trials'][trial]['plotd']}/image_get_cellboxes.png")
             for celli,cellbox in enumerate(cellboxes):
                 print(f"{trial};cell{celli+1:08d}")
                 logging.info(f"{trial};cell{celli+1:08d}")
