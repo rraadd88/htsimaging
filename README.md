@@ -46,11 +46,13 @@ cd htsimaging;pip install -e .
 
 "Pull" updates
 ------------
-`htsimaging` is constantly under development. In order to update local repo to the latest version, run following command:
+`htsimaging` is constantly under development. In order to update local repo to the latest version, first change direcotry to (`cd`) `htsimaging` folder, and run following command:
 
 ```
 git pull origin master
 ```
+
+Often you may need to update the dependencies also. Dependencies such as (`rohan`).
 
 Dependencies 
 -------------
