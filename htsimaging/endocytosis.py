@@ -338,7 +338,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         cfg['cfgp']=cfgp
         cfg['cores']=cores
         cfg['bright_fn_marker']=bright_fn_marker
-        if cfg['bright_fn_marker']=='_T1C1':
+        if 'T1C1' in cfg['bright_fn_marker']:
             cfg['magnification']=150
         elif cfg['bright_fn_marker']=='_t':
             cfg['magnification']=100
