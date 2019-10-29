@@ -1,6 +1,6 @@
 import os
 from rohan.dandage.io_strs import get_datetime
-from rohan.dandage.io_files import copy
+from rohan.dandage.io_files import copyfile
 from rohan.dandage.io_sys import runbashcmd
 from rohan.global_imports import *
 
@@ -21,7 +21,6 @@ def set_opts(indp,outdp,yeast_segmentation_srcdp):
             f.write(f"{k}={cfg[k]}\n")
             
 from os import symlink
-from rohan.dandage.io_files import cp
 from rohan.global_imports import *
 def run_yeastspotter(cfg,test=False):
     cfg['segmentation_cell']={}
@@ -43,7 +42,7 @@ def run_yeastspotter(cfg,test=False):
         top=f"{cfg['segmentation_cell']['inputd']}/{basename(p)}"
         if not exists(top):
 #             print(p,top)   
-            cp(p,top)
+            copyfile(p,top)
 #             symlink(p,top)        
         else:
             logging.warning(f"exists: {top}")
@@ -53,5 +52,5 @@ def run_yeastspotter(cfg,test=False):
     runbashcmd(f"conda activate htsimaging;python {cfg['yeastspotter_srcd']}/segmentation.py",test=test)
     print(brightp2copyfromto)
     for p in brightp2copyfromto:
-        copy(brightp2copyfromto[p][0],brightp2copyfromto[p][1]) 
+        copyfile(brightp2copyfromto[p][0],brightp2copyfromto[p][1]) 
     return cfg
