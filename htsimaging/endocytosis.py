@@ -245,7 +245,7 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
             ax=plt.subplot(111)
             ax.imshow(frame,cmap=get_cmap_subset('binary_r',vmin=0.2,vmax=1),alpha=0.8,
                      )
-            ax.text(frame.shape[0],frame.shape[1],f"frame={framei:02d}",ha='right',va='bottom',size='20',color='y')
+            ax.text(frame.shape[0],frame.shape[1],f"frame={framei:05d}",ha='right',va='bottom',size='20',color='y')
             if not framei==0:
                 # traj of particle
                 for p in t_cor.loc[(t_cor['frame']==framei),'particle'].unique():
