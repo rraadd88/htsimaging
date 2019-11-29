@@ -98,9 +98,11 @@ def get_cellboxes(regions,plotp=None):
         fig, ax = plt.subplots(figsize=(10, 6))
         plt.imshow(regions,cmap='binary')
     cellboxes=[]
+    celli2props={}
     for regioni,region in enumerate(regionprops(regions.astype(int))):
         box_xmnxmxymnymx=[region.centroid[1]-50,region.centroid[1]+50,region.centroid[0]-50,region.centroid[0]+50]
         cellboxes.append([int(i) for i in box_xmnxmxymnymx])
+        celli2props[regioni+1]=region.area
         if not plotp is None:
             rect = mpatches.Rectangle([box_xmnxmxymnymx[0],box_xmnxmxymnymx[2]], 100, 100,
                                       fill=False, edgecolor='red', linewidth=2)
@@ -109,7 +111,10 @@ def get_cellboxes(regions,plotp=None):
             ax.add_patch(rect)
     if not plotp is None:
         savefig(plotp)
-    return cellboxes
+    df1=pd.DataFrame(pd.Series(celli2props))
+    df1.index.name='cell#'
+    df1.columns=['area']
+    return cellboxes,df1.reset_index()
     
 def _plot(ax, coords, pos_columns, **plot_style):
     """ This function wraps Axes.plot to make its call signature the same for
@@ -407,7 +412,8 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
             cellsp=np.sort(cfg['trials'][trial]['bright_segmented_cells'])[0] # only bright field at the start
             cells=np.load(cellsp)
-            cellboxes=get_cellboxes(cells,plotp=f"{cfg['trials'][trial]['plotd']}/image_get_cellboxes.png")
+            cellboxes,dcellprops=get_cellboxes(cells,plotp=f"{cfg['trials'][trial]['plotd']}/image_get_cellboxes.png")
+            to_table(dcellprops,f"{cellsp}.cellprops.tsv")
             for celli,cellbox in enumerate(cellboxes):
                 print(f"{trial};cell{celli+1:08d}")
                 logging.info(f"{trial};cell{celli+1:08d}")

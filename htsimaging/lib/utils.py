@@ -27,6 +27,18 @@ def filterframe(frame,cutoff=0):
     frame_cleand[frame_cleandi<cutoff]=0
     return frame_cleaned
 
+def get_data_by_regions(regions,img=None,prop_type='area'):
+    if prop_type=='mean_intensity':
+        ValueError("arg img is required")
+    regions_props= measure.regionprops(regions.astype(int),intensity_image=img)
+    regions_lbls = np.array([prop.label for prop in regions_props])
+    if prop_type=='area':
+        regions_props_selected = np.array([getattr(prop,prop_type)  for prop in regions_props])
+    df1=pd.DataFrame({'labels':regions_lbls,
+                      prop_type:regions_props_selected,
+                     })
+    return df1
+
 def filter_regions(regions,img=None,prop_type='area',mn=0,mx=0,check=False,plotp=None):
     if prop_type=='mean_intensity':
         ValueError("arg img is required")
