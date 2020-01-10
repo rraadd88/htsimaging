@@ -22,10 +22,10 @@ def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,magnification=100
     imseg=io.imread(imsegp,as_gray=True)
     regions=measure.label(imseg)
 #     fiterby_border_thickness,im.shape[1]+fiterby_border_thickness
-    regions=filter_regions(regions,im,prop_type='area',
-                           mn=1000*magnification/100,
-                           #mx=8000*magnification/100,
-                           check=True,plotp=plotp)
+#     regions=filter_regions(regions,im,prop_type='area',
+#                            mn=1000*magnification/100,
+#                            mx=8000*magnification/100,
+#                            check=True,plotp=plotp)
     regions=filter_regions(regions,im,prop_type='eccentricity',mn=0,mx=0.8,check=False)
     regions=filter_regions(regions,im,prop_type='centroid_x',
                            mn=fiterby_border_thickness,mx=im.shape[0]+fiterby_border_thickness,check=False)
