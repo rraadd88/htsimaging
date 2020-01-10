@@ -98,14 +98,19 @@ def get_cellboxes(regions,plotp=None):
     if not plotp is None:
         fig, ax = plt.subplots(figsize=(10, 6))
         plt.imshow(regions,cmap='binary')
+    cellbox_width=150
     cellboxes=[]
     celli2props={}
     for regioni,region in enumerate(regionprops(regions.astype(int))):
-        box_xmnxmxymnymx=[region.centroid[1]-50,region.centroid[1]+50,region.centroid[0]-50,region.centroid[0]+50]
+        box_xmnxmxymnymx=[region.centroid[1]-(cellbox_width*0.5)
+                          ,region.centroid[1]+(cellbox_width*0.5)
+                          ,region.centroid[0]-(cellbox_width*0.5)
+                          ,region.centroid[0]+(cellbox_width*0.5)
+                         ]
         cellboxes.append([int(i) for i in box_xmnxmxymnymx])
         celli2props[regioni+1]=region.area
         if not plotp is None:
-            rect = mpatches.Rectangle([box_xmnxmxymnymx[0],box_xmnxmxymnymx[2]], 100, 100,
+            rect = mpatches.Rectangle([box_xmnxmxymnymx[0],box_xmnxmxymnymx[2]], cellbox_width, cellbox_width,
                                       fill=False, edgecolor='red', linewidth=2)
             ax.text(region.centroid[1],region.centroid[0],f"{regioni+1:d}",color='g')
 #             ax.text(region.centroid[1],region.centroid[0],f"{region.extent:.2f}",color='g')
