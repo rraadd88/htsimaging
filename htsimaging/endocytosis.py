@@ -92,7 +92,7 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
         return t_cor
 
 from htsimaging.lib.spt import frames2coords_cor
-from skimage.measure import label, regionprops_table
+from skimage.measure import label, regionprops_table, regionprops
 def get_cellboxes(regions,plotp=None):
     import matplotlib.patches as mpatches
     if not plotp is None:
