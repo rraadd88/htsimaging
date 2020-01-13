@@ -39,9 +39,7 @@ def get_data_by_regions(regions,img=None,prop_type='area'):
                      })
     return df1
 
-def filter_regions(regions,img,
-                   prop_type,
-                   mn,mx,
+def filter_regions(regions,img=None,prop_type='area',mn=0,mx=0,
                    check=False,plotp=None):
     if prop_type=='mean_intensity':
         ValueError("arg img is required")
