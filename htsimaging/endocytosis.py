@@ -92,7 +92,7 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
         return t_cor
 
 from htsimaging.lib.spt import frames2coords_cor
-from skimage.measure import label, regionprops
+from skimage.measure import label, regionprops_table
 def get_cellboxes(regions,plotp=None):
     import matplotlib.patches as mpatches
     if not plotp is None:
@@ -100,7 +100,8 @@ def get_cellboxes(regions,plotp=None):
         plt.imshow(regions,cmap='binary')
     cellbox_width=150
     cellboxes=[]
-    celli2props={}
+#     celli2props={}
+    df1=pd.DataFrame(regionprops_table(regions.astype(int)))
     for regioni,region in enumerate(regionprops(regions.astype(int))):
         box_xmnxmxymnymx=[region.centroid[1]-(cellbox_width*0.5)
                           ,region.centroid[1]+(cellbox_width*0.5)
@@ -108,7 +109,7 @@ def get_cellboxes(regions,plotp=None):
                           ,region.centroid[0]+(cellbox_width*0.5)
                          ]
         cellboxes.append([int(i) for i in box_xmnxmxymnymx])
-        celli2props[regioni+1]=region.area
+#         celli2props[regioni+1]=region.area
         if not plotp is None:
             rect = mpatches.Rectangle([box_xmnxmxymnymx[0],box_xmnxmxymnymx[2]], cellbox_width, cellbox_width,
                                       fill=False, edgecolor='red', linewidth=2)
@@ -117,10 +118,10 @@ def get_cellboxes(regions,plotp=None):
             ax.add_patch(rect)
     if not plotp is None:
         savefig(plotp)
-    df1=pd.DataFrame(pd.Series(celli2props))
-    df1.index.name='cell#'
-    df1.columns=['area']
-    return cellboxes,df1.reset_index()
+#     df1=pd.DataFrame(pd.Series(celli2props))
+#     df1.index.name='cell#'
+#     df1.columns=['area']
+    return cellboxes,df1#.reset_index()
     
 def _plot(ax, coords, pos_columns, **plot_style):
     """ This function wraps Axes.plot to make its call signature the same for
