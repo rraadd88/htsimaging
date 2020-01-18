@@ -89,7 +89,7 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
 #plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True,'colorby':'frame','cmap':'hsv'})
             plotp=f"{out_fh}_trajectories.png"
             plt.tight_layout()
-            savefig(plotp,format='png')    
+            savefig(plotp)    
         else:
             t_cor=pd.DataFrame(columns=t_cor.columns)
             to_table(t_cor,ddistancesp)
@@ -297,11 +297,11 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
 def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,force=False):
     makedirs(dirname(out_fh),exist_ok=True)
     params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100}
-    # for 170x170 images
-    params_locate_start={'diameter':5,'minmass_percentile':90} 
-    # for larger images increase the diameter; round to odd number
+    # for 150x150 images
+    params_locate_start={'diameter':7,'minmass_percentile':90} 
+    # round to odd number
     # diameter for cellboxdth=100: 7
-    # diameter for cellboxdth=100: 11    
+    # diameter for cellboxdth=150: 7    
     params_link_df={'search_range':5,'memory':0,'link_strategy':'drop',}
     params_filter={'mass_cutoff':0.5,'size_cutoff':1,'ecc_cutoff':1,
                   'filter_stubs':False,'flt_mass_size':False,'flt_incomplete_trjs':False,
