@@ -83,7 +83,8 @@ def nd2frames(nd_fh):
 
 def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=True,figsize=None,debug=False):
     if debug:
-        out_fh=f"{out_fh}_{diameter:02d}"
+        out_fh=f"{out_fh}_diameter_{diameter:02d}"
+        print(out_fh)
     f = tp.locate(frame, diameter, invert=False)
     minmass=np.percentile(f['mass'],minmass_percentile)
     logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,minmass))
@@ -217,9 +218,10 @@ def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percent
         if dbug:
             for diameter in np.arange(3,50,4):
                 d=params_locate_start.copy()
-                params_locate=get_params_locate(frames[0],out_fh=out_fh,**d)
+                d['diameter']=diameter
+                params_locate=get_params_locate(frames[0],out_fh=out_fh,**d,dbug=True)
                 print(diameter, params_locate)
-                dbug
+                brk
 
         params_locate=get_params_locate(frames[0],out_fh=out_fh,**params_locate_start)
         logging.info(params_locate)
