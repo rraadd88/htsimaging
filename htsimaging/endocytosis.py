@@ -87,9 +87,9 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
 #params_text={'size':5},
                         )
 #plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True,'colorby':'frame','cmap':'hsv'})
-            plotp=f"{out_fh}_trajectories.svg"
+            plotp=f"{out_fh}_trajectories.png"
             plt.tight_layout()
-            plt.savefig(plotp,format='svg')    
+            plt.savefig(plotp,format='png')    
         else:
             t_cor=pd.DataFrame(columns=t_cor.columns)
             to_table(t_cor,ddistancesp)
@@ -325,6 +325,7 @@ def multiprocess_cellframes2distances(cellcfgp):
                          [np.load(p) for p in cellcfg['cellframesmaskedps']],
                          out_fh=f"{cellcfg['outp']}/plot_check",
                          test=cellcfg['test'],force=cellcfg['force'])
+    
 
 def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
     """
@@ -396,7 +397,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         from htsimaging.lib.segment import run_yeastspotter
         cfg['yeastspotter_srcd']=f"{dirname(realpath(__file__))}/../deps/yeast_segmentation"
         logging.info(cfg.keys())
-        cfg=run_yeastspotter(cfg,test=True)
+        cfg=run_yeastspotter(cfg,test=test)
         yaml.dump(cfg,open(cfgp,'w'))
         cfg['flag_segmentation_done']=True
         print('flag_segmentation_done')
