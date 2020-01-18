@@ -12,6 +12,10 @@ import logging
 import yaml
 from htsimaging.lib.utils import filter_regions
 
+import warnings
+warnings.filterwarnings("ignore")
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,magnification=100,plotp=None):
     """
     prop_type='area',mn=100,mx=8000
@@ -98,7 +102,7 @@ def get_cellboxes(regions,plotp=None):
     if not plotp is None:
         fig, ax = plt.subplots(figsize=(10, 6))
         plt.imshow(regions,cmap='binary')
-    cellbox_width=150
+    cellbox_width=100
     cellboxes=[]
 #     celli2props={}
     df1=pd.DataFrame(regionprops_table(regions.astype(int)))
@@ -223,8 +227,8 @@ def plot_trajectories(traj,image, colorby='particle', mpp=None, label=False,
             lc = LineCollection(segments, cmap=cmap)
             lc.set_array(color_numbers)
             ax.add_collection(lc)
-            ax.set_xlim(x.apply(np.min).min(), x.apply(np.max).max())
-            ax.set_ylim(y.apply(np.min).min(), y.apply(np.max).max())
+#             ax.set_xlim(x.apply(np.min).min(), x.apply(np.max).max())
+#             ax.set_ylim(y.apply(np.min).min(), y.apply(np.max).max())
     if label:
         unstacked = traj.set_index([t_column, 'particle'])[pos_columns].unstack()
         first_frame = int(traj[t_column].min())
@@ -314,6 +318,8 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
 
 from multiprocessing import Pool
 def multiprocess_cellframes2distances(cellcfgp):
+    celli=basename(dirname(cellcfgp))
+    print(celli);logging.info(celli)
     cellcfg=yaml.load(open(cellcfgp,'r'))
     cellframes2distances([np.load(p) for p in cellcfg['cellframeps']],
                          [np.load(p) for p in cellcfg['cellframesmaskedps']],
@@ -360,7 +366,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         cfg['trials']={basename(d):{'datad':d} for d in glob(f"{cfg['prjd']}/*") if (isdir(d) and basename(d).replace('/','')!='segmentation_cell' and not basename(d).startswith('_'))}
         trials_bad=[]
         for k in cfg['trials']:
-            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if cfg['bright_fn_marker'] in p]
+            cfg['trials'][k]['bright']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if cfg['bright_fn_marker'] in p and not p.endswith('.segmented.tif')]
             cfg['trials'][k]['gfp']=[abspath(p) for p in glob(f"{cfg['trials'][k]['datad']}/*tif") if not (cfg['bright_fn_marker'] in p or 'segmented' in p) ]
             cfg['trials'][k]['plotd']=f"{cfg['trials'][k]['datad']}/plot"
             makedirs(cfg['trials'][k]['plotd'],exist_ok=True)
@@ -387,18 +393,17 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         cfg=yaml.load(open(cfgp,'r'))
     ## get segments from brightfield images
     if not 'flag_segmentation_done' in cfg or force:
-        print('flag_segmentation_done')
         from htsimaging.lib.segment import run_yeastspotter
         cfg['yeastspotter_srcd']=f"{dirname(realpath(__file__))}/../deps/yeast_segmentation"
-        print(cfg.keys())
+        logging.info(cfg.keys())
         cfg=run_yeastspotter(cfg,test=True)
         yaml.dump(cfg,open(cfgp,'w'))
         cfg['flag_segmentation_done']=True
+        print('flag_segmentation_done')
 
 #     if not '' in cfg:
     ## get and filter cells from segments images
     if not 'flag_cells_done' in cfg or force:
-        print('flag_cells_done')
         for trial in cfg['trials']:
             if len(cfg['trials'][trial]['bright'])!=0:
                 cellsps=[]
@@ -411,9 +416,9 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
                 cfg['trials'][trial]['bright_segmented_cells']=cellsps                                        
         cfg['flag_cells_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
+        print('flag_cells_done')
 
     if not 'flag_cellframes_done' in cfg or force:    
-        print('flag_cellframes_done')
         cellcfgps=[]
         for trial in cfg['trials']:
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
@@ -422,7 +427,6 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
             cellboxes,dcellprops=get_cellboxes(cells,plotp=f"{cfg['trials'][trial]['plotd']}/image_get_cellboxes.png")
             to_table(dcellprops,f"{cellsp}.cellprops.tsv")
             for celli,cellbox in enumerate(cellboxes):
-                print(f"{trial};cell{celli+1:08d}")
                 logging.info(f"{trial};cell{celli+1:08d}")
                 cellcfg={}
                 cellcfg['outp']=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
@@ -467,28 +471,31 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         cfg['cellcfgps']=cellcfgps        
         cfg['flag_cellframes_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
+        print('flag_cellframes_done')
         
         # parallel processing
     if not 'flag_distances_done' in cfg or force:    
-        print('flag_distances_done')
         cellcfgps=np.sort(cfg['cellcfgps'])
         if len(cellcfgps)!=0:
             print(f"{get_datetime()}: processing: {len(cellcfgps)} cells.")
-            for cellcfgp in cellcfgps:
-                logging.info(f'processing {cellcfgp}')
-                multiprocess_cellframes2distances(cellcfgp)
-#             else:
-#                 pool=Pool(processes=cfg['cores']) 
-#                 pool.map(multiprocess_cellframes2distances, cellcfgps)
-#                 pool.close(); pool.join()         
+            if not test:
+                pool=Pool(processes=cfg['cores']) 
+                pool.map(multiprocess_cellframes2distances, cellcfgps)
+                pool.close(); pool.join()         
+            else:
+                for cellcfgp in cellcfgps:
+                    logging.info(f'processing {cellcfgp}')
+                    multiprocess_cellframes2distances(cellcfgp)
         cfg['flag_distances_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
-    logging.info('finished')
+        print('flag_distances_done')
+    print('finished')
 
 ## begin    
 import sys
-exfromnotebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
-if not exfromnotebook:
+is_interactive_notebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
+# from rohan.dandage.io_sys import is_interactive_notebook
+if not is_interactive_notebook:
     # assembling:
     parser = argh.ArghParser()
     parser.add_commands([run_trials])

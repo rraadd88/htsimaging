@@ -1,6 +1,7 @@
 from os.path import splitext, join, exists, isdir,basename,abspath,dirname
 from rohan.global_imports import *
 import trackpy as tp
+tp.ignore_logging()
 # import nd2reader
 import pims
 import pims_nd2
@@ -97,7 +98,7 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
             ax=plt.subplot(111)
             ax=tp.annotate(f, frame,ax=ax)
 #             plt.savefig('%s.annotate.pdf' % out_fh,format='pdf')
-            plt.savefig('%s.annotate.svg' % out_fh,format='svg')
+            plt.savefig('%s.annotate.png' % out_fh,format='png')
 #             plt.clf()
 
         if not out_fh is None:
@@ -106,14 +107,14 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
             fig=plt.figure()
             ax=plt.subplot(111)
             _=f.loc[:,cols].hist(ax=ax)
-            plt.savefig('%s.feature_props.svg' % out_fh,format='svg')
+            plt.savefig('%s.feature_props.png' % out_fh,format='png')
 #             plt.clf()
 
         if not out_fh is None:
             logging.info('getting plots bias')
             fig=plt.figure()
             tp.subpx_bias(f);
-            plt.savefig('%s.subpx_bias.svg' % out_fh,format='svg')
+            plt.savefig('%s.subpx_bias.png' % out_fh,format='png')
 #             plt.clf()
 
     params_locate={'diameter':diameter,
@@ -140,7 +141,7 @@ def frames2coords(frames,out_fh,
         if not exists(dn2dp['t']) or force:
             dn2df['f_batch']=tp.batch(frames,engine='numba',**params_locate)
             dn2df['t']=tp.link_df(dn2df['f_batch'], **params_link_df)
-            print(params_link_df)
+            logging.info(params_link_df)
             to_table(dn2df['f_batch'],dn2dp['f_batch'])
             to_table(dn2df['t'],dn2dp['t'])
         else:
@@ -160,7 +161,7 @@ def frames2coords(frames,out_fh,
             ax=plt.subplot(111)
             tp.mass_size(dn2df['t1'].groupby('particle').mean(),ax=ax);
             plt.tight_layout()
-            plt.savefig('%s.mass_size.svg' % out_fh,format='svg')        
+            plt.savefig('%s.mass_size.png' % out_fh,format='png')        
         if flt_mass_size:
             dn2df['t2'] = dn2df['t1'][((dn2df['t1']['mass'] > dn2df['t1']['mass'].quantile(mass_cutoff)) & (dn2df['t1']['size'] < dn2df['t1']['size'].quantile(size_cutoff)) &
                      (dn2df['t1']['ecc'] < ecc_cutoff))]
@@ -175,7 +176,7 @@ def frames2coords(frames,out_fh,
             ax=plt.subplot(111)
             tp.mass_size(dn2df['t2'].groupby('particle').mean(),ax=ax);
             plt.tight_layout()
-            plt.savefig('%s.mass_size_post_filtering.svg' % out_fh,format='svg')        
+            plt.savefig('%s.mass_size_post_filtering.png' % out_fh,format='png')        
         if flt_incomplete_trjs:
             dn2df['t2']=dn2df['t2'].reset_index()
             vals=pd.DataFrame(dn2df['t2']['particle'].value_counts())
@@ -185,7 +186,7 @@ def frames2coords(frames,out_fh,
         df=dn2df['t2'].groupby('particle').agg({'frame':lambda x : len(unique_dropna(x))>1})
         particles=df.loc[df['frame'],:].index.tolist()
         dn2df['t2']=dn2df['t2'].loc[dn2df['t2']['particle'].isin(particles),:]
-        print(f"removed single frame particles: {len(_particles)} to {len(particles)}")
+        logging.info(f"removed single frame particles: {len(_particles)} to {len(particles)}")
         if len(dn2df['t2'])==0:
             return None
         to_table(dn2df['t2'],dn2dp['t2'])
@@ -211,7 +212,7 @@ def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percent
     t_fltp=f'{out_fh}.t2.tsv'
     if not exists(t_fltp) or force:
         params_locate=get_params_locate(frames[0],out_fh=out_fh,**params_locate_start)
-        print(params_locate)
+        logging.info(params_locate)
         logging.info('getting coords')
         t_flt=frames2coords(frames=frames,out_fh=out_fh,
                             params_locate=params_locate,params_msd=params_msd,params_link_df=params_link_df,
