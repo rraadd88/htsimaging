@@ -446,7 +446,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
                     np.save(cellcfg['cellbrightp'], cellbright) 
                     # only one cell per box
                     cellcfg['cellbrightmaskp']=f"{cellcfg['outp']}/cellbrightmask.npy"
-                    cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=45,mx=55)==0
+                    cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=70,mx=80)==0
                     np.save(cellcfg['cellbrightmaskp'], cellbrightmask)
 
                     cellframeps=[]

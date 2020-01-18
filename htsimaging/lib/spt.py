@@ -43,7 +43,7 @@ def plot_msd(imsd,emsd,ax=None,scale="log",plot_fh=None,
            xlabel='lag time $t$')
     plt.tight_layout()
     if not plot_fh is None: 
-        ax.figure.savefig(plot_fh,format='pdf');
+        ax.figure.savefig(plot_fh);
 #         plt.clf();plt.close()
     return ax
 
@@ -60,7 +60,7 @@ def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
     ax.legend(loc = 'center left', bbox_to_anchor = (1.0, 0.5)) #bbox_to_anchor=(2.2, 1.0)
     plt.tight_layout()
     if not plot_fh is None: 
-        ax.figure.savefig(plot_fh,format='pdf');
+        ax.figure.savefig(plot_fh);
 #         plt.clf();plt.close()
     return ax 
 
@@ -81,7 +81,9 @@ def nd2frames(nd_fh):
         frames.iter_axes = 't'
     return frames
 
-def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=True,figsize=None):
+def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=True,figsize=None,debug=False):
+    if debug:
+        out_fh=f"{out_fh}_{diameter:02d}"
     f = tp.locate(frame, diameter, invert=False)
     minmass=np.percentile(f['mass'],minmass_percentile)
     logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,minmass))
@@ -98,7 +100,7 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
             ax=plt.subplot(111)
             ax=tp.annotate(f, frame,ax=ax)
 #             savefig('%s.annotate.pdf' % out_fh,format='pdf')
-            savefig('%s.annotate.png' % out_fh,format='png')
+            savefig(f'{out_fh}.annotate.png')
 #             plt.clf()
 
         if not out_fh is None:
@@ -107,14 +109,14 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
             fig=plt.figure()
             ax=plt.subplot(111)
             _=f.loc[:,cols].hist(ax=ax)
-            savefig('%s.feature_props.png' % out_fh,format='png')
+            savefig(f'{out_fh}.feature_props.png')
 #             plt.clf()
 
         if not out_fh is None:
             logging.info('getting plots bias')
             fig=plt.figure()
             tp.subpx_bias(f);
-            savefig('%s.subpx_bias.png' % out_fh,format='png')
+            savefig(f'{out_fh}.subpx_bias.png')
 #             plt.clf()
 
     params_locate={'diameter':diameter,
@@ -161,7 +163,7 @@ def frames2coords(frames,out_fh,
             ax=plt.subplot(111)
             tp.mass_size(dn2df['t1'].groupby('particle').mean(),ax=ax);
             plt.tight_layout()
-            savefig('%s.mass_size.png' % out_fh,format='png')        
+            savefig('%s.mass_size.png' % out_fh)        
         if flt_mass_size:
             dn2df['t2'] = dn2df['t1'][((dn2df['t1']['mass'] > dn2df['t1']['mass'].quantile(mass_cutoff)) & (dn2df['t1']['size'] < dn2df['t1']['size'].quantile(size_cutoff)) &
                      (dn2df['t1']['ecc'] < ecc_cutoff))]
@@ -176,7 +178,7 @@ def frames2coords(frames,out_fh,
             ax=plt.subplot(111)
             tp.mass_size(dn2df['t2'].groupby('particle').mean(),ax=ax);
             plt.tight_layout()
-            savefig('%s.mass_size_post_filtering.png' % out_fh,format='png')        
+            savefig('%s.mass_size_post_filtering.png' % out_fh)        
         if flt_incomplete_trjs:
             dn2df['t2']=dn2df['t2'].reset_index()
             vals=pd.DataFrame(dn2df['t2']['particle'].value_counts())
@@ -211,6 +213,14 @@ def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percent
                       force=False):
     t_fltp=f'{out_fh}.t2.tsv'
     if not exists(t_fltp) or force:
+        dbug=True
+        if dbug:
+            for diameter in np.arange(3,50,4):
+                d=params_locate_start.copy()
+                params_locate=get_params_locate(frames[0],out_fh=out_fh,**d)
+                print(diameter, params_locate)
+                dbug
+
         params_locate=get_params_locate(frames[0],out_fh=out_fh,**params_locate_start)
         logging.info(params_locate)
         logging.info('getting coords')
@@ -252,7 +262,7 @@ def nd2msd(nd_fh,
         figure=plt.figure()
         ax=plt.subplot(111)
         acf.plot(ax=ax)
-        savefig('%s.acf.pdf' % out_fh,format='pdf')
+        savefig('%s.acf.pdf' % out_fh)
 #         plt.clf()
     
     if not out_fh is None:
