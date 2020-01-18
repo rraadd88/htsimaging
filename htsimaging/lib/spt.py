@@ -97,8 +97,8 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
             fig=plt.figure(figsize=figsize)
             ax=plt.subplot(111)
             ax=tp.annotate(f, frame,ax=ax)
-#             plt.savefig('%s.annotate.pdf' % out_fh,format='pdf')
-            plt.savefig('%s.annotate.png' % out_fh,format='png')
+#             savefig('%s.annotate.pdf' % out_fh,format='pdf')
+            savefig('%s.annotate.png' % out_fh,format='png')
 #             plt.clf()
 
         if not out_fh is None:
@@ -107,14 +107,14 @@ def get_params_locate(frame,diameter=15,minmass_percentile=92,out_fh=None,test=T
             fig=plt.figure()
             ax=plt.subplot(111)
             _=f.loc[:,cols].hist(ax=ax)
-            plt.savefig('%s.feature_props.png' % out_fh,format='png')
+            savefig('%s.feature_props.png' % out_fh,format='png')
 #             plt.clf()
 
         if not out_fh is None:
             logging.info('getting plots bias')
             fig=plt.figure()
             tp.subpx_bias(f);
-            plt.savefig('%s.subpx_bias.png' % out_fh,format='png')
+            savefig('%s.subpx_bias.png' % out_fh,format='png')
 #             plt.clf()
 
     params_locate={'diameter':diameter,
@@ -161,7 +161,7 @@ def frames2coords(frames,out_fh,
             ax=plt.subplot(111)
             tp.mass_size(dn2df['t1'].groupby('particle').mean(),ax=ax);
             plt.tight_layout()
-            plt.savefig('%s.mass_size.png' % out_fh,format='png')        
+            savefig('%s.mass_size.png' % out_fh,format='png')        
         if flt_mass_size:
             dn2df['t2'] = dn2df['t1'][((dn2df['t1']['mass'] > dn2df['t1']['mass'].quantile(mass_cutoff)) & (dn2df['t1']['size'] < dn2df['t1']['size'].quantile(size_cutoff)) &
                      (dn2df['t1']['ecc'] < ecc_cutoff))]
@@ -176,7 +176,7 @@ def frames2coords(frames,out_fh,
             ax=plt.subplot(111)
             tp.mass_size(dn2df['t2'].groupby('particle').mean(),ax=ax);
             plt.tight_layout()
-            plt.savefig('%s.mass_size_post_filtering.png' % out_fh,format='png')        
+            savefig('%s.mass_size_post_filtering.png' % out_fh,format='png')        
         if flt_incomplete_trjs:
             dn2df['t2']=dn2df['t2'].reset_index()
             vals=pd.DataFrame(dn2df['t2']['particle'].value_counts())
@@ -252,7 +252,7 @@ def nd2msd(nd_fh,
         figure=plt.figure()
         ax=plt.subplot(111)
         acf.plot(ax=ax)
-        plt.savefig('%s.acf.pdf' % out_fh,format='pdf')
+        savefig('%s.acf.pdf' % out_fh,format='pdf')
 #         plt.clf()
     
     if not out_fh is None:

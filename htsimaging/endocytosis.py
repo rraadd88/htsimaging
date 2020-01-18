@@ -78,7 +78,7 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
             ax=plt.subplot()
             t_cor[['distance delta','distance total','distance effective']].dropna().hist(ax=ax)
             plt.tight_layout()
-            plt.savefig(plotp)   
+            savefig(plotp)   
             ## plot image labeled particles
             fig=plt.figure(figsize=[10,10])
             ax=plt.subplot()
@@ -89,7 +89,7 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
 #plot_trajectories(img=frames[-1],dtraj=t_cor,params_plot_traj={'label':True,'colorby':'frame','cmap':'hsv'})
             plotp=f"{out_fh}_trajectories.png"
             plt.tight_layout()
-            plt.savefig(plotp,format='png')    
+            savefig(plotp,format='png')    
         else:
             t_cor=pd.DataFrame(columns=t_cor.columns)
             to_table(t_cor,ddistancesp)
@@ -102,7 +102,7 @@ def get_cellboxes(regions,plotp=None):
     if not plotp is None:
         fig, ax = plt.subplots(figsize=(10, 6))
         plt.imshow(regions,cmap='binary')
-    cellbox_width=100
+    cellbox_width=150
     cellboxes=[]
 #     celli2props={}
     df1=pd.DataFrame(regionprops_table(regions.astype(int)))
@@ -285,7 +285,7 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
                         return ax
                 if not test:    
                     makedirs(dirname(plotp),exist_ok=True)
-                    plt.savefig(plotp)
+                    savefig(plotp)
                 plt.clf();plt.close();
             _framei=framei
         if not test:    
@@ -298,7 +298,10 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
     makedirs(dirname(out_fh),exist_ok=True)
     params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100}
     # for 170x170 images
-    params_locate_start={'diameter':7,'minmass_percentile':90} # for larger images increase the diameter
+    params_locate_start={'diameter':5,'minmass_percentile':90} 
+    # for larger images increase the diameter; round to odd number
+    # diameter for cellboxdth=100: 7
+    # diameter for cellboxdth=100: 11    
     params_link_df={'search_range':5,'memory':0,'link_strategy':'drop',}
     params_filter={'mass_cutoff':0.5,'size_cutoff':1,'ecc_cutoff':1,
                   'filter_stubs':False,'flt_mass_size':False,'flt_incomplete_trjs':False,
