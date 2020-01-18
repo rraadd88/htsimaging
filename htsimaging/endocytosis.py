@@ -285,7 +285,7 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
                         return ax
                 if not test:    
                     makedirs(dirname(plotp),exist_ok=True)
-                    savefig(plotp)
+                    plt.savefig(plotp)
                 plt.clf();plt.close();
             _framei=framei
         if not test:    
