@@ -215,5 +215,5 @@ def get_cellprops(regions,intensity_imgtype2img,properties=['area',
         df.index=df.index+1
         dn2df[imgtype]=dmap2lin(df,coln='property',idxn='cell #')
 
-    df=pd.concat(dn2df,axis=0).droplevel(0)
+    df=pd.concat(dn2df,axis=0,names=['image type']).droplevel(1)#.reset_index()
     return df

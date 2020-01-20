@@ -425,8 +425,8 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
 
             cells=np.load(cellsp)
             dcellprops=get_cellprops(cells,
-                                     imgtype2img={
-            "gfp":np.mean([tifffile.imread(p) for p in cfg['trials'][trial]['gfp']], axis=0),
+                                     intensity_imgtype2img={
+            "gfp mean":np.mean(frames,axis=0),
             "bright":tifffile.imread(cfg['trials'][trial]['bright'])})
             to_table(dcellprops,f"{cellsp}.cellprops.tsv")
             
