@@ -205,7 +205,8 @@ def get_cellprops(regions,intensity_imgtype2img,properties=['area',
     'minor_axis_length',
     'orientation',
     'perimeter',
-    'solidity']):
+    'solidity',
+    'centroid']):
     from skimage.external import tifffile
     dn2df={}
     for imgtype in intensity_imgtype2img:
