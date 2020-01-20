@@ -11,7 +11,7 @@ import pims
 import trackpy as tp
 import logging
 import yaml
-from htsimaging.lib.utils import filter_regions
+from htsimaging.lib.utils import filter_regions,get_cellprops
 
 import warnings
 warnings.filterwarnings("ignore")
