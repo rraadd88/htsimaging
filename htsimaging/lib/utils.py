@@ -187,3 +187,33 @@ def phasecorr(imlist,imlist2=None,clip=0): #cv  [rowini,rowend,colini,colend]
         return imlist_stb,imlist2_stb
     else:
         return imlist_stb
+
+## features
+def get_cellprops(regions,intensity_imgtype2img,properties=['area',
+    'bbox_area',
+    'convex_area',
+    'eccentricity',
+    'equivalent_diameter',
+    'euler_number',
+    'extent',
+    'filled_area',
+    'label',
+    'major_axis_length',
+    'max_intensity',
+    'mean_intensity',
+    'min_intensity',
+    'minor_axis_length',
+    'orientation',
+    'perimeter',
+    'solidity']):
+    from skimage.external import tifffile
+    dn2df={}
+    for imgtype in intensity_imgtype2img:
+        df=pd.DataFrame(measure.regionprops_table(regions.astype(int),
+                                           intensity_image=intensity_imgtype2img[imgtype],
+                                           properties=properties))
+        df.index=df.index+1
+        dn2df[imgtype]=dmap2lin(df,coln='property',idxn='cell #')
+
+    df=pd.concat(dn2df,axis=0).droplevel(0)
+    return df

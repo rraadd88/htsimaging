@@ -1,6 +1,7 @@
 import sys
 import argh                                       
 from skimage import io,exposure,restoration,filters,morphology,measure
+from skimage.external import tifffile
 from glob import glob,iglob
 from rohan.global_imports import *
 from rohan.dandage.io_sys import runbashcmd
@@ -96,7 +97,6 @@ def get_distance_travelled(frames,t_cor,out_fh,test=False,force=False):
         return t_cor
 
 from htsimaging.lib.spt import frames2coords_cor
-from skimage.measure import label, regionprops_table, regionprops
 def get_cellboxes(regions,plotp=None):
     import matplotlib.patches as mpatches
     if not plotp is None:
@@ -104,9 +104,7 @@ def get_cellboxes(regions,plotp=None):
         plt.imshow(regions,cmap='binary')
     cellbox_width=150
     cellboxes=[]
-#     celli2props={}
-    df1=pd.DataFrame(regionprops_table(regions.astype(int)))
-    for regioni,region in enumerate(regionprops(regions.astype(int))):
+    for regioni,region in enumerate(measure.regionprops(regions.astype(int))):
         box_xmnxmxymnymx=[region.centroid[1]-(cellbox_width*0.5)
                           ,region.centroid[1]+(cellbox_width*0.5)
                           ,region.centroid[0]-(cellbox_width*0.5)
@@ -122,10 +120,7 @@ def get_cellboxes(regions,plotp=None):
             ax.add_patch(rect)
     if not plotp is None:
         savefig(plotp)
-#     df1=pd.DataFrame(pd.Series(celli2props))
-#     df1.index.name='cell#'
-#     df1.columns=['area']
-    return cellboxes,df1#.reset_index()
+    return cellboxes
     
 def _plot(ax, coords, pos_columns, **plot_style):
     """ This function wraps Axes.plot to make its call signature the same for
@@ -427,9 +422,15 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         for trial in cfg['trials']:
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
             cellsp=np.sort(cfg['trials'][trial]['bright_segmented_cells'])[0] # only bright field at the start
+
             cells=np.load(cellsp)
-            cellboxes,dcellprops=get_cellboxes(cells,plotp=f"{cfg['trials'][trial]['plotd']}/image_get_cellboxes.png")
+            dcellprops=get_cellprops(cells,
+                                     imgtype2img={
+            "gfp":np.mean([tifffile.imread(p) for p in cfg['trials'][trial]['gfp']], axis=0),
+            "bright":tifffile.imread(cfg['trials'][trial]['bright'])})
             to_table(dcellprops,f"{cellsp}.cellprops.tsv")
+            
+            cellboxes=get_cellboxes(cells,plotp=f"{cfg['trials'][trial]['plotd']}/image_get_cellboxes.png")
             for celli,cellbox in enumerate(cellboxes):
                 logging.info(f"{trial};cell{celli+1:08d}")
                 cellcfg={}
