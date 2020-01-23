@@ -484,6 +484,10 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         if len(cellcfgps)!=0:
             print(f"{get_datetime()}: processing: {len(cellcfgps)} cells.")
             if not test:
+                for cellcfgp in cellcfgps:
+                    cellcfg_=read_dict(cellcfgp)
+                    cellcfg_['force']=force
+                    to_dict(cellcfg_,cellcfgp)
                 pool=Pool(processes=cfg['cores']) 
                 pool.map(multiprocess_cellframes2distances, cellcfgps)
                 pool.close(); pool.join()         
