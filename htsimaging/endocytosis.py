@@ -316,7 +316,7 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
 
 from multiprocessing import Pool
 def multiprocess_cellframes2distances(cellcfgp):
-    celli=basename(dirname(cellcfgp))
+    celli=dirname(cellcfgp)
     print(celli);logging.info(celli)
     cellcfg=yaml.load(open(cellcfgp,'r'))
     cellframes2distances([np.load(p) for p in cellcfg['cellframeps']],
