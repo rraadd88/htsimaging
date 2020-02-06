@@ -502,22 +502,22 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
 
 ## begin    
 import sys
-is_interactive_notebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
-# from rohan.dandage.io_sys import is_interactive_notebook
-if not is_interactive_notebook:
-    # assembling:
-    parser = argh.ArghParser()
-    parser.add_commands([run_trials])
-    from rohan.dandage.io_strs import get_logger,get_datetime
-    level=logging.ERROR
-    logp=get_logger(program='htsimaging',
-               argv=[get_datetime()],
-               level=level,
-               dp=None)        
-    logging.info(f"start. log file: {logp}")
-    print(f"start. log file: {logp}")    
-    if __name__ == '__main__':
-        logging.info('start')
-        parser.dispatch()
-else:
-    print("can not run from notebook")
+# is_interactive_notebook=any([basename(abspath('.')).startswith(f'{i:02d}_') for i in range(10)])
+# # from rohan.dandage.io_sys import is_interactive_notebook
+# if not is_interactive_notebook:
+# assembling:
+parser = argh.ArghParser()
+parser.add_commands([run_trials])
+from rohan.dandage.io_strs import get_logger,get_datetime
+level=logging.ERROR
+logp=get_logger(program='htsimaging',
+           argv=[get_datetime()],
+           level=level,
+           dp=None)        
+logging.info(f"start. log file: {logp}")
+print(f"start. log file: {logp}")    
+if __name__ == '__main__':
+    logging.info('start')
+    parser.dispatch()
+# else:
+#     print("can not run from notebook")
