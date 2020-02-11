@@ -1,34 +1,16 @@
 from rohan.global_imports import *
-from rohan.dandage.io_sys import runbashcmd
 import sys
-import argh                                       
-from glob import glob,iglob
-from os.path import isdir
+import argh
 
-from skimage import io,exposure,restoration,filters,morphology,measure
 from skimage.external import tifffile
 import pims
-import trackpy as tp
-
 from htsimaging.lib.global_vars import *
-from htsimaging.lib.utils import filter_regions,get_cellprops
-from htsimaging.lib.plot import *
-from htsimaging.lib.stat import *
+from htsimaging.lib.spt import apply_cellframes2distances
 
 import warnings
 warnings.filterwarnings("ignore")
 warnings.simplefilter(action='ignore', category=FutureWarning)
-
-from multiprocessing import Pool
-def multiprocess_cellframes2distances(cellcfgp):
-    celli=dirname(cellcfgp)
-    print(celli);logging.info(celli)
-    cellcfg=yaml.load(open(cellcfgp,'r'))
-    cellframes2distances([np.load(p) for p in sorted(cellcfg['cellframeps'])],
-                         [np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
-                         out_fh=f"{cellcfg['outp']}/plot_check",
-                         test=cellcfg['test'],force=cellcfg['force'])
-    
+from multiprocessing import Pool    
 
 def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
     """
@@ -106,7 +88,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
             for celli,cellbox in enumerate(cellboxes):
                 logging.info(f"{trial};cell{celli+1:08d}")
                 # make cg for cell
-                cellcfg=make_cell_cfg(cfg,cells)
+                cellcfg=make_cell_cfg(cfg,cells,cellbox)
                 cellcfgps.append(cellcfg['cfgp'])
         cfg['cellcfgps']=cellcfgps        
         cfg['flag_cellframes_done']=True
@@ -124,12 +106,12 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
                     cellcfg_['force']=force
                     to_dict(cellcfg_,cellcfgp)
                 pool=Pool(processes=cfg['cores']) 
-                pool.map(multiprocess_cellframes2distances, cellcfgps)
+                pool.map(apply_cellframes2distances, cellcfgps)
                 pool.close(); pool.join()         
             else:
                 for cellcfgp in cellcfgps:
                     logging.info(f'processing {cellcfgp}')
-                    multiprocess_cellframes2distances(cellcfgp)
+                    apply_cellframes2distances(cellcfgp)
         cfg['flag_distances_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
         print('flag_distances_done')

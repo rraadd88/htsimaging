@@ -6,6 +6,8 @@ tp.ignore_logging()
 import pims
 import pims_nd2
 import logging
+from htsimaging.lib.plot import *
+from htsimaging.lib.stat import *
 
 # %matplotlib inline
 
@@ -494,3 +496,16 @@ def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,forc
     ddist=get_distance_travelled(frames=cellframesmasked,t_cor=t_cor,out_fh=out_fh,test=test,force=force)
     if not (out_fh is None or ddist is None):
         make_gif(cellframes,ddist,f"{dirname(out_fh)}/vid",force=force)    
+        
+def apply_cellframes2distances(cellcfgp):
+    """
+    wrapper around cellframes2distances for multiprocessing
+    """
+    celli=dirname(cellcfgp)
+    print(celli);logging.info(celli)
+    cellcfg=yaml.load(open(cellcfgp,'r'))
+    cellframes2distances([np.load(p) for p in sorted(cellcfg['cellframeps'])],
+                         [np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
+                         out_fh=f"{cellcfg['outp']}/plot_check",
+                         test=cellcfg['test'],force=cellcfg['force'])
+        
