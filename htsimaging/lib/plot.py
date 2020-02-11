@@ -117,6 +117,28 @@ def plot_trajectories(traj,image, colorby='particle', mpp=None, label=False,
     ax.set_ylim(ax.get_ylim()[::-1])
     return ax    
 
+def plot_properties_cell(cellcfg,df2,cols_colorby):
+    from rohan.dandage.stat.norm import rescale
+    from rohan.dandage.plot.contour import plot_contourf
+    ncols=4
+    nrows=int(np.ceil(len(cols_colorby)/4))
+    fig,axes=plt.subplots(nrows,ncols,sharex=True,sharey=True,figsize=[nrows*4.5,ncols*3])
+    metric_type='max'
+    for axi,(colorby,ax) in enumerate(zip(cols_colorby,np.ravel(axes))):
+        plot_contourf(df2['x median'],df2['y median'],
+                      rescale(df2[f'{colorby} {metric_type}']),
+                     ax=ax,
+                     fig=fig,
+                      cbar=True if ((axi+1) % 4)==0 else False,
+                     params_contourf={'cmap':'binary','vmin':0,'vmax':1},)
+        df2.plot.scatter(x='x median',y='y median',color='lime',
+                         s=10,
+                         alpha=0.2,
+                         ax=ax)   
+        ax.contour(np.load(cellcfg['cellbrightp']), [0.5], linewidths=1, linestyles='dashed',colors='cyan')    
+        ax.set_title(colorby)
+        ax.set_axis_off()
+
 def make_gif(frames,t_cor,outd=None,test=False,force=False):
     from rohan.dandage.plot.colors import get_cmap_subset
     if not outd is None:
