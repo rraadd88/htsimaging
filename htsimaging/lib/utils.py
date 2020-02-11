@@ -219,7 +219,7 @@ def get_cellprops(regions,intensity_imgtype2img,properties=['area',
     df=pd.concat(dn2df,axis=0,names=['image type']).droplevel(1)#.reset_index()
     return df
 
-def get_summary_signal_by_roi(cellframes,xy_center=None,width=20,
+def get_signal_summary_by_roi(cellframes,xy_center=None,width=20,
                        fun_summary_frame='min',fun_summary_frames='median'):
     """
     place of the roi in the image is defined by
