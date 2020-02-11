@@ -468,3 +468,29 @@ def msd2params(imsd,
             imsd_flt.to_csv(imsd_flt_fh)
             params_flt.to_csv(params_flt_fh)
         return imsd_flt,params_flt
+    
+# from htsimaging.lib.spt import frames2coords_cor    
+def cellframes2distances(cellframes,cellframesmasked,out_fh=None,test=False,force=False):
+    makedirs(dirname(out_fh),exist_ok=True)
+    params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100}
+    # for 150x150 images
+    params_locate_start={'diameter':7,'minmass_percentile':90} 
+    # round to odd number
+    # diameter for cellboxdth=100: 7
+    # diameter for cellboxdth=150: 7    
+    params_link_df={'search_range':5,'memory':0,'link_strategy':'drop',}
+    params_filter={'mass_cutoff':0.5,'size_cutoff':1,'ecc_cutoff':1,
+                  'filter_stubs':False,'flt_mass_size':False,'flt_incomplete_trjs':False,
+                  'test':test}
+    makedirs(dirname(out_fh),exist_ok=True)
+    t_cor=frames2coords_cor(frames=cellframesmasked,out_fh=out_fh,
+                            params_locate_start=params_locate_start,
+                            params_msd=params_msd,params_link_df=params_link_df,
+                            params_filter=params_filter,
+                            subtract_drift=True,
+                            force=force)
+    if t_cor is None:
+        return None
+    ddist=get_distance_travelled(frames=cellframesmasked,t_cor=t_cor,out_fh=out_fh,test=test,force=force)
+    if not (out_fh is None or ddist is None):
+        make_gif(cellframes,ddist,f"{dirname(out_fh)}/vid",force=force)    
