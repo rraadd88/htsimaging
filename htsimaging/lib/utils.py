@@ -218,3 +218,17 @@ def get_cellprops(regions,intensity_imgtype2img,properties=['area',
 
     df=pd.concat(dn2df,axis=0,names=['image type']).droplevel(1)#.reset_index()
     return df
+
+def get_summary_signal_by_roi(cellframes,xy_center=None,width=20,
+                       fun_summary_frame='min',fun_summary_frames='median'):
+    """
+    place of the roi in the image is defined by
+    :param xy_center:
+    :param width:    
+    """
+    width_half=int(width*0.5)
+    frame=cellframes[0]
+    if xy_center is None:
+        xy_center=[int(i/2) for i in cellframes[0].shape]
+    signal_cytoplasm=getattr(np,fun_summary_frames)([getattr(np,fun_summary_frame)(frame[xy_center[1]-width_half:xy_center[1]+width_half,xy_center[0]-width_half:xy_center[0]+width_half]) for frame in cellframes])
+    return signal_cytoplasm
