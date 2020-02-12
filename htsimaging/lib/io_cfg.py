@@ -52,10 +52,11 @@ def make_cell_cfg(cfg,cells,cellbox):
     if not exists(cellcfg['cfgp']) or force:
         cellcfg={}
         cellcfg['outp']=outp
+        cellcfg['outp']=f"{outp}/plot"
         cellcfg['cfgp']=cfgp
         cellcfg['test']=test
         cellcfg['force']=force
-        cellcfg['cellbrightp']=f"{cellcfg['outp']}/cellbright.npy"
+        cellcfg['cellbrightp']=f"{cellcfg['outp']}/cellbright.npy"       
         cellbright=cells[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
 
         if not exists(dirname(cellcfg['cellbrightp'])): 
@@ -65,7 +66,6 @@ def make_cell_cfg(cfg,cells,cellbox):
         cellcfg['cellbrightmaskp']=f"{cellcfg['outp']}/cellbrightmask.npy"
         cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=70,mx=80)==0
         np.save(cellcfg['cellbrightmaskp'], cellbrightmask)
-
         cellframeps=[]
         cellframesmaskedps=[]
         for framei,frame in enumerate(frames):
@@ -86,6 +86,16 @@ def make_cell_cfg(cfg,cells,cellbox):
 
         cellcfg['cellframeps']=cellframeps
         cellcfg['cellframesmaskedps']=cellframesmaskedps
+        from htsimaging.lib.utils import get_signal_summary_by_roi
+        cellcfg['signal_cytoplasm']=get_signal_summary_by_roi(cellframes,
+                                 xy_center=None,
+                                width=20,
+                                fun_summary_frame='min',
+                                fun_summary_frames='median',)
+        cellcfg['cellgfpmaxp']=f"{cellcfg['outp']}/cellgfpmax.npy"
+        cellcfg['cellgfpminp']=f"{cellcfg['outp']}/cellgfpmin.npy"
+        np.save(cellcfg['cellgfpmaxp'], np.amax(cellframesmasked,axis=0))
+        np.save(cellcfg['cellgfpminp'], np.amin(cellframesmasked,axis=0))
         yaml.dump(cellcfg,open(cellcfg['cfgp'],'w'))
     else:
         cellcfg=read_dict(cfgp)

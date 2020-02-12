@@ -122,22 +122,39 @@ def plot_properties_cell(cellcfg,df2,cols_colorby):
     from rohan.dandage.plot.contour import plot_contourf
     ncols=4
     nrows=int(np.ceil(len(cols_colorby)/4))
-    fig,axes=plt.subplots(nrows,ncols,sharex=True,sharey=True,figsize=[nrows*4.5,ncols*3])
+    fig,axes=plt.subplots(nrows,ncols,
+#                           sharex=True,sharey=True,
+                          figsize=[nrows*5,ncols*3])
     metric_type='max'
     for axi,(colorby,ax) in enumerate(zip(cols_colorby,np.ravel(axes))):
-        plot_contourf(df2['x median'],df2['y median'],
+        fig,ax=plot_contourf(df2['x median'],df2['y median'],
                       rescale(df2[f'{colorby} {metric_type}']),
                      ax=ax,
                      fig=fig,
                       cbar=True if ((axi+1) % 4)==0 else False,
                      params_contourf={'cmap':'binary','vmin':0,'vmax':1},)
-        df2.plot.scatter(x='x median',y='y median',color='lime',
+        ax=df2.plot.scatter(x='x median',y='y median',color='lime',
                          s=10,
                          alpha=0.2,
                          ax=ax)   
         ax.contour(np.load(cellcfg['cellbrightp']), [0.5], linewidths=1, linestyles='dashed',colors='cyan')    
         ax.set_title(colorby)
-        ax.set_axis_off()
+        ax.invert_yaxis()
+        ax.axis('equal')
+#         ax.set_ylim(ax.get_ylim()[::-1])
+#         ax.set_axis_off()
+
+def dist_signal(img,threshold=None,label_threshold=None,params_hist={},ax=None):
+    ax=plt.subplot() if ax is None else ax 
+    a=np.ravel(img)
+    _=ax.hist(np.extract(a<np.quantile(a,0.9),a),**params_hist)
+    # ax.set_xlim(np.min(a),np.quantile(a,0.9))
+    if not threshold is None:
+        ax.axvline(threshold,color='r',label=label_threshold,linestyle='dashed')
+        ax.legend()
+    ax.set_xlabel('signal')
+    ax.set_ylabel('density')
+    return ax
 
 def make_gif(frames,t_cor,outd=None,test=False,force=False):
     from rohan.dandage.plot.colors import get_cmap_subset
