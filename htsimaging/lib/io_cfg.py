@@ -50,8 +50,8 @@ def make_project_cfg(prjd,bright_fn_marker,test,force,cores):
                                                               
 def make_cell_cfg(cfg,cells,trial,celli,cellbox):
     outp=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
-    cfgp=f"{cellcfg['outp']}/cfg.yml"
-    if not exists(cellcfg['cfgp']) or force:
+    cfgp=f"{outp}/cfg.yml"
+    if not exists(cfgp) or force:
         cellcfg={}
         cellcfg['outp']=outp
         cellcfg['plotp']=f"{outp}/plot"
