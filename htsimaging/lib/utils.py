@@ -231,4 +231,4 @@ def get_signal_summary_by_roi(cellframes,xy_center=None,width=20,
     if xy_center is None:
         xy_center=[int(i/2) for i in cellframes[0].shape]
     signal_cytoplasm=getattr(np,fun_summary_frames)([getattr(np,fun_summary_frame)(frame[xy_center[1]-width_half:xy_center[1]+width_half,xy_center[0]-width_half:xy_center[0]+width_half]) for frame in cellframes])
-    return signal_cytoplasm
+    return int(signal_cytoplasm)

@@ -48,7 +48,7 @@ def make_project_cfg(prjd,bright_fn_marker,test,force,cores):
         cfg=yaml.load(open(cfgp,'r'))
     return cfg
                                                               
-def make_cell_cfg(cfg,cells,trial,celli,cellbox):
+def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,test,force):
     outp=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
     cfgp=f"{outp}/cfg.yml"
     if not exists(cfgp) or force:
@@ -69,17 +69,20 @@ def make_cell_cfg(cfg,cells,trial,celli,cellbox):
                                                               
         # only one cell per box
         cellcfg['cellbrightmaskp']=f"{cellcfg['outp']}/cellbrightmask.npy"
+        from htsimaging.lib.utils import filter_regions
         cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=70,mx=80)==0
         np.save(cellcfg['cellbrightmaskp'], cellbrightmask)
         cellframeps=[]
         cellframesmaskedps=[]
+#         cellframes=[]
+        cellframesmaskeds=[]
         for framei,frame in enumerate(frames):
             cellframe=frame[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
             cellframep=f"{cellcfg['outp']}/cellframe/frame{framei:08d}.npy"
             if not exists(dirname(cellframep)): 
                 makedirs(dirname(cellframep),exist_ok=True)
             np.save(cellframep, cellframe)
-            cellframeps.append(cellframep)
+            cellframeps.append(cellframep);#cellframes.append(cellframe)
 
             cellframemasked=cellframe.copy()
             cellframemasked[cellbrightmask]=0
@@ -87,27 +90,27 @@ def make_cell_cfg(cfg,cells,trial,celli,cellbox):
             if not exists(dirname(cellframemaskedp)): 
                 makedirs(dirname(cellframemaskedp),exist_ok=True)
             np.save(cellframemaskedp, cellframemasked)
-            cellframesmaskedps.append(cellframemaskedp)
+            cellframesmaskedps.append(cellframemaskedp);cellframesmaskeds.append(cellframemasked)
 
         cellcfg['cellframeps']=cellframeps
         cellcfg['cellframesmaskedps']=cellframesmaskedps
         from htsimaging.lib.utils import get_signal_summary_by_roi
-        cellcfg['signal_cytoplasm']=get_signal_summary_by_roi(cellframes,
+        cellcfg['signal_cytoplasm']=get_signal_summary_by_roi(cellframesmaskeds,
                                  xy_center=None,
                                 width=20,
                                 fun_summary_frame='min',
                                 fun_summary_frames='median',)
         cellcfg['cellgfpmaxp']=f"{cellcfg['outp']}/cellgfpmax.npy"
         cellcfg['cellgfpminp']=f"{cellcfg['outp']}/cellgfpmin.npy"
-        np.save(cellcfg['cellgfpmaxp'], np.amax(cellframesmasked,axis=0))
-        np.save(cellcfg['cellgfpminp'], np.amin(cellframesmasked,axis=0))
+        np.save(cellcfg['cellgfpmaxp'], np.amax(cellframesmaskeds,axis=0))
+        np.save(cellcfg['cellgfpminp'], np.amin(cellframesmaskeds,axis=0))
                                                               
-        df0=pd.DataFrame({'step name':steps,
-        'step #':range(len(steps)),}).set_index('step #')
-        df0['dfp']=df0.apply(lambda x:f"{cellcfg['outp']}/d{'_'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.tsv" ,axis=1)
-        df0['plotp suffix']=df0.apply(lambda x:f"_{'__'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.png" ,axis=1)
-        cellcfg['track particles']=df0.set_index('step name')['dfp'].apply(lambda x: f"{basenamenoext(x)}p").to_dict()
-        to_table(df0,f"{cellcfg['outp']}/dinfo.tsv")
+#         df0=pd.DataFrame({'step name':steps,
+#         'step #':range(len(steps)),}).set_index('step #')
+#         df0['dfp']=df0.apply(lambda x:f"{cellcfg['outp']}/d{'_'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.tsv" ,axis=1)
+#         df0['plotp suffix']=df0.apply(lambda x:f"_{'__'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.png" ,axis=1)
+#         cellcfg['track particles']=df0.set_index('step name')['dfp'].apply(lambda x: f"{basenamenoext(x)}p").to_dict()
+#         to_table(df0,f"{cellcfg['outp']}/dinfo.tsv")
         yaml.dump(cellcfg,open(cellcfg['cfgp'],'w'))
     else:
         cellcfg=read_dict(cfgp)

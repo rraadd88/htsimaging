@@ -243,7 +243,7 @@ def cellcfg2distances(cellcfg,
 
     make_gif([np.load(p) for p in sorted(cellcfg['cellframeps'])],
              dn2df['filter_stubs'],
-             f"{dirname(outp)}/vid",
+             f"{cellcfg['outp']}/vid",
              force=force)    
         
 def apply_cellcfgp2distances(cellcfgp):

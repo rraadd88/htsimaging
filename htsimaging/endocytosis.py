@@ -88,7 +88,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
             for celli,cellbox in enumerate(cellboxes):
                 logging.info(f"{trial};cell{celli+1:08d}")
                 # make cg for cell
-                cellcfg=make_cell_cfg(cfg,cells,trial,celli,cellbox)
+                cellcfg=make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,test,force)
                 cellcfgps.append(cellcfg['cfgp'])
         cfg['cellcfgps']=cellcfgps        
         cfg['flag_cellframes_done']=True

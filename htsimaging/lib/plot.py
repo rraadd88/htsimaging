@@ -249,5 +249,6 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
     if not test:    
         plt.close('all')
         com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
+        from rohan.dandage.io_sys import runbashcmd
         runbashcmd(com)
     return gifp
