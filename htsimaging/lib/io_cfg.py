@@ -52,16 +52,19 @@ def make_cell_cfg(cfg,cells,cellbox):
     if not exists(cellcfg['cfgp']) or force:
         cellcfg={}
         cellcfg['outp']=outp
-        cellcfg['outp']=f"{outp}/plot"
+        cellcfg['plotp']=f"{outp}/plot"
         cellcfg['cfgp']=cfgp
         cellcfg['test']=test
         cellcfg['force']=force
         cellcfg['cellbrightp']=f"{cellcfg['outp']}/cellbright.npy"       
         cellbright=cells[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
-
+                                                              
         if not exists(dirname(cellcfg['cellbrightp'])): 
             makedirs(dirname(cellcfg['cellbrightp']),exist_ok=True)
         np.save(cellcfg['cellbrightp'], cellbright) 
+        makedirs(dirname(cellcfg['outp']),exist_ok=True)
+        makedirs(dirname(cellcfg['plotp']),exist_ok=True)
+                                                              
         # only one cell per box
         cellcfg['cellbrightmaskp']=f"{cellcfg['outp']}/cellbrightmask.npy"
         cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=70,mx=80)==0

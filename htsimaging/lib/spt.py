@@ -212,49 +212,113 @@ def frames2coords(frames,outp,
     else:
         return dn2df['t2']
     
+def test_locate_particles(cellcfg,params_locate,force=False):
+        # test locate
+    if exists(f"{cellcfg['outp']}/dlocate.tsv") and not force:
+        return
+    from htsimaging.lib.plot import dist_signal
+    frame =np.load(cellcfg['cellgfpmaxp'])
+    df1 = tp.locate(frame, **params_locate)
+    df1['particle']=df1.index
+    to_table(df1,f"{cellcfg['outp']}/dlocate_test.tsv")
+    
+    print(f"particles detected ={len(df1)}")
+    # plot dist signal of the detected particles
+    fig=plt.figure()
+    ax=plt.subplot()
+    dist_signal(np.load(cellcfg['cellgfpminp']),
+                params_hist={'bins':20,'label':'gfp min','density':True,'color':'k'},ax=ax)
+    dist_signal(np.load(cellcfg['cellgfpmaxp']),
+                params_hist={'bins':20,'label':'gfp max','density':True,'color':'green'},ax=ax)
+    dist_signal(df1['signal'],
+                threshold=cellcfg['signal_cytoplasm'],label_threshold='signal_cytoplasm',
+                params_hist={'bins':20,'label':'particles','density':True,'color':'r'},ax=ax)
+    savefig(f"{cellcfg['plotp']}/dist_signal_locate_particles.png")  
+    
+    # plot image of the detected particles
+    from htsimaging.lib.plot import image_locate_particles
+    image_locate_particles(df1,frame)
+    savefig(f"{cellcfg['plotp']}/image_locate_particles.png")  
+            
+    from htsimaging.lib.plot import plot_properties_cell
+    plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist())
+    savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
+    
+    
 # from htsimaging.lib.spt import frames2coords_cor    
 def cellcfg2distances(cellcfg,
                     # for 150x150 images
-                    params_locate={'diameter':15, 
-                      'noise_size':1,
-                      'separation':7,
-                      'threshold':4000,
-                      'preprocess':True,
-                      'invert':False,
-                      'max_iterations':50,
-                      'percentile':0,
-                      'engine':'numba',
-                      }
-                    # round to odd number
-                    params_link_df={'search_range':5,'memory':0,'link_strategy':'drop',},
-                    params_filter={'mass_cutoff':0.5,'size_cutoff':1,'ecc_cutoff':1,
-                                  'filter_stubs':False,'flt_mass_size':False,'flt_incomplete_trjs':False,
-                                  'test':test},
-                    params_msd={'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
+                    params={'locate':{'diameter':15, # round to odd number
+                                      'noise_size':1,
+                                      'separation':7,
+                                      'threshold':4000,
+                                      'preprocess':True,
+                                      'invert':False,
+                                      'max_iterations':50,
+                                      'percentile':0,
+                                      'engine':'numba',
+                                      },
+                    'link_df':{'search_range':5,
+                               'memory':0,
+                               'link_strategy':'drop',},
+                    'filter_stubs':{'threshold':3},
+#                     'filter':{'mass_cutoff':0.5,
+#                               'size_cutoff':1,
+#                               'ecc_cutoff':1,
+#                               'filter_stubs':False,
+#                               'flt_mass_size':False,
+#                               'flt_incomplete_trjs':False,
+# #                                   'test':test
+#                                   },
+#                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
+                           },
                     test=False,force=False):
-    params_locate['threshold']=cellcfg['signal_cytoplasm']
+    params['locate']['threshold']=cellcfg['signal_cytoplasm']
+    params['filter']['test']=test
+    params['link_df']['search_range']=params['locate']['separation']*0.5
+            
+    to_dict(params,f"{cellcfg['outp']}/params.yml")
     
-    
-    makedirs(dirname(cellcfg['outp']),exist_ok=True)
-    makedirs(dirname(cellcfg['plotp']),exist_ok=True)
+    test_locate_particles(cellcfg,params['locate'],force=force)
+    return
+    # get trajectories
+    steps=['locate','link','filter_stubs','subtract_drift','distance']
+    dn2dp={s:f"{cellcfg['outp']}/d{si}{s}.tsv" for si,s in enumerate(steps)}
+    dn2plotp_suffix={s:f"{si}{s}.png" for si,s in enumerate(steps)}
+    dn2df={}
+    dn2df['locate']=tp.batch([np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
+                             **params['locate'])
+    dn2df['link']=tp.link_df(dn2df['locate'], **params['link_df'])
 
-    cellframes=[np.load(p) for p in sorted(cellcfg['cellframeps'])],
-    cellframesmasked=[np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])]
-    
-    
-    t_cor=frames2coords(frames=cellframesmasked,
-                            outp=outp,
-                            params_locate_start=params_locate_start,
-                            params_msd=params_msd,
-                            params_link_df=params_link_df,
-                            params_filter=params_filter,
-                            subtract_drift=True,
-                            force=force)
-    if t_cor is None:
-        return None
-    ddist=get_distance_travelled(frames=cellframesmasked,t_cor=t_cor,outp=outp,test=test,force=force)
+    img_gfp=np.load(cellcfg['cellgfpmaxp'])
+    img_bright=np.load(cellcfg['cellbrightp'])
+#     %run ../htsimaging/htsimaging/lib/plot.py
+    from htsimaging.lib.plot import image_trajectories
+    image_trajectories(dtraj=dn2df['link'], 
+                       img_gfp=img_gfp, 
+                       img_bright=img_bright, fig=None, ax=None)
+    savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['link']}")
+
+    dn2df['filter_stubs']=tp.filter_stubs(dn2df['link'], threshold=params['filter_stubs']['threshold'])
+    dn2df['filter_stubs'].index.name='index'
+    dn2df['filter_stubs'].index=range(len(dn2df['filter_stubs']))
+    image_trajectories(dtraj=dn2df['filter_stubs'], 
+                       img_gfp=img_gfp, 
+                       img_bright=img_bright, fig=None, ax=None)
+    savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['filter_stubs']}")
+
+    d = tp.compute_drift(dn2df['filter_stubs'])
+    dn2df['subtract_drift'] = tp.subtract_drift(dn2df['filter_stubs'], d)
+    image_trajectories(dtraj=dn2df['subtract_drift'], 
+                       img_gfp=img_gfp, 
+                       img_bright=img_bright, fig=None, ax=None)
+    savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['subtract_drift']}")
+
+    from htsimaging.lib.stat import get_distance_travelled
+    dn2df['distance']=get_distance_travelled(t_cor=dn2df['subtract_drift'])
+
     if not (outp is None or ddist is None):
-        make_gif(cellframes,ddist,f"{dirname(outp)}/vid",force=force)    
+        make_gif([np.load(p) for p in sorted(cellcfg['cellframeps'])],ddist,f"{dirname(outp)}/vid",force=force)    
         
 def apply_cellcfg2distances(cellcfgp):
     """
