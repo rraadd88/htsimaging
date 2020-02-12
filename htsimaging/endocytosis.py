@@ -5,7 +5,6 @@ import argh
 from skimage.external import tifffile
 import pims
 from htsimaging.lib.global_vars import *
-from htsimaging.lib.spt import apply_cellframes2distances
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -42,15 +41,15 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
     
     """    
     # make cfg for the project
-    from htsimaging.lib.io_cfg import make_project_cfg
-    make_project_cfg(prjd,bright_fn_marker,test,force,cores)
+    from htsimaging.lib.io_cfg import make_project_cfg,make_cell_cfg
+    cfg=make_project_cfg(prjd,bright_fn_marker,test,force,cores)
     ## get segments from brightfield images
     if not 'flag_segmentation_done' in cfg or force:
         from htsimaging.lib.segment import run_yeastspotter
         cfg['yeastspotter_srcd']=f"{dirname(realpath(__file__))}/../deps/yeast_segmentation"
         logging.info(cfg.keys())
         cfg=run_yeastspotter(cfg,test=test)
-        yaml.dump(cfg,open(cfgp,'w'))
+        to_dict(cfg,cfg['cfgp'])
         cfg['flag_segmentation_done']=True
         print('flag_segmentation_done')
 
@@ -69,11 +68,12 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
                     cellsps.append(cellsp)
                 cfg['trials'][trial]['bright_segmented_cells']=cellsps                                        
         cfg['flag_cells_done']=True
-        yaml.dump(cfg,open(cfgp,'w'))
+        to_dict(cfg,cfg['cfgp'])
         print('flag_cells_done')
 
     if not 'flag_cellframes_done' in cfg or force:    
         from htsimaging.lib.segment import get_cellboxes
+        from htsimaging.lib.utils import get_cellprops
         cellcfgps=[]
         for trial in cfg['trials']:
             frames = pims.ImageSequence(np.sort(cfg['trials'][trial]['gfp']), as_grey=True)
@@ -88,15 +88,16 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
             for celli,cellbox in enumerate(cellboxes):
                 logging.info(f"{trial};cell{celli+1:08d}")
                 # make cg for cell
-                cellcfg=make_cell_cfg(cfg,cells,cellbox)
+                cellcfg=make_cell_cfg(cfg,cells,trial,celli,cellbox)
                 cellcfgps.append(cellcfg['cfgp'])
         cfg['cellcfgps']=cellcfgps        
         cfg['flag_cellframes_done']=True
-        yaml.dump(cfg,open(cfgp,'w'))
+        to_dict(cfg,cfg['cfgp'])
         print('flag_cellframes_done')
         
         # parallel processing
     if not 'flag_distances_done' in cfg or force:    
+        from htsimaging.lib.spt import apply_cellcfgp2distances                            
         cellcfgps=np.sort(cfg['cellcfgps'])
         if len(cellcfgps)!=0:
             print(f"{get_datetime()}: processing: {len(cellcfgps)} cells.")
@@ -106,14 +107,14 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
                     cellcfg_['force']=force
                     to_dict(cellcfg_,cellcfgp)
                 pool=Pool(processes=cfg['cores']) 
-                pool.map(apply_cellframes2distances, cellcfgps)
+                pool.map(apply_cellcfgp2distances, cellcfgps)
                 pool.close(); pool.join()         
             else:
                 for cellcfgp in cellcfgps:
                     logging.info(f'processing {cellcfgp}')
-                    apply_cellcfg2distances(cellcfgp)
+                    apply_cellcfgp2distances(cellcfgp)
         cfg['flag_distances_done']=True
-        yaml.dump(cfg,open(cfgp,'w'))
+        to_dict(cfg,cfg['cfgp'])
         print('flag_distances_done')
     print('finished')
 

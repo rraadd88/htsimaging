@@ -1,6 +1,8 @@
 from rohan.global_imports import *
+from os.path import isdir
+import pims
 
-def make_project_cfg():
+def make_project_cfg(prjd,bright_fn_marker,test,force,cores):
     prjd=abspath(prjd)
     cfgp=f"{prjd}/cfg.yml"
     if not exists(cfgp) or force:    
@@ -46,7 +48,7 @@ def make_project_cfg():
         cfg=yaml.load(open(cfgp,'r'))
     return cfg
                                                               
-def make_cell_cfg(cfg,cells,cellbox):
+def make_cell_cfg(cfg,cells,trial,celli,cellbox):
     outp=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
     cfgp=f"{cellcfg['outp']}/cfg.yml"
     if not exists(cellcfg['cfgp']) or force:

@@ -246,7 +246,7 @@ def cellcfg2distances(cellcfg,
              f"{dirname(outp)}/vid",
              force=force)    
         
-def apply_cellcfg2distances(cellcfgp):
+def apply_cellcfgp2distances(cellcfgp):
     """
     wrapper around cellcfg2distances for multiprocessing
     """
