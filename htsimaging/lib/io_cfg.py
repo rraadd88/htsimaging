@@ -99,6 +99,13 @@ def make_cell_cfg(cfg,cells,cellbox):
         cellcfg['cellgfpminp']=f"{cellcfg['outp']}/cellgfpmin.npy"
         np.save(cellcfg['cellgfpmaxp'], np.amax(cellframesmasked,axis=0))
         np.save(cellcfg['cellgfpminp'], np.amin(cellframesmasked,axis=0))
+                                                              
+        df0=pd.DataFrame({'step name':steps,
+        'step #':range(len(steps)),}).set_index('step #')
+        df0['dfp']=df0.apply(lambda x:f"{cellcfg['outp']}/d{'_'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.tsv" ,axis=1)
+        df0['plotp suffix']=df0.apply(lambda x:f"_{'__'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.png" ,axis=1)
+        cellcfg['track particles']=df0.set_index('step name')['dfp'].apply(lambda x: f"{basenamenoext(x)}p").to_dict()
+        to_table(df0,f"{cellcfg['outp']}/dinfo.tsv")
         yaml.dump(cellcfg,open(cellcfg['cfgp'],'w'))
     else:
         cellcfg=read_dict(cfgp)

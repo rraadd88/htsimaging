@@ -111,7 +111,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
             else:
                 for cellcfgp in cellcfgps:
                     logging.info(f'processing {cellcfgp}')
-                    apply_cellframes2distances(cellcfgp)
+                    apply_cellcfg2distances(cellcfgp)
         cfg['flag_distances_done']=True
         yaml.dump(cfg,open(cfgp,'w'))
         print('flag_distances_done')

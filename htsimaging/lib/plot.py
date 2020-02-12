@@ -192,6 +192,12 @@ def image_trajectories(dtraj,
     ax.grid(False)
     return ax
 
+def plot_image(ax,frame):
+    ax.imshow(frame,cmap='binary_r',alpha=0.8,
+             )
+    ax.grid(False)
+    return ax
+
 def make_gif(frames,t_cor,outd=None,test=False,force=False):
     from rohan.dandage.plot.colors import get_cmap_subset
     if not outd is None:
@@ -199,48 +205,49 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
         gifp=f"{dirname(outd)}/vid.gif"
     else:
         test=True
-        gifp=''
-    if not exists(gifp) or force:
-        for framei,frame in enumerate(frames):
-            plotp=f'{outd}/{framei:02d}.png'
-            plt.figure(figsize=[10,10])
-            ax=plt.subplot(111)
-            ax.imshow(frame,cmap=get_cmap_subset('binary_r',vmin=0.2,vmax=1),alpha=0.8,
-                     )
-            ax.text(frame.shape[0],frame.shape[1],f"frame={framei:05d}",ha='right',va='bottom',size='20',color='y')
-            if not framei==0:
+    if exists(gifp) and not force:
+        return
+    if not 'frame min' in t_cor:
+        df=t_cor.groupby('particle').agg({'frame':[min,max]})
+        df.columns=coltuples2str(df.columns)
+        t_cor=t_cor.merge(df,left_on='particle',right_index=True)
+    for framei,frame in enumerate(frames):
+        plotp=f'{outd}/{framei:02d}.jpeg'
+        plt.figure(figsize=[5,5])
+        ax=plt.subplot(111)
+        ax=plot_image(ax,frame)
+        ax.text(ax.get_xlim()[1],ax.get_ylim()[1],
+                f"frame#{framei:03d}",ha='right',
+                va='bottom',
+                size='20',
+                color='k')
+        if not framei==0:
+            # traj of particle
+            for p in t_cor.loc[(t_cor['frame']==framei),'particle'].unique():
                 # traj of particle
-                for p in t_cor.loc[(t_cor['frame']==framei),'particle'].unique():
-                    # traj of particle
-                    framei_min=t_cor['frame min'].unique()[0]
-                    df=t_cor.loc[((t_cor['particle']==p) \
-                                  & (t_cor['frame'].isin(range(framei_min,framei+1)))\
-                                  & (t_cor['x'].between(0,frame.shape[0]))\
-                                  & (t_cor['y'].between(0,frame.shape[1]))),:].sort_values(by=['frame','particle'])
-                    if test:
-                        print(df['frame'])
-                    if len(df)!=0:
-                        if not 'move' in df:
-                            df.plot.line(x='x',y='y',lw=7,
-                                c='limegreen',
-                                legend=False,ax=ax)                        
-                        else:
-                            df.plot.line(x='x',y='y',lw=7,
-                                c='limegreen' if df.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-                                legend=False,ax=ax)
-                ax.set_xlim(0,frame.shape[1])
-                ax.set_ylim(0,frame.shape[1])
-                plt.axis('off')
-                if test:
-                    if framei==3:
-                        return ax
-                if not test:    
-                    makedirs(dirname(plotp),exist_ok=True)
-                    plt.savefig(plotp)
-                plt.clf();plt.close();
-            _framei=framei
-        if not test:    
-            plt.close('all')
-            com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
-            runbashcmd(com)
+                framei_min=t_cor['frame min'].unique()[0]
+                df=t_cor.loc[((t_cor['particle']==p) \
+                              & (t_cor['frame'].isin(range(framei_min,framei+1)))\
+                              & (t_cor['x'].between(0,frame.shape[0]))\
+                              & (t_cor['y'].between(0,frame.shape[1]))),:].sort_values(by=['frame','particle'])
+                if len(df)!=0:
+                    if not 'move' in df:
+                        df.plot.line(x='x',y='y',lw=4,
+                            c='limegreen',
+                            legend=False,ax=ax)                        
+                    else:
+                        df.plot.line(x='x',y='y',lw=4,
+                            c='limegreen' if df.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
+                            legend=False,ax=ax)
+            ax.set_xlim(0,frame.shape[1])
+    #         ax.set_ylim(0,frame.shape[1])
+            plt.axis('off')
+            makedirs(dirname(plotp),exist_ok=True)
+            plt.savefig(plotp)
+            plt.clf();plt.close();
+        _framei=framei
+    if not test:    
+        plt.close('all')
+        com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
+        runbashcmd(com)
     return gifp

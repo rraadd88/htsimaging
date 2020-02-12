@@ -82,145 +82,17 @@ def nd2frames(nd_fh):
         frames.bundle_axes='yx'
         frames.iter_axes = 't'
     return frames
-
-# def get_params_locate(frame,diameter=15,minmass_percentile=92,outp=None,test=True,figsize=None,dbug=False):
-#     if dbug:
-#         outp=f"{outp}_diameter_{diameter:02d}"
-#     f = tp.locate(frame, diameter, invert=False)
-#     minmass=np.percentile(f['mass'],minmass_percentile)
-#     logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,minmass))
-                 
-#     f = tp.locate(frame, diameter, invert=False, minmass=np.percentile(f['mass'],minmass_percentile))
-#     logging.info('feature count= %s, %spercentile= %s'  % (len(f),minmass_percentile,
-#                                                            np.percentile(f['mass'],minmass_percentile)))
-    
-#     if test:
-#         if not outp is None:
-#             fig=plt.figure(figsize=figsize)
-#             ax=plt.subplot(111)
-#             ax=tp.annotate(f, frame,ax=ax)
-#             savefig(f'{outp}/image_get_params_locate.png')            
-#     params_locate={'diameter':diameter,
-#                   'minmass':minmass}
-#     return params_locate
-
-def plot_traj(frame,traj):
-    fig=plt.figure(figsize=[frame.shape[0]*0.02,frame.shape[1]*0.02])        
-    ax=plt.subplot(111)
-    ax.imshow(frame,cmap='binary_r',alpha=0.8)
-    ax = tp.plot_traj(traj,label=False,ax=ax,lw=2)
-    plt.tight_layout()
-    return ax
-
-def frames2coords(frames,outp,
-                  params_locate,params_msd,params_link_df={'search_range':20,},
-                  mass_cutoff=0.5,size_cutoff=0.5,ecc_cutoff=0.5,
-                      subtract_drift=False,
-                    filter_stubs=True,flt_mass_size=True,flt_incomplete_trjs=True,
-                    force=False,test=False):
-    dns=['f_batch','t','t1','t2']
-    dn2dp={dn:f'{outp}.{dn}.tsv' for dn in dns}
-    dn2df={}
-    if not exists(dn2dp['t2']) or force:
-        if not exists(dn2dp['t']) or force:
-            dn2df['f_batch']=tp.batch(frames,engine='numba',**params_locate)
-            dn2df['t']=tp.link_df(dn2df['f_batch'], **params_link_df)
-            logging.info(params_link_df)
-            to_table(dn2df['f_batch'],dn2dp['f_batch'])
-            to_table(dn2df['t'],dn2dp['t'])
-        else:
-            dn2df['t']=read_table(dn2dp['t'])
-        max_lagtime_stubs=params_msd["max_lagtime"]*params_msd["fps"]
-        if filter_stubs:
-            dn2df['t1'] = tp.filter_stubs(dn2df['t'], max_lagtime_stubs*1.25)
-            logging.info('filter_stubs: particle counts: %s to %s' % (dn2df['t']['particle'].nunique(),dn2df['t1']['particle'].nunique()))
-            if t1['particle'].nunique()==0:
-                logging.error('filter_stubs: particle counts =0; using less stringent conditions')
-                dn2df['t1'] = tp.filter_stubs(dn2df['t'], max_lagtime_stubs*1)
-        else:
-            dn2df['t1'] = dn2df['t'].copy()
-
-        if test:        
-            fig=plt.figure()
-            ax=plt.subplot(111)
-            tp.mass_size(dn2df['t1'].groupby('particle').mean(),ax=ax);
-            plt.tight_layout()
-            savefig('%s.mass_size.png' % outp)        
-        if flt_mass_size:
-            dn2df['t2'] = dn2df['t1'][((dn2df['t1']['mass'] > dn2df['t1']['mass'].quantile(mass_cutoff)) & (dn2df['t1']['size'] < dn2df['t1']['size'].quantile(size_cutoff)) &
-                     (dn2df['t1']['ecc'] < ecc_cutoff))]
-            logging.info('filter_mass_size: particle counts: %s to %s' % (dn2df['t1']['particle'].nunique(),dn2df['t2']['particle'].nunique()))
-            if len(t2)==0:
-                dn2df['t2'] = dn2df['t1'].copy()
-                logging.warning('filter_mass_size produced 0 particles; using t2=t1.copy()')
-        else:
-            dn2df['t2'] = dn2df['t1'].copy()
-        if test:        
-            fig=plt.figure()
-            ax=plt.subplot(111)
-            tp.mass_size(dn2df['t2'].groupby('particle').mean(),ax=ax);
-            plt.tight_layout()
-            savefig('%s.mass_size_post_filtering.png' % outp)        
-        if flt_incomplete_trjs:
-            dn2df['t2']=dn2df['t2'].reset_index()
-            vals=pd.DataFrame(dn2df['t2']['particle'].value_counts())
-            partis=[i for i in vals.index if vals.loc[i,'particle']>=int(vals.max())*0.95 ]
-            dn2df['t2']=dn2df['t2'].loc[[i for i in dn2df['t2'].index if (dn2df['t2'].loc[i,'particle'] in partis)],:]
-        _particles=dn2df['t2']['particle'].unique()
-        df=dn2df['t2'].groupby('particle').agg({'frame':lambda x : len(unique_dropna(x))>1})
-        particles=df.loc[df['frame'],:].index.tolist()
-        dn2df['t2']=dn2df['t2'].loc[dn2df['t2']['particle'].isin(particles),:]
-        logging.info(f"removed single frame particles: {len(_particles)} to {len(particles)}")
-        if len(dn2df['t2'])==0:
-            return None
-        to_table(dn2df['t2'],dn2dp['t2'])
-    else:
-        dn2df['t2']=read_table(dn2dp['t2'])
-    if test:
-        for traj in ['t','t1','t2']:
-            ax=plot_traj(frames[-1],traj=dn2df[traj])
-        logging.info('getting plots hist')
-        cols=['mass','size','ecc','signal','raw_mass','ep']
-        fig=plt.figure()
-        ax=plt.subplot(111)
-        _=dn2df['t2'].loc[:,cols].hist(ax=ax)        
-#     return dn2df['t2']
-
-# def frames2coords_cor(frames,params_locate_start={'diameter':11,'minmass_percentile':92},
-#                       params_filter={},
-#                       params_link_df={},
-#                      outp=None,
-#                      params_msd={},
-#                       force=False):
-#     t_fltp=f'{outp}.t2.tsv'
-#     if not exists(t_fltp) or force:
-#         logging.info(params_locate)
-#         logging.info('getting coords')
-#         t_flt=frames2coords(frames=frames,outp=outp,
-#                             params_locate=params_locate,
-#                             params_msd=params_msd,
-#                             params_link_df=params_link_df,
-#                             force=force,**params_filter)        
-#         if t_flt is None:
-#             return None
-#     else:
-#         t_flt=pd.read_csv(t_fltp,sep='\t')
-    if subtract_drift:
-        d = tp.compute_drift(dn2df['t2'])
-        dn2df['t2_corrected'] = tp.subtract_drift(dn2df['t2'], d)
-        return dn2df['t2_corrected']
-    else:
-        return dn2df['t2']
     
 def test_locate_particles(cellcfg,params_locate,force=False):
         # test locate
-    if exists(f"{cellcfg['outp']}/dlocate.tsv") and not force:
+    dlocate_testp=f"{cellcfg['outp']}/dlocate_test.tsv"
+    if exists(dlocate_testp) and not force:
         return
     from htsimaging.lib.plot import dist_signal
     frame =np.load(cellcfg['cellgfpmaxp'])
     df1 = tp.locate(frame, **params_locate)
     df1['particle']=df1.index
-    to_table(df1,f"{cellcfg['outp']}/dlocate_test.tsv")
+    to_table(df1,dlocate_testp)
     
     print(f"particles detected ={len(df1)}")
     # plot dist signal of the detected particles
@@ -244,13 +116,57 @@ def test_locate_particles(cellcfg,params_locate,force=False):
     plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist())
     savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
     
-    
+
+# df0=pd.DataFrame({'step name':steps,
+# 'step #':range(len(steps)),}).set_index('step #')
+# df0['dfp']=df0.apply(lambda x:f"{cellcfg['outp']}/d{'_'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.tsv" ,axis=1)
+# df0['plotp suffix']=df0.apply(lambda x:f"_{'__'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.png" ,axis=1)
+# cellcfg['track particles']=df0.set_index('step name')['dfp'].apply(lambda x: f"{basenamenoext(x)}p").to_dict()            
+# class track_particles():            
+#     def locate(cellcfg,params,dfp,plotp_suffix):
+            
+#         df1=tp.batch([np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
+#                                  **params)
+#         to_table(df1,dfp)
+#     def link(cellcfg,params,dfp,plotp_suffix):
+#         df1=tp.link_df(df, **params)
+#         to_table(cellcfg['']df1,dfp)
+            
+#         image_trajectories(dtraj=dn2df[step], 
+#                            img_gfp=img_gfp, 
+#                            img_bright=img_bright, fig=None, ax=None)
+#         savefig(f"{cellcfg['plotp']}/image_trajectories_{plotp_suffix}")
+#     def filter_stubs(cellcfg,params,dfp,plotp_suffix):
+#         df1=tp.filter_stubs(dn2df['link'], threshold=params['filter_stubs']['threshold'])
+#         df1.index.name='index'
+#         df1.index=range(len(df1))
+#         to_table(df1,dfp)
+                
+#         image_trajectories(dtraj=df1, 
+#                            img_gfp=img_gfp, 
+#                            img_bright=img_bright, fig=None, ax=None)
+#         savefig(f"{cellcfg['plotp']}/image_trajectories_{plotp_suffix}")
+
+#     def subtract_drift(cellcfg,params,dfp,plotp_suffix):
+#         df1 = tp.subtract_drift(df, tp.compute_drift(df))
+#         to_table(df1,dfp)
+                
+#         image_trajectories(dtraj=df1, 
+#                            img_gfp=img_gfp, 
+#                            img_bright=img_bright, fig=None, ax=None)
+#         savefig(f"{cellcfg['plotp']}/image_trajectories_{plotp_suffix}")
+
+#     def distance(cellcfg,params,dfp,plotp_suffix):
+#         from htsimaging.lib.stat import get_distance_travelled
+#         df1=get_distance_travelled(t_cor=df)
+#         to_table(df1,dfp)
+        
 # from htsimaging.lib.spt import frames2coords_cor    
 def cellcfg2distances(cellcfg,
                     # for 150x150 images
                     params={'locate':{'diameter':15, # round to odd number
                                       'noise_size':1,
-                                      'separation':7,
+#                                       'separation':15,
                                       'threshold':4000,
                                       'preprocess':True,
                                       'invert':False,
@@ -273,33 +189,38 @@ def cellcfg2distances(cellcfg,
 #                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
                            },
                     test=False,force=False):
+    params['locate']['separation']=params['locate']['diameter']*1.25
     params['locate']['threshold']=cellcfg['signal_cytoplasm']
-    params['filter']['test']=test
     params['link_df']['search_range']=params['locate']['separation']*0.5
             
     to_dict(params,f"{cellcfg['outp']}/params.yml")
     
     test_locate_particles(cellcfg,params['locate'],force=force)
-    return
     # get trajectories
-    steps=['locate','link','filter_stubs','subtract_drift','distance']
+    steps=['locate','link_df','filter_stubs','subtract_drift','distance']
     dn2dp={s:f"{cellcfg['outp']}/d{si}{s}.tsv" for si,s in enumerate(steps)}
     dn2plotp_suffix={s:f"{si}{s}.png" for si,s in enumerate(steps)}
+#     steps_=[k for k in dn2dp if not exists(dn2dp[k])]
+
+    from htsimaging.lib.plot import image_trajectories
+    img_gfp=np.load(cellcfg['cellgfpmaxp'])
+    img_bright=np.load(cellcfg['cellbrightp'])
+    
     dn2df={}
     dn2df['locate']=tp.batch([np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
                              **params['locate'])
-    dn2df['link']=tp.link_df(dn2df['locate'], **params['link_df'])
+    to_table(dn2df['locate'],dn2dp['locate'])
 
-    img_gfp=np.load(cellcfg['cellgfpmaxp'])
-    img_bright=np.load(cellcfg['cellbrightp'])
-#     %run ../htsimaging/htsimaging/lib/plot.py
-    from htsimaging.lib.plot import image_trajectories
-    image_trajectories(dtraj=dn2df['link'], 
+    dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
+    to_table(dn2df['link_df'],dn2dp['link_df'])
+    image_trajectories(dtraj=dn2df['link_df'], 
                        img_gfp=img_gfp, 
                        img_bright=img_bright, fig=None, ax=None)
-    savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['link']}")
+    savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['link_df']}")
+    to_table(dn2df['link_df'],dn2dp['link_df'])
 
-    dn2df['filter_stubs']=tp.filter_stubs(dn2df['link'], threshold=params['filter_stubs']['threshold'])
+    
+    dn2df['filter_stubs']=tp.filter_stubs(dn2df['link_df'], threshold=params['filter_stubs']['threshold'])
     dn2df['filter_stubs'].index.name='index'
     dn2df['filter_stubs'].index=range(len(dn2df['filter_stubs']))
     image_trajectories(dtraj=dn2df['filter_stubs'], 
@@ -316,9 +237,14 @@ def cellcfg2distances(cellcfg,
 
     from htsimaging.lib.stat import get_distance_travelled
     dn2df['distance']=get_distance_travelled(t_cor=dn2df['subtract_drift'])
+    
+    for k in dn2df:
+        to_table(dn2df[k],dn2dp[k])
 
-    if not (outp is None or ddist is None):
-        make_gif([np.load(p) for p in sorted(cellcfg['cellframeps'])],ddist,f"{dirname(outp)}/vid",force=force)    
+    make_gif([np.load(p) for p in sorted(cellcfg['cellframeps'])],
+             dn2df['filter_stubs'],
+             f"{dirname(outp)}/vid",
+             force=force)    
         
 def apply_cellcfg2distances(cellcfgp):
     """
