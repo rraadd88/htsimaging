@@ -93,8 +93,9 @@ def test_locate_particles(cellcfg,params_locate,force=False):
     df1 = tp.locate(frame, **params_locate)
     df1['particle']=df1.index
     to_table(df1,dlocate_testp)
-    
     print(f"particles detected ={len(df1)}")
+    if len(df1)==0:
+        return False
     # plot dist signal of the detected particles
     fig=plt.figure()
     ax=plt.subplot()
@@ -106,16 +107,16 @@ def test_locate_particles(cellcfg,params_locate,force=False):
                 threshold=cellcfg['signal_cytoplasm'],label_threshold='signal_cytoplasm',
                 params_hist={'bins':20,'label':'particles','density':True,'color':'r'},ax=ax)
     savefig(f"{cellcfg['plotp']}/dist_signal_locate_particles.png")  
-    
+
     # plot image of the detected particles
     from htsimaging.lib.plot import image_locate_particles
     image_locate_particles(df1,frame)
     savefig(f"{cellcfg['plotp']}/image_locate_particles.png")  
-            
+
     from htsimaging.lib.plot import plot_properties_cell
     plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist())
     savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
-    
+    return True
 
 # df0=pd.DataFrame({'step name':steps,
 # 'step #':range(len(steps)),}).set_index('step #')
@@ -195,7 +196,8 @@ def cellcfg2distances(cellcfg,
             
     to_dict(params,f"{cellcfg['outp']}/params.yml")
     
-    test_locate_particles(cellcfg,params['locate'],force=force)
+    if not test_locate_particles(cellcfg,params['locate'],force=force):
+        return 
     # get trajectories
     steps=['locate','link_df','filter_stubs','subtract_drift','distance']
     dn2dp={s:f"{cellcfg['outp']}/d{si}{s}.tsv" for si,s in enumerate(steps)}

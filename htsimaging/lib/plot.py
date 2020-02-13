@@ -212,7 +212,7 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
         df.columns=coltuples2str(df.columns)
         t_cor=t_cor.merge(df,left_on='particle',right_index=True)
     for framei,frame in enumerate(frames):
-        plotp=f'{outd}/{framei:02d}.jpeg'
+        plotp=f'{outd}/{framei:03d}.jpeg'
         plt.figure(figsize=[5,5])
         ax=plt.subplot(111)
         ax=plot_image(ax,frame)
@@ -248,7 +248,7 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
         _framei=framei
     if not test:    
         plt.close('all')
-        com=f"convert -delay 10 -loop 0 {outd}/*.png {gifp}"
+        com=f"convert -delay 10 -loop 0 {outd}/*.jpeg {gifp}"
         from rohan.dandage.io_sys import runbashcmd
         runbashcmd(com)
     return gifp
