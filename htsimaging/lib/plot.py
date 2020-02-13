@@ -161,26 +161,31 @@ def dist_signal(img,threshold=None,label_threshold=None,
     ax.set_ylabel('density')
     return ax
 
-def image_locate_particles(df1,frame,fig=None,ax=None):
+def image_background(img_region=None,img=None,ax=None):
+    ax=plt.subplot(111) if ax is None else ax
+    if not img is None:
+        ax.imshow(img,cmap='binary_r',alpha=0.8,)
+    if not img_region is None:
+        ax.contour(img_region, [0.5], linewidths=1, linestyles='dashed',colors='cyan')
+    ax.grid(False)
+    return ax
+
+def image_locate_particles(df1,frame,img_region,fig=None,ax=None):
     import trackpy as tp
     fig=plt.figure(figsize=[20,20]) if fig is None else fig
     ax=plt.subplot(111) if ax is None else ax
+    ax=image_background(img_region=img_region,img=frame,ax=ax)
     ax=tp.annotate(df1, frame,ax=ax)
     _=df1.apply(lambda x:ax.text(x['x'],x['y'],int(x['particle']),color='lime'),axis=1)
 #     ax.grid(False)
     return ax
 
-def image_trajectories(dtraj,
-                       img_gfp=None,img_bright=None,label=True,
+def image_trajectories(dtraj,img_gfp=None,img_bright=None,label=True,
                        fig=None,ax=None):
     import trackpy as tp    
     fig=plt.figure(figsize=[20,20]) if fig is None else fig
     ax=plt.subplot(111) if ax is None else ax
-    if not img_gfp is None:
-        ax.imshow(img_gfp,cmap='binary_r',
-                  alpha=0.8,)
-    if not img_bright is None:
-        ax.contour(img_bright, [0.5], linewidths=1, linestyles='dashed',colors='cyan')    
+    ax=image_background(img_region=img_bright,img=img_gfp,ax=ax)
     ax = tp.plot_traj(dtraj,label=False,ax=ax,lw=2,plot_style={'color':'lime'})
     dtrajagg=dtraj.groupby('particle').agg({c:np.median for c in ['x','y']}).reset_index()
 #     dtrajagg.columns=coltuples2str(dtrajagg.columns)
@@ -192,19 +197,17 @@ def image_trajectories(dtraj,
     ax.grid(False)
     return ax
 
-def plot_image(ax,frame):
-    ax.imshow(frame,cmap='binary_r',alpha=0.8,
-             )
-    ax.grid(False)
-    return ax
+def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
+             outd=None,
+             test=False,force=False):
+    if not cellcfg is None:
+        frames=[np.load(p) for p in sorted(cellcfg['cellframeps'])]
+        t_cor=read_table(f"{cellcfg['outp']}/d2filter_stubs.tsv")
+        img_bright=np.load(cellcfg['cellbrightp'])
+        outd=f"{cellcfg['outp']}/vid"
+    makedirs(outd,exist_ok=True)
+    gifp=f"{dirname(outd)}/vid.gif"
 
-def make_gif(frames,t_cor,outd=None,test=False,force=False):
-    from rohan.dandage.plot.colors import get_cmap_subset
-    if not outd is None:
-        makedirs(outd,exist_ok=True)
-        gifp=f"{dirname(outd)}/vid.gif"
-    else:
-        test=True
     if exists(gifp) and not force:
         return
     if not 'frame min' in t_cor:
@@ -215,7 +218,7 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
         plotp=f'{outd}/{framei:03d}.jpeg'
         plt.figure(figsize=[5,5])
         ax=plt.subplot(111)
-        ax=plot_image(ax,frame)
+        ax=image_background(img_region=img_bright,img=frame,ax=ax)
         ax.text(ax.get_xlim()[1],ax.get_ylim()[1],
                 f"frame#{framei:03d}",ha='right',
                 va='bottom',
@@ -252,3 +255,26 @@ def make_gif(frames,t_cor,outd=None,test=False,force=False):
         from rohan.dandage.io_sys import runbashcmd
         runbashcmd(com)
     return gifp
+
+def plot_trajectories_stats(df,coly,colx='frame',rescalex=True,
+                    label=None,
+                    axvlinex=None,
+                    params_plot={'color':'k','alpha':0.5},
+                   fig=None,ax=None):
+    fig=plt.figure() if fig is None else fig
+    axin=not ax is None
+    ax=plt.subplot() if ax is None else ax
+    label=label if not hasattr(df,'label') else df.name       
+    df=df.sort_values(colx)
+    if rescalex:
+        xmin=df[colx].min()
+        df[colx]=range(len(df)) 
+    ax=df.plot(x=colx,y=coly,ax=ax,label=label,**params_plot)
+    ax.set_xlim(df[colx].min(),df[colx].max()+2)
+    ax.set_ylim(df[coly].min(),df[coly].max())    
+    if not axvlinex is None:
+        ax.axvline(axvlinex-(xmin if rescalex else 0),
+               label='inflection point',color='gray')
+    ax.set_xlabel(colx);ax.set_ylabel(coly)
+    return ax
+                         

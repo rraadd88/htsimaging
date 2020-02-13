@@ -6,7 +6,7 @@ tp.ignore_logging()
 import pims
 import pims_nd2
 import logging
-from htsimaging.lib.plot import *
+# from htsimaging.lib.plot import *
 from htsimaging.lib.stat import *
 
 # %matplotlib inline
@@ -110,7 +110,9 @@ def test_locate_particles(cellcfg,params_locate,force=False):
 
     # plot image of the detected particles
     from htsimaging.lib.plot import image_locate_particles
-    image_locate_particles(df1,frame)
+    image_locate_particles(df1,
+                           frame=frame,
+                           img_region=np.load(cellcfg['cellbrightp']))
     savefig(f"{cellcfg['plotp']}/image_locate_particles.png")  
 
     from htsimaging.lib.plot import plot_properties_cell
@@ -162,12 +164,52 @@ def test_locate_particles(cellcfg,params_locate,force=False):
 #         df1=get_distance_travelled(t_cor=df)
 #         to_table(df1,dfp)
         
-# from htsimaging.lib.spt import frames2coords_cor    
+def trim_returns(df1):
+    from htsimaging.lib.stat import get_inflection_point
+    from htsimaging.lib.plot import plot_trajectories_stats
+    # get distance from center
+    from scipy.spatial import distance
+    center=[75,75]
+    df1['distance from center']=df1.apply(lambda x: distance.euclidean(center,[x['x'],x['y']]),axis=1)
+    # get inflection point if any
+    df1=df1.groupby('particle').apply(lambda x: get_inflection_point(x))
+    df2=df1.groupby('particle',as_index=False).apply(lambda df: df.set_index('frame').sort_index(axis=0).loc[df['inflection point'].unique()[0]:,:].reset_index())
+
+
+    fig=plt.figure(figsize=[20,4])
+    # plot before filtering
+    ax=plt.subplot()
+    df1.loc[df1['inflection point'].isnull(),:].groupby('particle').apply(lambda x: plot_trajectories_stats(x,
+                                                                            coly='distance from center',
+                                                                            colx='frame',
+                                                                           fig=fig,ax=ax,
+                                                                           rescalex=False,
+                                                                          params_plot={'color':'lime','alpha':0.5}))
+    df1.loc[~df1['inflection point'].isnull(),:].groupby('particle').apply(lambda x: plot_trajectories_stats(x,
+                                                                             coly='distance from center',
+                                                                             colx='frame',
+                                                                           fig=fig,ax=ax,
+                                                                           rescalex=False,
+                                                                            axvlinex=x['inflection point'].unique()[0],
+                                                                          params_plot={'color':'r','alpha':0.75}))
+
+    df2.loc[~df2['inflection point'].isnull(),:].groupby('particle').apply(lambda x: plot_trajectories_stats(x,
+                                                                             coly='distance from center',
+                                                                             colx='frame',
+                                                                           fig=fig,ax=ax,
+                                                                           rescalex=False,
+                                                                            axvlinex=x['inflection point'].unique()[0],
+                                                                          params_plot={'color':'g','alpha':1}))
+    ax.get_legend().remove()
+    ax.set_ylim(df1['distance from center'].min(),df1['distance from center'].max())               
+    ax.set_xlim(df1['frame'].min(),df1['frame'].max())
+    return df2
+            
 def cellcfg2distances(cellcfg,
                     # for 150x150 images
                     params={'locate':{'diameter':15, # round to odd number
                                       'noise_size':1,
-#                                       'separation':15,
+                                      'separation':15,
                                       'threshold':4000,
                                       'preprocess':True,
                                       'invert':False,
@@ -175,24 +217,17 @@ def cellcfg2distances(cellcfg,
                                       'percentile':0,
                                       'engine':'numba',
                                       },
-                    'link_df':{'search_range':5,
+                    'link_df':{
+                               'search_range':5,
                                'memory':0,
                                'link_strategy':'drop',},
-                    'filter_stubs':{'threshold':3},
-#                     'filter':{'mass_cutoff':0.5,
-#                               'size_cutoff':1,
-#                               'ecc_cutoff':1,
-#                               'filter_stubs':False,
-#                               'flt_mass_size':False,
-#                               'flt_incomplete_trjs':False,
-# #                                   'test':test
-#                                   },
+                    'filter_stubs':{'threshold':4},
 #                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
                            },
                     test=False,force=False):
     params['locate']['separation']=params['locate']['diameter']*1.25
     params['locate']['threshold']=cellcfg['signal_cytoplasm']
-    params['link_df']['search_range']=params['locate']['separation']*0.5
+    params['link_df']['search_range']=params['locate']['diameter']*0.33
             
     to_dict(params,f"{cellcfg['outp']}/params.yml")
     
@@ -202,8 +237,11 @@ def cellcfg2distances(cellcfg,
     steps=['locate','link_df','filter_stubs','subtract_drift','distance']
     dn2dp={s:f"{cellcfg['outp']}/d{si}{s}.tsv" for si,s in enumerate(steps)}
     dn2plotp_suffix={s:f"{si}{s}.png" for si,s in enumerate(steps)}
-#     steps_=[k for k in dn2dp if not exists(dn2dp[k])]
-
+    steps_done=[k for k in dn2dp if exists(dn2dp[k])]
+    
+    if ('distance' in steps_done) and not force:
+        return
+           
     from htsimaging.lib.plot import image_trajectories
     img_gfp=np.load(cellcfg['cellgfpmaxp'])
     img_bright=np.load(cellcfg['cellbrightp'])
@@ -228,6 +266,18 @@ def cellcfg2distances(cellcfg,
     image_trajectories(dtraj=dn2df['filter_stubs'], 
                        img_gfp=img_gfp, 
                        img_bright=img_bright, fig=None, ax=None)
+    savefig(f"{cellcfg['plotp']}/image_trajectories_pre_{dn2plotp_suffix['filter_stubs']}")
+
+    dn2df['filter_stubs']=trim_returns(dn2df['filter_stubs'])
+    savefig(f"{cellcfg['plotp']}/image_trajectories_stats_trimming_{dn2plotp_suffix['filter_stubs']}")
+
+    dn2df['filter_stubs']=tp.filter_stubs(dn2df['filter_stubs'], threshold=params['filter_stubs']['threshold'])
+    dn2df['filter_stubs'].index.name='index'
+    dn2df['filter_stubs'].index=range(len(dn2df['filter_stubs']))
+            
+    image_trajectories(dtraj=dn2df['filter_stubs'], 
+                       img_gfp=img_gfp, 
+                       img_bright=img_bright, fig=None, ax=None)
     savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['filter_stubs']}")
 
     d = tp.compute_drift(dn2df['filter_stubs'])
@@ -243,10 +293,10 @@ def cellcfg2distances(cellcfg,
     for k in dn2df:
         to_table(dn2df[k],dn2dp[k])
 
-    make_gif([np.load(p) for p in sorted(cellcfg['cellframeps'])],
-             dn2df['filter_stubs'],
-             f"{cellcfg['outp']}/vid",
-             force=force)    
+#     make_gif([np.load(p) for p in sorted(cellcfg['cellframeps'])],
+#              dn2df['filter_stubs'],
+#              f"{cellcfg['outp']}/vid",
+#              force=force)    
         
 def apply_cellcfgp2distances(cellcfgp):
     """

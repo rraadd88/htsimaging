@@ -30,3 +30,15 @@ def get_distance_travelled(t_cor):
     t_cor['distance effective per frame']=t_cor.apply(lambda x : distance_effective(particle=x['particle'],frame1=x['frame min'],frame2=x['frame'],t_cor=t_cor) ,axis=1)
     t_cor['intensity']=t_cor['mass']            
     return t_cor
+
+def get_slope(df,ds):
+    return sc.stats.linregress(df.loc[ds.index,'frame'],df.loc[ds.index,'distance from center']).slope
+def get_inflection_point(df,threshold_slope=0.25):
+    label=df.name
+    df['slope distance from center versus frame']=df.rolling(4)['y'].apply(lambda x: get_slope(df,x),raw=False)
+    if any(df['slope distance from center versus frame']>threshold_slope) and not all(df['slope distance from center versus frame']>threshold_slope):
+        inflection_point=df.set_index('frame')['slope distance from center versus frame'].idxmax()
+    else:
+        inflection_point=None
+    df['inflection point']=inflection_point
+    return df
