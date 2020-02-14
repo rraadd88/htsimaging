@@ -54,6 +54,7 @@ def get_distance_from_centroid(df1,center=[75,75]):
     df1['distance effective from centroid per frame']=df1.apply(lambda x: distance.euclidean(center,[x['x'],x['y']]),axis=1)
     df=df1.groupby('particle',as_index=False).agg({'distance effective from centroid per frame':[np.min,np.max]})
     df.columns=coltuples2str(df.columns)
-    df=df.rename(columns={c:c if not ' per frame' in c else c.replace(' per frame','') for c in df})
+    df=df.rename(columns={c:c if not 'per frame a' in c else c.replace('per frame a','') for c in df})
+#     print(df.columns)
     df['distance effective from centroid']=df['distance effective from centroid max']-df['distance effective from centroid min']
     return df1.merge(df,on='particle',how='left')
