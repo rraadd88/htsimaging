@@ -114,10 +114,12 @@ def test_locate_particles(cellcfg,params_locate,force=False):
                            frame=frame,
                            img_region=np.load(cellcfg['cellbrightp']))
     savefig(f"{cellcfg['plotp']}/image_locate_particles.png")  
-
-    from htsimaging.lib.plot import plot_properties_cell
-    plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist())
-    savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
+    try:
+        from htsimaging.lib.plot import plot_properties_cell
+        plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist())
+        savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
+    except:
+        print(f"plot_properties_cell bugged for {cellcfg['cfgp']}")
     return True
 
 # df0=pd.DataFrame({'step name':steps,
@@ -167,10 +169,6 @@ def test_locate_particles(cellcfg,params_locate,force=False):
 def trim_returns(df1):
     from htsimaging.lib.stat import get_inflection_point
     from htsimaging.lib.plot import plot_trajectories_stats
-    # get distance from center
-    from scipy.spatial import distance
-    center=[75,75]
-    df1['distance from center']=df1.apply(lambda x: distance.euclidean(center,[x['x'],x['y']]),axis=1)
     # get inflection point if any
     df1=df1.groupby('particle').apply(lambda x: get_inflection_point(x))
     df2=df1.groupby('particle',as_index=False).apply(lambda df: df.set_index('frame').sort_index(axis=0).loc[df['inflection point'].unique()[0]:,:].reset_index())
@@ -222,6 +220,7 @@ def cellcfg2distances(cellcfg,
                                'memory':0,
                                'link_strategy':'drop',},
                     'filter_stubs':{'threshold':4},
+                    'get_distance_from_centroid':{'center':[75,75]},
 #                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
                            },
                     test=False,force=False):
@@ -243,6 +242,8 @@ def cellcfg2distances(cellcfg,
         return
            
     from htsimaging.lib.plot import image_trajectories
+    from htsimaging.lib.stat import get_distance_from_centroid
+           
     img_gfp=np.load(cellcfg['cellgfpmaxp'])
     img_bright=np.load(cellcfg['cellbrightp'])
     
@@ -267,7 +268,8 @@ def cellcfg2distances(cellcfg,
                        img_gfp=img_gfp, 
                        img_bright=img_bright, fig=None, ax=None)
     savefig(f"{cellcfg['plotp']}/image_trajectories_pre_{dn2plotp_suffix['filter_stubs']}")
-
+    
+    dn2df['filter_stubs']=get_distance_from_centroid(dn2df['filter_stubs'],**params['get_distance_from_centroid'])
     dn2df['filter_stubs']=trim_returns(dn2df['filter_stubs'])
     savefig(f"{cellcfg['plotp']}/image_trajectories_stats_trimming_{dn2plotp_suffix['filter_stubs']}")
 
@@ -287,6 +289,7 @@ def cellcfg2distances(cellcfg,
                        img_bright=img_bright, fig=None, ax=None)
     savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['subtract_drift']}")
 
+    dn2df['distance']=get_distance_from_centroid(dn2df['distance'],**params['get_distance_from_centroid'])
     from htsimaging.lib.stat import get_distance_travelled
     dn2df['distance']=get_distance_travelled(t_cor=dn2df['subtract_drift'])
     
@@ -302,8 +305,8 @@ def apply_cellcfgp2distances(cellcfgp):
     """
     wrapper around cellcfg2distances for multiprocessing
     """
-    celli=dirname(cellcfgp)
-    print(celli);logging.info(celli)
+    celli='/'.join(dirname(cellcfgp).split('/')[:-2])
+    print(celli,end=': ');logging.info(celli)
     cellcfg=yaml.load(open(cellcfgp,'r'))
     cellcfg2distances(cellcfg,
                       test=cellcfg['test'],

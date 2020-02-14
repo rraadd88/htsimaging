@@ -38,7 +38,7 @@ def run_yeastspotter(cfg,test=False):
         for brightp in brightps:
             brightp2copyfromto[brightp]=[f"{cfg['segmentation_cell']['outputd']}/masks/{basename(brightp)}",f"{dirname(brightp)}/{basename(brightp)}.segmented.tif"]
         cfg['trials'][triald]['bright_segmented']=[f"{dirname(p)}/{basename(p)}.segmented.tif" for p in brightps]
-    print(brightp2copyfromto)
+#     print(brightp2copyfromto)
         
     for p in brightp2copyfromto:
         top=f"{cfg['segmentation_cell']['inputd']}/{basename(p)}"
@@ -50,9 +50,10 @@ def run_yeastspotter(cfg,test=False):
             logging.warning(f"exists: {top}")
     set_opts(cfg['segmentation_cell']['inputd'],cfg['segmentation_cell']['outputd'],
              yeast_segmentation_srcdp=cfg['yeastspotter_srcd'])
-
+    print('running yeastspotter')
     runbashcmd(f"conda activate htsimaging;python {cfg['yeastspotter_srcd']}/segmentation.py",test=test)
-    print(brightp2copyfromto)
+#                 &> {cfg['segmentation_cell']['parentd']}/log_yeastspotter.txt
+#     print(brightp2copyfromto)
     for p in brightp2copyfromto:
         if exists(brightp2copyfromto[p][0]):
             copyfile(brightp2copyfromto[p][0],brightp2copyfromto[p][1]) 
