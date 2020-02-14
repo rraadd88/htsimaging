@@ -229,6 +229,7 @@ def cellcfg2distances(cellcfg,
     to_dict(params,f"{cellcfg['outp']}/params.yml")
     
     if not test_locate_particles(cellcfg,params['locate'],force=force):
+        print(cellcfg['cfgp'])
         return 
     # get trajectories
     steps=['locate','link_df','filter_stubs','subtract_drift','distance']
@@ -237,7 +238,8 @@ def cellcfg2distances(cellcfg,
     steps_done=[k for k in dn2dp if exists(dn2dp[k])]
     
     if ('distance' in steps_done) and not force:
-        return
+       print(cellcfg['cfgp']) 
+       return
            
     from htsimaging.lib.plot import image_trajectories
     from htsimaging.lib.stat import get_distance_from_centroid
@@ -264,6 +266,7 @@ def cellcfg2distances(cellcfg,
     dn2df['filter_stubs'].index=range(len(dn2df['filter_stubs']))
     if len(dn2df['filter_stubs'])==0:
         to_table(dn2df['filter_stubs'],dn2dp['distance'])
+        print(cellcfg['cfgp'])
         return 
     image_trajectories(dtraj=dn2df['filter_stubs'], 
                        img_gfp=img_gfp, 
@@ -279,6 +282,7 @@ def cellcfg2distances(cellcfg,
     dn2df['filter_stubs'].index=range(len(dn2df['filter_stubs']))
     if len(dn2df['filter_stubs'])==0:
         to_table(dn2df['filter_stubs'],dn2dp['distance'])
+        print(cellcfg['cfgp'])
         return             
     image_trajectories(dtraj=dn2df['filter_stubs'], 
                        img_gfp=img_gfp, 
