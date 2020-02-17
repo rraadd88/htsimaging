@@ -252,6 +252,7 @@ def cellcfg2distances(cellcfg,
                              **params['locate'])
     to_table(dn2df['locate'],dn2dp['locate'])
 
+    dn2df['locate']=dn2df['locate']['frame'].astype(np.integer)
     dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
     to_table(dn2df['link_df'],dn2dp['link_df'])
     image_trajectories(dtraj=dn2df['link_df'], 
