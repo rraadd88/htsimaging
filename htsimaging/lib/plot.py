@@ -152,7 +152,7 @@ def dist_signal(img,threshold=None,label_threshold=None,
                 ax=None):
     ax=plt.subplot() if ax is None else ax 
     a=np.ravel(img)
-    _=ax.hist(np.extract(a<np.quantile(a,0.9),a),**params_hist)
+    _=ax.hist(np.extract(a<np.quantile(a,0.9),a),linewidth=0,**params_hist)
     # ax.set_xlim(np.min(a),np.quantile(a,0.9))
     if not threshold is None:
         ax.axvline(threshold,label=label_threshold,**params_axvline)

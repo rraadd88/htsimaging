@@ -86,9 +86,12 @@ def nd2frames(nd_fh):
 def test_locate_particles(cellcfg,params_locate,force=False,test=False):
     dlocate_testp=f"{cellcfg['outp']}/dlocate_test.tsv"
     if exists(dlocate_testp) and not force and not test:
-        return
+        return True
     from htsimaging.lib.plot import dist_signal
-    cellgfpmax =np.load(cellcfg['cellgfpmaxp'])
+    cellgfpmin=np.load(cellcfg['cellgfpminp'])
+    cellgfpmin=np.where(cellgfpmin==cellcfg['signal_cytoplasm'], np.nan, cellgfpmin)
+    cellgfpmax=np.load(cellcfg['cellgfpmaxp'])
+    cellgfpmax=np.where(cellgfpmax==0, np.nan, cellgfpmax)    
     df1 = tp.locate(cellgfpmax, **params_locate)
     df1['particle']=df1.index
     if not test:
@@ -99,10 +102,10 @@ def test_locate_particles(cellcfg,params_locate,force=False,test=False):
     # plot dist signal of the detected particles
     fig=plt.figure()
     ax=plt.subplot()
-    dist_signal(np.load(cellcfg['cellgfpmaxp']),
+    dist_signal(cellgfpmin,
                 params_hist={'bins':20,'label':'gfp min',
                              'density':True,'color':'k'},ax=ax)
-    dist_signal(np.load(cellcfg['cellgfpmaxp']),
+    dist_signal(cellgfpmax,
                 params_hist={'bins':20,'label':'gfp max',
                              'density':True,'color':'green'},ax=ax)
     dist_signal(df1['signal'],
