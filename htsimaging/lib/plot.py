@@ -218,6 +218,7 @@ def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
         df=t_cor.groupby('particle').agg({'frame':[min,max]})
         df.columns=coltuples2str(df.columns)
         t_cor=t_cor.merge(df,left_on='particle',right_index=True)
+    t_cor=t_cor.sort_values(['frame','particle'])
     for framei,frame in enumerate(frames):
         plotp=f'{outd}/{framei:03d}.jpeg'
         plt.figure(figsize=[5,5])

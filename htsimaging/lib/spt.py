@@ -89,14 +89,14 @@ def test_locate_particles(cellcfg,params_locate,force=False,test=False):
         return True
     from htsimaging.lib.plot import dist_signal
     cellgfpmin=np.load(cellcfg['cellgfpminp'])
-    cellgfpmin=np.where(cellgfpmin==cellcfg['signal_cytoplasm'], np.nan, cellgfpmin)
+#     cellgfpmin=np.where(cellgfpmin==cellcfg['signal_cytoplasm'], np.nan, cellgfpmin)
     cellgfpmax=np.load(cellcfg['cellgfpmaxp'])
-    cellgfpmax=np.where(cellgfpmax==0, np.nan, cellgfpmax)    
+#     cellgfpmax=np.where(cellgfpmax==cellcfg['signal_cytoplasm'], np.nan, cellgfpmax)    
     df1 = tp.locate(cellgfpmax, **params_locate)
     df1['particle']=df1.index
     if not test:
         to_table(df1,dlocate_testp)
-    logging.info(f"particles detected ={len(df1)}")
+    logging.info(f"particles detected ={len(df1)}") if not test else print(f"particles detected ={len(df1)}")
     if len(df1)==0:
         return False
     # plot dist signal of the detected particles
@@ -169,7 +169,7 @@ def trim_returns(df1):
             
 def cellcfg2distances(cellcfg,
                     # for 150x150 images
-                    params={'locate':{'diameter':15, # round to odd number
+                    params={'locate':{'diameter':9, # round to odd number
                                       'noise_size':1,
                                       'separation':15,
                                       'threshold':4000,
