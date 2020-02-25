@@ -118,7 +118,7 @@ def test_locate_particles(cellcfg,params_locate,force=False,test=False):
     from htsimaging.lib.plot import image_locate_particles
     ax=image_locate_particles(df1,
                            frame=cellgfpmax,
-                           img_region=np.load(cellcfg['cellbrightp'])
+                           img_region=np.load(cellcfg['cellbrightp']),
                            annotate_particles=False)
     _=ax.text(0,1,'\n'.join([f"{k}:{params_locate[k]}" for k in params_locate]),
               va='top',color='lime')
@@ -205,7 +205,7 @@ def cellcfg2distances(cellcfg,
     steps_done=[k for k in dn2dp if exists(dn2dp[k])]
     
     if ('distance' in steps_done) and not force:
-       print(cellcfg['cfgp']) 
+       print(cellcfg['cfgp'])
        return
            
     from htsimaging.lib.plot import image_trajectories
@@ -218,7 +218,8 @@ def cellcfg2distances(cellcfg,
     dn2df['locate']=tp.batch([np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
                              **params['locate'])
 #     to_table(dn2df['locate'],dn2dp['locate'])
-
+    if len(dn2df['locate'])==0:
+        return
     dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
 #     to_table(dn2df['link_df'],dn2dp['link_df'])
     image_trajectories(dtraj=dn2df['link_df'], 

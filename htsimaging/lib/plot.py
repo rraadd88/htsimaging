@@ -198,7 +198,7 @@ def image_trajectories(dtraj,img_gfp=None,img_bright=None,label=True,
     ax.grid(False)
     return ax
 
-def plot_image_particles(t_cor,img_bright=None,frame=None,framei=0,particle2color=None,test=False,outd=None):
+def plot_moving_particles(t_cor,img_bright=None,frame=None,framei=0,particle2color=None,test=False,outd=None):
     plotp=f'{outd}/{framei:03d}.jpeg'
     plt.figure(figsize=[5,5])
     ax=plt.subplot(111)
@@ -271,7 +271,7 @@ def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
         t_cor=t_cor.merge(df,left_on='particle',right_index=True)
     t_cor=t_cor.sort_values(['frame','particle'])
     for framei,frame in enumerate(frames):
-        plot_image_particles(t_cor,img_bright=img_bright,frame=frame,
+        plot_moving_particles(t_cor,img_bright=img_bright,frame=frame,
                             framei=framei,particle2color=particle2color,
                              outd=outd,
                              test=False)

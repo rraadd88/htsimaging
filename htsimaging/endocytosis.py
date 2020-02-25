@@ -36,9 +36,10 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=N
         Here, `images_190919` will be prjd
         so the correct command will be
         python endocytosis.py run-trials /path/to/images_190919 _T1C1
-
+        
     :param bright_fn_marker: _t if inhouse microscope else if chul: _T1C1    
-    
+    :param rerun_step: flag_segmentation_done, flag_cells_done, flag_cellframes_done, flag_distances_done
+
     """
     if not rerun_step is None:
         if isinstance(rerun_step,str):
@@ -104,11 +105,11 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=N
         cellcfgps=np.sort(cfg['cellcfgps'])
         if len(cellcfgps)!=0:
             print(f"{get_datetime()}: processing: {len(cellcfgps)} cells.")
+            for cellcfgp in cellcfgps:
+                cellcfg_=read_dict(cellcfgp)
+                cellcfg_['force']=force if rerun_step is None else True
+                to_dict(cellcfg_,cellcfgp)
             if not test:
-                for cellcfgp in cellcfgps:
-                    cellcfg_=read_dict(cellcfgp)
-                    cellcfg_['force']=force
-                    to_dict(cellcfg_,cellcfgp)
                 pool=Pool(processes=cfg['cores']) 
                 pool.map(apply_cellcfgp2distances, cellcfgps)
                 pool.close(); pool.join()         
