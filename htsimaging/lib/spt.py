@@ -83,7 +83,7 @@ def nd2frames(nd_fh):
         frames.iter_axes = 't'
     return frames
     
-def test_locate_particles(cellcfg,params_locate,force=False):
+def test_locate_particles(cellcfg,params_locate,force=False,plot=False):
         # test locate
     dlocate_testp=f"{cellcfg['outp']}/dlocate_test.tsv"
     if exists(dlocate_testp) and not force:
@@ -114,7 +114,7 @@ def test_locate_particles(cellcfg,params_locate,force=False):
                            frame=frame,
                            img_region=np.load(cellcfg['cellbrightp']))
     savefig(f"{cellcfg['plotp']}/image_locate_particles.png")  
-    if len(df1)>=5:
+    if len(df1)>=5 or plot:
         from htsimaging.lib.plot import plot_properties_cell
         plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist())
         savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
@@ -228,7 +228,7 @@ def cellcfg2distances(cellcfg,
             
     to_dict(params,f"{cellcfg['outp']}/params.yml")
     
-    if not test_locate_particles(cellcfg,params['locate'],force=force):
+    if not test_locate_particles(cellcfg,params['locate'],force=force,plot=True):
         print(cellcfg['cfgp'])
         return 
     # get trajectories
