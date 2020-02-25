@@ -170,13 +170,14 @@ def image_background(img_region=None,img=None,ax=None):
     ax.grid(False)
     return ax
 
-def image_locate_particles(df1,frame,img_region,fig=None,ax=None):
+def image_locate_particles(df1,frame,img_region,fig=None,ax=None,annotate_particles=False):
     import trackpy as tp
     fig=plt.figure(figsize=[20,20]) if fig is None else fig
     ax=plt.subplot(111) if ax is None else ax
     ax=image_background(img_region=img_region,img=frame,ax=ax)
     ax=tp.annotate(df1, frame,ax=ax)
-    _=df1.apply(lambda x:ax.text(x['x'],x['y'],int(x['particle']),color='lime'),axis=1)
+    if annotate_particles:
+        _=df1.apply(lambda x:ax.text(x['x'],x['y'],int(x['particle']),color='lime'),axis=1)
 #     ax.grid(False)
     return ax
 
@@ -197,8 +198,47 @@ def image_trajectories(dtraj,img_gfp=None,img_bright=None,label=True,
     ax.grid(False)
     return ax
 
+def plot_image_particles(t_cor,img_bright=None,frame=None,framei=0,particle2color=None,test=False,outd=None):
+    plotp=f'{outd}/{framei:03d}.jpeg'
+    plt.figure(figsize=[5,5])
+    ax=plt.subplot(111)
+    if not ((img_bright is None) and (frame is None)):
+        ax=image_background(img_region=img_bright,img=frame,ax=ax)
+    ax.text(ax.get_xlim()[1],ax.get_ylim()[1],
+            f"frame#{framei:03d}",ha='right',
+            va='bottom',
+            size='20',
+            color='k')
+    for p in t_cor.loc[(t_cor['frame']==framei),'particle'].unique():
+        framei_min=t_cor['frame min'].unique()[0]
+        df=t_cor.loc[((t_cor['particle']==p) \
+                      & (t_cor['frame'].isin(range(framei_min,framei+1)))\
+                      & (t_cor['x'].between(0,frame.shape[0]))\
+                      & (t_cor['y'].between(0,frame.shape[1]))),:].sort_values(by=['frame','particle'])
+        if len(df)!=0:
+            if framei!=0:    
+                df.plot.line(x='x',y='y',lw=4,
+                    c='limegreen' if particle2color is None else particle2color[p],
+                    legend=False,ax=ax)
+            else:
+                df.plot.scatter(x='x',y='y',s=4,
+                    c='limegreen' if particle2color is None else particle2color[p],
+                    legend=False,ax=ax)
+            if test:
+                d=df.head(1).T.to_dict()
+                d=d[list(d.keys())[0]]
+                ax.text(x=d['x'],y=d['y'],s=int(d['particle']),
+                    color='magenta',
+                    )
+    ax.set_xlim(0,frame.shape[1])
+    if not test:
+        plt.axis('off')
+        makedirs(dirname(plotp),exist_ok=True)
+        plt.savefig(plotp)
+        plt.clf();plt.close();
+        
 def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
-             outd=None,
+             outd=None,particle2color=None,
              test=False,force=False):
     if not cellcfg is None:
         if frames is None:
@@ -209,6 +249,17 @@ def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
             img_bright=np.load(cellcfg['cellbrightp'])
         if outd is None:    
             outd=f"{cellcfg['outp']}/vid"
+        if not particle2color is None:
+            if exists(f"{cellcfg['outp']}/d4distance.tsv"):
+                df1=read_table(f"{cellcfg['outp']}/d4distance.tsv").drop_duplicates(subset=['particle'])
+                from rohan.dandage.stat.norm import rescale
+                from rohan.dandage.plot.colors import saturate_color
+                df1['distance effective from centroid']=rescale(df1['distance effective from centroid'])
+                df1.loc[(df1['distance effective from centroid']<=0.5),'distance effective from centroid']=0.5
+                df1['color']=df1['distance effective from centroid'].apply(lambda x: saturate_color('limegreen',x))
+                particle2color=df1.set_index('particle')['color'].to_dict()
+            else:
+                logging.warning('distance file (d4distance.tsv) not found')
     makedirs(outd,exist_ok=True)
     gifp=f"{dirname(outd)}/{basenamenoext(outd)}.gif"
 
@@ -220,39 +271,10 @@ def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
         t_cor=t_cor.merge(df,left_on='particle',right_index=True)
     t_cor=t_cor.sort_values(['frame','particle'])
     for framei,frame in enumerate(frames):
-        plotp=f'{outd}/{framei:03d}.jpeg'
-        plt.figure(figsize=[5,5])
-        ax=plt.subplot(111)
-        ax=image_background(img_region=img_bright,img=frame,ax=ax)
-        ax.text(ax.get_xlim()[1],ax.get_ylim()[1],
-                f"frame#{framei:03d}",ha='right',
-                va='bottom',
-                size='20',
-                color='k')
-        if not framei==0:
-            # traj of particle
-            for p in t_cor.loc[(t_cor['frame']==framei),'particle'].unique():
-                # traj of particle
-                framei_min=t_cor['frame min'].unique()[0]
-                df=t_cor.loc[((t_cor['particle']==p) \
-                              & (t_cor['frame'].isin(range(framei_min,framei+1)))\
-                              & (t_cor['x'].between(0,frame.shape[0]))\
-                              & (t_cor['y'].between(0,frame.shape[1]))),:].sort_values(by=['frame','particle'])
-                if len(df)!=0:
-                    if not 'move' in df:
-                        df.plot.line(x='x',y='y',lw=4,
-                            c='limegreen',
-                            legend=False,ax=ax)                        
-                    else:
-                        df.plot.line(x='x',y='y',lw=4,
-                            c='limegreen' if df.loc[:,['particle','move']].drop_duplicates().set_index('particle').loc[p,'move']==1 else 'magenta',
-                            legend=False,ax=ax)
-            ax.set_xlim(0,frame.shape[1])
-    #         ax.set_ylim(0,frame.shape[1])
-            plt.axis('off')
-            makedirs(dirname(plotp),exist_ok=True)
-            plt.savefig(plotp)
-            plt.clf();plt.close();
+        plot_image_particles(t_cor,img_bright=img_bright,frame=frame,
+                            framei=framei,particle2color=particle2color,
+                             outd=outd,
+                             test=False)
         _framei=framei
     if not test:    
         plt.close('all')

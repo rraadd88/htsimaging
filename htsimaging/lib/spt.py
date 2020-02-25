@@ -118,7 +118,8 @@ def test_locate_particles(cellcfg,params_locate,force=False,test=False):
     from htsimaging.lib.plot import image_locate_particles
     ax=image_locate_particles(df1,
                            frame=cellgfpmax,
-                           img_region=np.load(cellcfg['cellbrightp']))
+                           img_region=np.load(cellcfg['cellbrightp'])
+                           annotate_particles=False)
     _=ax.text(0,1,'\n'.join([f"{k}:{params_locate[k]}" for k in params_locate]),
               va='top',color='lime')
     if not test:
