@@ -201,12 +201,16 @@ def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
              outd=None,
              test=False,force=False):
     if not cellcfg is None:
-        frames=[np.load(p) for p in sorted(cellcfg['cellframeps'])]
-        t_cor=read_table(f"{cellcfg['outp']}/d2filter_stubs.tsv")
-        img_bright=np.load(cellcfg['cellbrightp'])
-        outd=f"{cellcfg['outp']}/vid"
+        if frames is None:
+            frames=[np.load(p) for p in sorted(cellcfg['cellframeps'])]
+        if t_cor is None:
+            t_cor=read_table(f"{cellcfg['outp']}/d2filter_stubs.tsv")
+        if img_bright is None:
+            img_bright=np.load(cellcfg['cellbrightp'])
+        if outd is None:    
+            outd=f"{cellcfg['outp']}/vid"
     makedirs(outd,exist_ok=True)
-    gifp=f"{dirname(outd)}/vid.gif"
+    gifp=f"{dirname(outd)}/{basenamenoext(outd)}.gif"
 
     if exists(gifp) and not force:
         return

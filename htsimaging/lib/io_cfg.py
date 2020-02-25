@@ -94,23 +94,21 @@ def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,test,force):
 
         cellcfg['cellframeps']=cellframeps
         cellcfg['cellframesmaskedps']=cellframesmaskedps
+        #gfp min max
+        cellcfg['cellgfpminp']=f"{cellcfg['outp']}/cellgfpmin.npy"
+        cellcfg['cellgfpmaxp']=f"{cellcfg['outp']}/cellgfpmax.npy"
+        cellgfpmin=np.amax(cellframesmaskeds,axis=0)
+        cellgfpmax=np.amin(cellframesmaskeds,axis=0)
+        np.save(cellcfg['cellgfpminp'], cellgfpmin)
+        np.save(cellcfg['cellgfpmaxp'], cellgfpmax)
+
         from htsimaging.lib.utils import get_signal_summary_by_roi
         cellcfg['signal_cytoplasm']=get_signal_summary_by_roi(cellframesmaskeds,
                                  xy_center=None,
                                 width=20,
                                 fun_summary_frame='min',
                                 fun_summary_frames='median',)
-        cellcfg['cellgfpmaxp']=f"{cellcfg['outp']}/cellgfpmax.npy"
-        cellcfg['cellgfpminp']=f"{cellcfg['outp']}/cellgfpmin.npy"
-        np.save(cellcfg['cellgfpmaxp'], np.amax(cellframesmaskeds,axis=0))
-        np.save(cellcfg['cellgfpminp'], np.amin(cellframesmaskeds,axis=0))
-                                                              
-#         df0=pd.DataFrame({'step name':steps,
-#         'step #':range(len(steps)),}).set_index('step #')
-#         df0['dfp']=df0.apply(lambda x:f"{cellcfg['outp']}/d{'_'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.tsv" ,axis=1)
-#         df0['plotp suffix']=df0.apply(lambda x:f"_{'__'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.png" ,axis=1)
-#         cellcfg['track particles']=df0.set_index('step name')['dfp'].apply(lambda x: f"{basenamenoext(x)}p").to_dict()
-#         to_table(df0,f"{cellcfg['outp']}/dinfo.tsv")
+
         yaml.dump(cellcfg,open(cellcfg['cfgp'],'w'))
     else:
         cellcfg=read_dict(cfgp)

@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from multiprocessing import Pool    
 
-def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
+def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=None):
     """
     runs the analysis.   
     
@@ -39,12 +39,15 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
 
     :param bright_fn_marker: _t if inhouse microscope else if chul: _T1C1    
     
-    """    
+    """
+    if not rerun_step is None:
+        if isinstance(rerun_step,str):
+            rerun_step=[rerun_step]
     # make cfg for the project
     from htsimaging.lib.io_cfg import make_project_cfg,make_cell_cfg
     cfg=make_project_cfg(prjd,bright_fn_marker,test,force,cores)
     ## get segments from brightfield images
-    if not 'flag_segmentation_done' in cfg or force:
+    if (not 'flag_segmentation_done' in cfg) or force or ('flag_segmentation_done' in rerun_step):
         from htsimaging.lib.segment import run_yeastspotter
         cfg['yeastspotter_srcd']=f"{dirname(realpath(__file__))}/../deps/yeast_segmentation"
         logging.info(cfg.keys())
@@ -55,7 +58,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
 
 #     if not '' in cfg:
     ## get and filter cells from segments images
-    if not 'flag_cells_done' in cfg or force:
+    if (not 'flag_cells_done' in cfg) or force or ('flag_cells_done' in rerun_step):
         from htsimaging.lib.segment import segmentation2cells
         for trial in cfg['trials']:
             if len(cfg['trials'][trial]['bright'])!=0:
@@ -71,7 +74,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         to_dict(cfg,cfg['cfgp'])
         print('flag_cells_done')
 
-    if not 'flag_cellframes_done' in cfg or force:    
+    if (not 'flag_cellframes_done' in cfg) or force or ('flag_cellframes_done' in rerun_step):    
         from htsimaging.lib.segment import get_cellboxes
         from htsimaging.lib.utils import get_cellprops
         cellcfgps=[]
@@ -96,7 +99,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4):
         print('flag_cellframes_done')
         
         # parallel processing
-    if not 'flag_distances_done' in cfg or force:    
+    if (not 'flag_distances_done' in cfg) or force or ('flag_distances_done' in rerun_step):    
         from htsimaging.lib.spt import apply_cellcfgp2distances                            
         cellcfgps=np.sort(cfg['cellcfgps'])
         if len(cellcfgps)!=0:
