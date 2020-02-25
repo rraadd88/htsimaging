@@ -185,7 +185,7 @@ def cellcfg2distances(cellcfg,
 #                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
                            },
                     test=False,force=False):
-    params['locate']['separation']=params['locate']['diameter']*0.66#*1.25
+    params['locate']['separation']=params['locate']['diameter']#*1.25
     params['locate']['threshold']=cellcfg['signal_cytoplasm']
     params['link_df']['search_range']=params['locate']['diameter']*0.33
             
@@ -213,15 +213,15 @@ def cellcfg2distances(cellcfg,
     dn2df={}
     dn2df['locate']=tp.batch([np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
                              **params['locate'])
-    to_table(dn2df['locate'],dn2dp['locate'])
+#     to_table(dn2df['locate'],dn2dp['locate'])
 
     dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
-    to_table(dn2df['link_df'],dn2dp['link_df'])
+#     to_table(dn2df['link_df'],dn2dp['link_df'])
     image_trajectories(dtraj=dn2df['link_df'], 
                        img_gfp=img_gfp, 
                        img_bright=img_bright, fig=None, ax=None)
     savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['link_df']}")
-    to_table(dn2df['link_df'],dn2dp['link_df'])
+#     to_table(dn2df['link_df'],dn2dp['link_df'])
 
     
     dn2df['filter_stubs']=tp.filter_stubs(dn2df['link_df'], threshold=params['filter_stubs']['threshold'])
