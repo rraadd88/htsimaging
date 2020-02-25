@@ -83,86 +83,49 @@ def nd2frames(nd_fh):
         frames.iter_axes = 't'
     return frames
     
-def test_locate_particles(cellcfg,params_locate,force=False,plot=False):
-        # test locate
+def test_locate_particles(cellcfg,params_locate,force=False,test=False):
     dlocate_testp=f"{cellcfg['outp']}/dlocate_test.tsv"
-    if exists(dlocate_testp) and not force:
+    if exists(dlocate_testp) and not force and not test:
         return
     from htsimaging.lib.plot import dist_signal
-    frame =np.load(cellcfg['cellgfpmaxp'])
-    df1 = tp.locate(frame, **params_locate)
+    cellgfpmax =np.load(cellcfg['cellgfpmaxp'])
+    df1 = tp.locate(cellgfpmax, **params_locate)
     df1['particle']=df1.index
-    to_table(df1,dlocate_testp)
+    if not test:
+        to_table(df1,dlocate_testp)
     logging.info(f"particles detected ={len(df1)}")
     if len(df1)==0:
         return False
     # plot dist signal of the detected particles
     fig=plt.figure()
     ax=plt.subplot()
-    dist_signal(np.load(cellcfg['cellgfpminp']),
-                params_hist={'bins':20,'label':'gfp min','density':True,'color':'k'},ax=ax)
     dist_signal(np.load(cellcfg['cellgfpmaxp']),
-                params_hist={'bins':20,'label':'gfp max','density':True,'color':'green'},ax=ax)
+                params_hist={'bins':20,'label':'gfp min',
+                             'density':True,'color':'k'},ax=ax)
+    dist_signal(np.load(cellcfg['cellgfpmaxp']),
+                params_hist={'bins':20,'label':'gfp max',
+                             'density':True,'color':'green'},ax=ax)
     dist_signal(df1['signal'],
                 threshold=cellcfg['signal_cytoplasm'],label_threshold='signal_cytoplasm',
-                params_hist={'bins':20,'label':'particles','density':True,'color':'r'},ax=ax)
-    savefig(f"{cellcfg['plotp']}/dist_signal_locate_particles.png")  
-
+                params_hist={'bins':20,'label':f'particles\n(total ={len(df1)})',
+                             'density':True,'color':'r'},ax=ax)
+    if not test:
+        savefig(f"{cellcfg['plotp']}/dist_signal_locate_particles.png")
     # plot image of the detected particles
     from htsimaging.lib.plot import image_locate_particles
-    image_locate_particles(df1,
-                           frame=frame,
+    ax=image_locate_particles(df1,
+                           frame=cellgfpmax,
                            img_region=np.load(cellcfg['cellbrightp']))
-    savefig(f"{cellcfg['plotp']}/image_locate_particles.png")  
-    if len(df1)>=5 or plot:
+    _=ax.text(0,1,'\n'.join([f"{k}:{params_locate[k]}" for k in params_locate]),
+              va='top',color='lime')
+    if not test:
+        savefig(f"{cellcfg['plotp']}/image_locate_particles.png")  
+    if len(df1)>=5:
         from htsimaging.lib.plot import plot_properties_cell
-        plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist())
-        savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
+        plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist()) 
+        if not test:
+            savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
     return True
-
-# df0=pd.DataFrame({'step name':steps,
-# 'step #':range(len(steps)),}).set_index('step #')
-# df0['dfp']=df0.apply(lambda x:f"{cellcfg['outp']}/d{'_'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.tsv" ,axis=1)
-# df0['plotp suffix']=df0.apply(lambda x:f"_{'__'.join(df0.loc[range(x.name+1),'step name'].values.tolist())}.png" ,axis=1)
-# cellcfg['track particles']=df0.set_index('step name')['dfp'].apply(lambda x: f"{basenamenoext(x)}p").to_dict()            
-# class track_particles():            
-#     def locate(cellcfg,params,dfp,plotp_suffix):
-            
-#         df1=tp.batch([np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
-#                                  **params)
-#         to_table(df1,dfp)
-#     def link(cellcfg,params,dfp,plotp_suffix):
-#         df1=tp.link_df(df, **params)
-#         to_table(cellcfg['']df1,dfp)
-            
-#         image_trajectories(dtraj=dn2df[step], 
-#                            img_gfp=img_gfp, 
-#                            img_bright=img_bright, fig=None, ax=None)
-#         savefig(f"{cellcfg['plotp']}/image_trajectories_{plotp_suffix}")
-#     def filter_stubs(cellcfg,params,dfp,plotp_suffix):
-#         df1=tp.filter_stubs(dn2df['link'], threshold=params['filter_stubs']['threshold'])
-#         df1.index.name='index'
-#         df1.index=range(len(df1))
-#         to_table(df1,dfp)
-                
-#         image_trajectories(dtraj=df1, 
-#                            img_gfp=img_gfp, 
-#                            img_bright=img_bright, fig=None, ax=None)
-#         savefig(f"{cellcfg['plotp']}/image_trajectories_{plotp_suffix}")
-
-#     def subtract_drift(cellcfg,params,dfp,plotp_suffix):
-#         df1 = tp.subtract_drift(df, tp.compute_drift(df))
-#         to_table(df1,dfp)
-                
-#         image_trajectories(dtraj=df1, 
-#                            img_gfp=img_gfp, 
-#                            img_bright=img_bright, fig=None, ax=None)
-#         savefig(f"{cellcfg['plotp']}/image_trajectories_{plotp_suffix}")
-
-#     def distance(cellcfg,params,dfp,plotp_suffix):
-#         from htsimaging.lib.stat import get_distance_travelled
-#         df1=get_distance_travelled(t_cor=df)
-#         to_table(df1,dfp)
         
 def trim_returns(df1):
     from htsimaging.lib.stat import get_inflection_point
@@ -222,13 +185,13 @@ def cellcfg2distances(cellcfg,
 #                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
                            },
                     test=False,force=False):
-    params['locate']['separation']=params['locate']['diameter']*1.25
+    params['locate']['separation']=params['locate']['diameter']*0.66#*1.25
     params['locate']['threshold']=cellcfg['signal_cytoplasm']
     params['link_df']['search_range']=params['locate']['diameter']*0.33
             
     to_dict(params,f"{cellcfg['outp']}/params.yml")
     
-    if not test_locate_particles(cellcfg,params['locate'],force=force,plot=True):
+    if not test_locate_particles(cellcfg,params['locate'],force=force,test=False):
         print(cellcfg['cfgp'])
         return 
     # get trajectories
