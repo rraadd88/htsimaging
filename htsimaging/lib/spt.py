@@ -222,9 +222,9 @@ def cellcfg2distances(cellcfg,
     dn2df={}
     dn2df['locate']=tp.batch([np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
                              **params['locate'])
-#     to_table(dn2df['locate'],dn2dp['locate'])
     if len(dn2df['locate'])==0:
         return
+    dn2df['locate']['frame']=dn2df['locate']['frame'].astype(np.integer)
     dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
 #     to_table(dn2df['link_df'],dn2dp['link_df'])
     image_trajectories(dtraj=dn2df['link_df'], 

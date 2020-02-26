@@ -1,19 +1,20 @@
 argh
 argparse
-cv2
-glob
-json
-logging
-multiprocessing
-pickle
-pims
-pims_nd2
-pimsviewer
+# # cv2
+# glob
+# json
+# logging
+# multiprocessing
+# pickle
+# pims
+# pims_nd2
+# pimsviewer
 skimage
 statsmodels
 string
 subprocess
-trackpy==0.4.1
+trackpy>=0.4.2
+pandas>=1.0.0
 yaml
 scikit-image
 numba
