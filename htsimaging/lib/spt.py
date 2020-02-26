@@ -170,17 +170,18 @@ def trim_returns(df1):
     ax.set_xlim(df1['frame'].min(),df1['frame'].max())
     return df2
                 
-def fill_frame_jumps(df1,memory):
+def fill_frame_jumps(df1,jump_length):
     df1=df1.sort_values(by=['particle','frame'])
     df1['frame delta']=df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1])
-    df=df1.loc[(df1['frame delta']==memory+1),:]
+    df=df1.loc[(df1['frame delta']==jump_length),:]
     df.loc[df.index,'frame']=df['frame']-1
-    df1=pd.concat({'not':df,'fill':df},axis=0)
+    df1=pd.concat({'not':df1,'fill':df},axis=0)
     df1.index.name='frame fill or not'
     df1=df1.reset_index()
     df1=df1.sort_values(by=['particle','frame'])
     df1['frame delta']=df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1])
-    logging.warning(sum((df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1]))==memory+1)==0)
+    logging.warning(sum((df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1]))==jump_length)==0)
+    df1.index=range(len(df1))
     return df1                
             
 def cellcfg2distances(cellcfg,
@@ -197,7 +198,7 @@ def cellcfg2distances(cellcfg,
                                       },
                     'link_df':{
                                'search_range':5,
-                               'memory':1,
+                               'memory':0,
                                'link_strategy':'drop',},
                     'filter_stubs':{'threshold':4},
                     'get_distance_from_centroid':{'center':[75,75]},
@@ -236,9 +237,10 @@ def cellcfg2distances(cellcfg,
         return
     dn2df['locate']['frame']=dn2df['locate']['frame'].astype(np.integer)
     dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
-    if params['link_df']['memory']!=0:
-        dn2df['link_df']=fill_frame_jumps(dn2df['link_df'],memory=params['link_df']['memory'])
-
+#     if params['link_df']['memory']!=0:
+    dn2df['link_df']=fill_frame_jumps(dn2df['link_df'],
+                                      jump_length=2 if params['link_df']['memory']==0 else params['link_df']['memory']+1)
+#     to_table(dn2df['link_df'],'test.tsv')
 #     to_table(dn2df['link_df'],dn2dp['link_df'])
     image_trajectories(dtraj=dn2df['link_df'], 
                        img_gfp=img_gfp, 
