@@ -169,6 +169,17 @@ def trim_returns(df1):
     ax.set_ylim(df1['distance effective from centroid per frame'].min(),df1['distance effective from centroid per frame'].max())               
     ax.set_xlim(df1['frame'].min(),df1['frame'].max())
     return df2
+                
+def fill_frame_jumps(df1,memory):
+    df1=df1.sort_values(by=['particle','frame'])
+    df1['frame delta']=df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1])
+    df=df1.loc[(df1['frame delta']==memory+1),:]
+    df.loc[df.index,'frame']=df['frame']-1
+    df1=df1.append(df)
+    df1=df1.sort_values(by=['particle','frame'])
+    df1['frame delta']=df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1])
+    print(sum((df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1]))==memory+1))
+    return df1                
             
 def cellcfg2distances(cellcfg,
                     # for 150x150 images
@@ -223,6 +234,8 @@ def cellcfg2distances(cellcfg,
         return
     dn2df['locate']['frame']=dn2df['locate']['frame'].astype(np.integer)
     dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
+    dn2df['link_df']=fill_frame_jumps(dn2df['link_df'],memory=params['link_df']['memory'])
+
 #     to_table(dn2df['link_df'],dn2dp['link_df'])
     image_trajectories(dtraj=dn2df['link_df'], 
                        img_gfp=img_gfp, 
