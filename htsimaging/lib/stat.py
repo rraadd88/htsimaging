@@ -37,7 +37,7 @@ def get_slope(df,ds):
     return sc.stats.linregress(df.loc[ds.index,'frame'],df.loc[ds.index,'distance effective from centroid per frame']).slope
 def get_inflection_point(df,threshold_slope=0.25):
     label=df.name
-    df['slope distance effective from centroid versus frame']=df.rolling(4)['y'].apply(lambda x: get_slope(df,x),raw=False)
+    df['slope distance effective from centroid versus frame']=df.rolling(6)['y'].apply(lambda x: get_slope(df,x),raw=False)
     if any(df['slope distance effective from centroid versus frame']>threshold_slope) and not all(df['slope distance effective from centroid versus frame']>threshold_slope):
         inflection_point=df.set_index('frame')['slope distance effective from centroid versus frame'].idxmax()
     else:

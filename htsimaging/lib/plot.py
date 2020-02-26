@@ -244,7 +244,7 @@ def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
              test=False,force=False):
     if not cellcfg is None:
         if frames is None:
-            frames=[np.load(p) for p in sorted(cellcfg['cellframeps'])]
+            frames=[np.load(p) for p in sorted(cellcfg['cellframes'])]
         if t_cor is None:
             t_cor=read_table(f"{cellcfg['outp']}/d2filter_stubs.tsv")
         if img_bright is None:

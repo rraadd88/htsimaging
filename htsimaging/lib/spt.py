@@ -110,8 +110,8 @@ def test_locate_particles(cellcfg,params_locate,frame=None,force=False,test=Fals
     dist_signal(np.unique(frame)[2:],
                 params_hist={'bins':20,'label':'frame',
                              'density':True,'color':'lime'},ax=ax)        
-    dist_signal(np.unique(frame)[1],
-                threshold=cellcfg['signal_cytoplasm'],label_threshold='signal_cytoplasm',
+    dist_signal(df1['signal'],
+                threshold=np.unique(frame)[1],label_threshold='signal_cytoplasm',
                 params_hist={'bins':20,'label':f'particles\n(total ={len(df1)})',
                              'density':True,'color':'r'},ax=ax)
     if not test:
@@ -184,7 +184,7 @@ def cellcfg2distances(cellcfg,
                                       },
                     'link_df':{
                                'search_range':5,
-                               'memory':0,
+                               'memory':1,
                                'link_strategy':'drop',},
                     'filter_stubs':{'threshold':4},
                     'get_distance_from_centroid':{'center':[75,75]},
