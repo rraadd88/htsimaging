@@ -1,21 +1,8 @@
+git+https://github.com/rraadd88/rohan.git
 argh
-argparse
-# # cv2
-# glob
-# json
-# logging
-# multiprocessing
-# pickle
-# pims
-# pims_nd2
-# pimsviewer
-skimage
 statsmodels
-string
-subprocess
-trackpy>=0.4.2
-pandas>=1.0.0
-yaml
+trackpy==0.4.2
 scikit-image
 numba
+pims
 tensorflow==1.5
