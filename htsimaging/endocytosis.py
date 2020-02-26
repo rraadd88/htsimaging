@@ -75,7 +75,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=N
         to_dict(cfg,cfg['cfgp'])
         print('flag_cells_done')
 
-    if (not 'flag_cellframes_done' in cfg) or force or ('flag_cellframes_done' in rerun_step):    
+    if (not 'flag_cellframes_done' in cfg) or force or ('flag_cellframes_done' in rerun_step): 
         from htsimaging.lib.segment import get_cellboxes
         from htsimaging.lib.utils import get_cellprops
         cellcfgps=[]
@@ -92,7 +92,8 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=N
             for celli,cellbox in enumerate(cellboxes):
                 logging.info(f"{trial};cell{celli+1:08d}")
                 # make cg for cell
-                cellcfg=make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,test,force)
+                cellcfg=make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,
+                                      test=test,force=force if rerun_step is None else True)
                 cellcfgps.append(cellcfg['cfgp'])
         cfg['cellcfgps']=cellcfgps        
         cfg['flag_cellframes_done']=True

@@ -4,7 +4,6 @@ import trackpy as tp
 tp.ignore_logging()
 # import nd2reader
 import pims
-import pims_nd2
 import logging
 # from htsimaging.lib.plot import *
 from htsimaging.lib.stat import *
@@ -175,7 +174,7 @@ def trim_returns(df1):
             
 def cellcfg2distances(cellcfg,
                     # for 150x150 images
-                    params={'locate':{'diameter':9, # round to odd number
+                    params={'locate':{'diameter':11, # round to odd number
                                       'noise_size':1,
                                       'separation':15,
                                       'threshold':4000,
@@ -194,8 +193,8 @@ def cellcfg2distances(cellcfg,
 #                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
                            },
                     test=False,force=False):
-    params['locate']['separation']=params['locate']['diameter']#*1.25
-    params['locate']['threshold']=cellcfg['signal_cytoplasm']
+    params['locate']['separation']=params['locate']['diameter']*1
+    params['locate']['threshold']=cellcfg['signal_cytoplasm']*0.5
     params['link_df']['search_range']=params['locate']['diameter']*0.33
             
     to_dict(params,f"{cellcfg['outp']}/params.yml")
@@ -220,7 +219,7 @@ def cellcfg2distances(cellcfg,
     img_bright=np.load(cellcfg['cellbrightp'])
     
     dn2df={}
-    dn2df['locate']=tp.batch([np.load(p) for p in sorted(cellcfg['cellframesmaskedps'])],
+    dn2df['locate']=tp.batch([np.load(p) for p in sorted(cellcfg['cellframes_masked_substracted'])],
                              **params['locate'])
     if len(dn2df['locate'])==0:
         return

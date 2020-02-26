@@ -4,7 +4,6 @@ import pims
 import string
 from scipy import stats,ndimage
 from multiprocessing import Pool
-import cv2
 from skimage.segmentation import random_walker
 # from skimage.data import binary_blobs
 from skimage import io,exposure,restoration,filters,morphology,measure

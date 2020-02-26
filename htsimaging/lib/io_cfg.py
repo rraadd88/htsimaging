@@ -1,6 +1,7 @@
 from rohan.global_imports import *
 from os.path import isdir
 import pims
+import sys
 
 def make_project_cfg(prjd,bright_fn_marker,test,force,cores):
     prjd=abspath(prjd)
@@ -48,7 +49,14 @@ def make_project_cfg(prjd,bright_fn_marker,test,force,cores):
         cfg=yaml.load(open(cfgp,'r'))
     return cfg
 
-def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,test,force):
+def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,
+                 params_get_signal_summary_by_roi={'xy_center':None,'width':20,
+                                  'fun_summary_frame':'min',
+                                  'fun_summary_frames':'median'
+                                 },
+                  test=False,force=False,
+                        ):
+                                                              
     outp=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
     cfgp=f"{outp}/cfg.yml"
     if not exists(cfgp) or force:
@@ -72,52 +80,46 @@ def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,test,force):
         from htsimaging.lib.utils import filter_regions
         cellbrightmask=filter_regions(cellbright.astype(int),prop_type='centroid_x',mn=70,mx=80)==0
         np.save(cellcfg['cellbrightmaskp'], cellbrightmask)
-        cellframeps=[]
-        cellframesmaskedps=[]
-#         cellframes=[]
-        cellframesmaskeds=[]
+        cellframe_type2frames={'cellframes':{'frames':[],'ps':[]},
+                               'cellframes_masked':{'frames':[],'ps':[]},
+                               'cellframes_masked_substracted':{'frames':[],'ps':[]},
+                              }
+        for dn in sorted(list(cellframe_type2frames.keys())):
+            if not exists(f"{cellcfg['outp']}/{dn}"): 
+                makedirs(f"{cellcfg['outp']}/{dn}",exist_ok=True)
+        from htsimaging.lib.utils import get_signal_summary_by_roi
         for framei,frame in enumerate(frames):
             cellframe=frame[cellbox[2]:cellbox[3],cellbox[0]:cellbox[1]]
-            cellframep=f"{cellcfg['outp']}/cellframe/frame{framei:08d}.npy"
-            if not exists(dirname(cellframep)): 
-                makedirs(dirname(cellframep),exist_ok=True)
-            np.save(cellframep, cellframe)
-            cellframeps.append(cellframep);#cellframes.append(cellframe)
+            
+            cellframe_masked=cellframe.copy()
+            cellframe_masked[cellbrightmask]=0
+                         
+            cellframe_masked_substracted=cellframe_masked.copy()
+            signal_cytoplasm=get_signal_summary_by_roi([cellframe_masked_substracted],**params_get_signal_summary_by_roi)
+            cellframe_masked_substracted=np.where(cellframe_masked_substracted<signal_cytoplasm*1.5,
+                                                              signal_cytoplasm,
+                                                              cellframe_masked_substracted) 
+            
+            cellframe_type2frames['cellframes']['frames'].append(cellframe)
+            cellframe_type2frames['cellframes_masked']['frames'].append(cellframe_masked)
+            cellframe_type2frames['cellframes_masked_substracted']['frames'].append(cellframe_masked_substracted)
+            for dn in sorted(list(cellframe_type2frames.keys())):
+                cellframe_type2frames[dn]['ps'].append(f"{cellcfg['outp']}/{dn}/frame{framei:08d}.npy")
+                np.save(cellframe_type2frames[dn]['ps'][framei],
+                        cellframe_type2frames[dn]['frames'][framei])
 
-            cellframemasked=cellframe.copy()
-            cellframemasked[cellbrightmask]=0
-            cellframemaskedp=f"{cellcfg['outp']}/cellframesmasked/frame{framei:08d}.npy"
-            if not exists(dirname(cellframemaskedp)): 
-                makedirs(dirname(cellframemaskedp),exist_ok=True)
-            np.save(cellframemaskedp, cellframemasked)
-            cellframesmaskedps.append(cellframemaskedp);cellframesmaskeds.append(cellframemasked)
-
-        cellcfg['cellframeps']=cellframeps
-        cellcfg['cellframesmaskedps']=cellframesmaskedps
+        for dn in sorted(list(cellframe_type2frames.keys())):
+            cellcfg[dn]=cellframe_type2frames[dn]['ps']
         #gfp min max
-        cellcfg['cellgfpminp']=f"{cellcfg['outp']}/cellgfpmin.npy"
-        cellcfg['cellgfpmaxp']=f"{cellcfg['outp']}/cellgfpmax.npy"
-        cellgfpmin=np.amax(cellframesmaskeds,axis=0)
-        cellgfpmax=np.amin(cellframesmaskeds,axis=0)
-        np.save(cellcfg['cellgfpminp'], cellgfpmin)
-        np.save(cellcfg['cellgfpmaxp'], cellgfpmax)
+        for funn in ['min','max']:
+            cellcfg[f'cellgfp{funn}p']=f"{cellcfg['outp']}/cellgfp{funn}.npy"
+            frame=getattr(np,f"a{funn}")(cellframe_type2frames['cellframes_masked_substracted']['frames'],axis=0)
+            np.save(cellcfg[f'cellgfp{funn}p'], frame)
+        del frame
 
-        from htsimaging.lib.utils import get_signal_summary_by_roi
-        cellcfg['signal_cytoplasm']=get_signal_summary_by_roi(cellframesmaskeds,
-                                 xy_center=None,
-                                width=20,
-                                fun_summary_frame='min',
-                                fun_summary_frames='median',)
+        cellcfg['signal_cytoplasm']=get_signal_summary_by_roi(cellframe_type2frames['cellframes_masked']['frames'],
+                                                              **params_get_signal_summary_by_roi)
 
-        cellframesmaskedsubstractedps=[]
-        for cellframesmasked in cellframesmaskeds:
-            cellframesmaskedsubstractedp=f"{cellcfg['outp']}/cellframesmaskedsubstracted/frame{framei:08d}.npy"
-            cellframesmaskedsubstracted=np.where(cellframesmasked<cellcfg['signal_cytoplasm']*1.5,
-                                                              cellcfg['signal_cytoplasm'],
-                                                              cellframesmasked)
-            np.save(cellframesmaskedsubstractedp, cellframesmaskedsubstracted)
-            cellframesmaskedsubstractedps.append(cellframesmaskedsubstractedp)
-        cellcfg['cellframesmaskedsubstractedps']=cellframesmaskedsubstractedps
         yaml.dump(cellcfg,open(cellcfg['cfgp'],'w'))
     else:
         cellcfg=read_dict(cfgp)
