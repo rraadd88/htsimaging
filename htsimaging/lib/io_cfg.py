@@ -99,7 +99,8 @@ def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,
             cellframe_masked_substracted=np.where(cellframe_masked_substracted<signal_cytoplasm*1.5,
                                                               signal_cytoplasm,
                                                               cellframe_masked_substracted) 
-            
+            cellframe_masked_substracted[cellbrightmask]=0
+
             cellframe_type2frames['cellframes']['frames'].append(cellframe)
             cellframe_type2frames['cellframes_masked']['frames'].append(cellframe_masked)
             cellframe_type2frames['cellframes_masked_substracted']['frames'].append(cellframe_masked_substracted)

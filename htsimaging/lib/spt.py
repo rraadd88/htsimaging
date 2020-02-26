@@ -86,12 +86,8 @@ def test_locate_particles(cellcfg,params_locate,frame=None,force=False,test=Fals
     dlocate_testp=f"{cellcfg['outp']}/dlocate_test.tsv"
     if exists(dlocate_testp) and not force and not test:
         return True
-    from htsimaging.lib.plot import dist_signal
-    cellgfpmin=np.load(cellcfg['cellgfpminp'])
-#     cellgfpmin=np.where(cellgfpmin==cellcfg['signal_cytoplasm'], np.nan, cellgfpmin)
     cellgfpmax=np.load(cellcfg['cellgfpmaxp'])
     frame=cellgfpmax if frame is None else frame
-#     cellgfpmax=np.where(cellgfpmax==cellcfg['signal_cytoplasm'], np.nan, cellgfpmax)    
     df1 = tp.locate(frame, 
                     **params_locate)
     df1['particle']=df1.index
@@ -102,17 +98,19 @@ def test_locate_particles(cellcfg,params_locate,frame=None,force=False,test=Fals
         return False
     # plot dist signal of the detected particles
     fig=plt.figure()
+    cellgfpmin=np.load(cellcfg['cellgfpminp'])
+    from htsimaging.lib.plot import dist_signal
     ax=plt.subplot()
-    dist_signal(cellgfpmin,
-                params_hist={'bins':20,'label':'gfp min',
-                             'density':True,'color':'k'},ax=ax)
-    dist_signal(cellgfpmax,
-                params_hist={'bins':20,'label':'gfp max',
-                             'density':True,'color':'green'},ax=ax)
-    dist_signal(frame,
+#     dist_signal(np.unique(cellgfpmin)[2:],
+#                 params_hist={'bins':20,'label':'gfp min',
+#                              'density':True,'color':'k'},ax=ax)
+#     dist_signal(np.unique(cellgfpmax)[2:],
+#                 params_hist={'bins':20,'label':'gfp max',
+#                              'density':True,'color':'green'},ax=ax)
+    dist_signal(np.unique(frame)[2:],
                 params_hist={'bins':20,'label':'frame',
                              'density':True,'color':'lime'},ax=ax)        
-    dist_signal(df1['signal'],
+    dist_signal(np.unique(frame)[1],
                 threshold=cellcfg['signal_cytoplasm'],label_threshold='signal_cytoplasm',
                 params_hist={'bins':20,'label':f'particles\n(total ={len(df1)})',
                              'density':True,'color':'r'},ax=ax)
