@@ -175,10 +175,12 @@ def fill_frame_jumps(df1,memory):
     df1['frame delta']=df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1])
     df=df1.loc[(df1['frame delta']==memory+1),:]
     df.loc[df.index,'frame']=df['frame']-1
-    df1=df1.append(df)
+    df1=pd.concat({'not':df,'fill':df},axis=0)
+    df1.index.name='frame fill or not'
+    df1=df1.reset_index()
     df1=df1.sort_values(by=['particle','frame'])
     df1['frame delta']=df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1])
-    print(sum((df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1]))==memory+1))
+    logging.warning(sum((df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1]))==memory+1)==0)
     return df1                
             
 def cellcfg2distances(cellcfg,
@@ -234,7 +236,8 @@ def cellcfg2distances(cellcfg,
         return
     dn2df['locate']['frame']=dn2df['locate']['frame'].astype(np.integer)
     dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
-    dn2df['link_df']=fill_frame_jumps(dn2df['link_df'],memory=params['link_df']['memory'])
+    if params['link_df']['memory']!=0:
+        dn2df['link_df']=fill_frame_jumps(dn2df['link_df'],memory=params['link_df']['memory'])
 
 #     to_table(dn2df['link_df'],dn2dp['link_df'])
     image_trajectories(dtraj=dn2df['link_df'], 
