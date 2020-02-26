@@ -83,7 +83,7 @@ def nd2frames(nd_fh):
         frames.iter_axes = 't'
     return frames
     
-def test_locate_particles(cellcfg,params_locate,force=False,test=False):
+def test_locate_particles(cellcfg,params_locate,frame=None,force=False,test=False):
     dlocate_testp=f"{cellcfg['outp']}/dlocate_test.tsv"
     if exists(dlocate_testp) and not force and not test:
         return True
@@ -91,8 +91,10 @@ def test_locate_particles(cellcfg,params_locate,force=False,test=False):
     cellgfpmin=np.load(cellcfg['cellgfpminp'])
 #     cellgfpmin=np.where(cellgfpmin==cellcfg['signal_cytoplasm'], np.nan, cellgfpmin)
     cellgfpmax=np.load(cellcfg['cellgfpmaxp'])
+    frame=cellgfpmax if frame is None else frame
 #     cellgfpmax=np.where(cellgfpmax==cellcfg['signal_cytoplasm'], np.nan, cellgfpmax)    
-    df1 = tp.locate(cellgfpmax, **params_locate)
+    df1 = tp.locate(frame, 
+                    **params_locate)
     df1['particle']=df1.index
     if not test:
         to_table(df1,dlocate_testp)
@@ -108,6 +110,9 @@ def test_locate_particles(cellcfg,params_locate,force=False,test=False):
     dist_signal(cellgfpmax,
                 params_hist={'bins':20,'label':'gfp max',
                              'density':True,'color':'green'},ax=ax)
+    dist_signal(frame,
+                params_hist={'bins':20,'label':'frame',
+                             'density':True,'color':'lime'},ax=ax)        
     dist_signal(df1['signal'],
                 threshold=cellcfg['signal_cytoplasm'],label_threshold='signal_cytoplasm',
                 params_hist={'bins':20,'label':f'particles\n(total ={len(df1)})',
@@ -117,18 +122,18 @@ def test_locate_particles(cellcfg,params_locate,force=False,test=False):
     # plot image of the detected particles
     from htsimaging.lib.plot import image_locate_particles
     ax=image_locate_particles(df1,
-                           frame=cellgfpmax,
+                           frame=frame,
                            img_region=np.load(cellcfg['cellbrightp']),
                            annotate_particles=False)
     _=ax.text(0,1,'\n'.join([f"{k}:{params_locate[k]}" for k in params_locate]),
               va='top',color='lime')
     if not test:
         savefig(f"{cellcfg['plotp']}/image_locate_particles.png")  
-    if len(df1)>=5:
-        from htsimaging.lib.plot import plot_properties_cell
-        plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist()) 
-        if not test:
-            savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
+#     if len(df1)>=5:
+#         from htsimaging.lib.plot import plot_properties_cell
+#         plot_properties_cell(cellcfg,df1,cols_colorby=df1.select_dtypes('float').columns.tolist()) 
+#         if not test:
+#             savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
     return True
         
 def trim_returns(df1):

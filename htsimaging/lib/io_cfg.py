@@ -47,7 +47,7 @@ def make_project_cfg(prjd,bright_fn_marker,test,force,cores):
     else:
         cfg=yaml.load(open(cfgp,'r'))
     return cfg
-                                                              
+
 def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,test,force):
     outp=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
     cfgp=f"{outp}/cfg.yml"
@@ -109,6 +109,15 @@ def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,test,force):
                                 fun_summary_frame='min',
                                 fun_summary_frames='median',)
 
+        cellframesmaskedsubstractedps=[]
+        for cellframesmasked in cellframesmaskeds:
+            cellframesmaskedsubstractedp=f"{cellcfg['outp']}/cellframesmaskedsubstracted/frame{framei:08d}.npy"
+            cellframesmaskedsubstracted=np.where(cellframesmasked<cellcfg['signal_cytoplasm']*1.5,
+                                                              cellcfg['signal_cytoplasm'],
+                                                              cellframesmasked)
+            np.save(cellframesmaskedsubstractedp, cellframesmaskedsubstracted)
+            cellframesmaskedsubstractedps.append(cellframesmaskedsubstractedp)
+        cellcfg['cellframesmaskedsubstractedps']=cellframesmaskedsubstractedps
         yaml.dump(cellcfg,open(cellcfg['cfgp'],'w'))
     else:
         cellcfg=read_dict(cfgp)
