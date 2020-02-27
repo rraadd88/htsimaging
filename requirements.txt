@@ -4,6 +4,6 @@ trackpy==0.4.2
 scikit-image
 numba
 pims
-tensorflow==1.5
+tensorflow==1.15.2
 pandas==0.25.3
 rohan
