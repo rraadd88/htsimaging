@@ -3,7 +3,8 @@ from os.path import isdir
 import pims
 import sys
 
-def make_project_cfg(prjd,bright_fn_marker,test,force,cores):
+def make_project_cfg(prjd,bright_fn_marker,cores=1,
+                    test=False,force=False):
     prjd=abspath(prjd)
     cfgp=f"{prjd}/cfg.yml"
     if not exists(cfgp) or force:    

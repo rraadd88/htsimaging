@@ -46,7 +46,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=N
             rerun_step=[rerun_step]
     # make cfg for the project
     from htsimaging.lib.io_cfg import make_project_cfg,make_cell_cfg
-    cfg=make_project_cfg(prjd,bright_fn_marker,cores,test,force)
+    cfg=make_project_cfg(prjd,bright_fn_marker,cores=cores,test=test,force=force)
     ## get segments from brightfield images
     if (not 'flag_segmentation_done' in cfg) or force or ('flag_segmentation_done' in rerun_step):
         from htsimaging.lib.segment import run_yeastspotter
