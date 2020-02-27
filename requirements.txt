@@ -1,9 +1,1 @@
-argh
-statsmodels
-trackpy==0.4.2
-scikit-image
-numba
-pims
-tensorflow==1.5
-pandas==0.25.3
-rohan
+
