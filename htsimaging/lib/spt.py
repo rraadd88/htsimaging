@@ -198,7 +198,7 @@ def cellcfg2distances(cellcfg,
                                       },
                     'link_df':{
                                'search_range':5,
-                               'memory':0,
+                               'memory':1,
                                'link_strategy':'drop',},
                     'filter_stubs':{'threshold':4},
                     'get_distance_from_centroid':{'center':[75,75]},
@@ -215,7 +215,7 @@ def cellcfg2distances(cellcfg,
         print(cellcfg['cfgp'])
         return 
     # get trajectories
-    steps=['locate','link_df','filter_stubs','subtract_drift','distance']
+    steps=['locate','link_df','filter_stubs','filter_returns','subtract_drift','distance']
     dn2dp={s:f"{cellcfg['outp']}/d{si}{s}.tsv" for si,s in enumerate(steps)}
     dn2plotp_suffix={s:f"{si}{s}.png" for si,s in enumerate(steps)}
     steps_done=[k for k in dn2dp if exists(dn2dp[k])]
@@ -239,7 +239,7 @@ def cellcfg2distances(cellcfg,
     dn2df['link_df']=tp.link_df(dn2df['locate'], **params['link_df'])
 #     if params['link_df']['memory']!=0:
     dn2df['link_df']=fill_frame_jumps(dn2df['link_df'],
-                                      jump_length=2 if params['link_df']['memory']==0 else params['link_df']['memory']+1)
+                      jump_length=2 if params['link_df']['memory']==0 else params['link_df']['memory']+1)
 #     to_table(dn2df['link_df'],'test.tsv')
 #     to_table(dn2df['link_df'],dn2dp['link_df'])
     image_trajectories(dtraj=dn2df['link_df'], 
@@ -259,25 +259,25 @@ def cellcfg2distances(cellcfg,
     image_trajectories(dtraj=dn2df['filter_stubs'], 
                        img_gfp=img_gfp, 
                        img_bright=img_bright, fig=None, ax=None)
-    savefig(f"{cellcfg['plotp']}/image_trajectories_pre_{dn2plotp_suffix['filter_stubs']}")
+    savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['filter_stubs']}")
     
-    dn2df['filter_stubs']=get_distance_from_centroid(dn2df['filter_stubs'],**params['get_distance_from_centroid'])
-    dn2df['filter_stubs']=trim_returns(dn2df['filter_stubs'])
-    savefig(f"{cellcfg['plotp']}/image_trajectories_stats_trimming_{dn2plotp_suffix['filter_stubs']}")
+    dn2df['filter_returns']=get_distance_from_centroid(dn2df['filter_stubs'],**params['get_distance_from_centroid'])
+    dn2df['filter_returns']=trim_returns(dn2df['filter_returns'])
+    savefig(f"{cellcfg['plotp']}/image_trajectories_stats_trimming_{dn2plotp_suffix['filter_returns']}")
 
-    dn2df['filter_stubs']=tp.filter_stubs(dn2df['filter_stubs'], threshold=params['filter_stubs']['threshold'])
-    dn2df['filter_stubs'].index.name='index'
-    dn2df['filter_stubs'].index=range(len(dn2df['filter_stubs']))
-    if len(dn2df['filter_stubs'])==0:
-        to_table(dn2df['filter_stubs'],dn2dp['distance'])
+    dn2df['filter_returns']=tp.filter_stubs(dn2df['filter_returns'], threshold=params['filter_stubs']['threshold'])
+    dn2df['filter_returns'].index.name='index'
+    dn2df['filter_returns'].index=range(len(dn2df['filter_returns']))
+    if len(dn2df['filter_returns'])==0:
+        to_table(dn2df['filter_returns'],dn2dp['distance'])
         print(cellcfg['cfgp'])
         return             
     image_trajectories(dtraj=dn2df['filter_stubs'], 
                        img_gfp=img_gfp, 
                        img_bright=img_bright, fig=None, ax=None)
-    savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['filter_stubs']}")
+    savefig(f"{cellcfg['plotp']}/image_trajectories_{dn2plotp_suffix['filter_returns']}")
 
-    d = tp.compute_drift(dn2df['filter_stubs'])
+    d = tp.compute_drift(dn2df['filter_returns'])
     dn2df['subtract_drift'] = tp.subtract_drift(dn2df['filter_stubs'], d)
     image_trajectories(dtraj=dn2df['subtract_drift'], 
                        img_gfp=img_gfp, 
@@ -290,9 +290,8 @@ def cellcfg2distances(cellcfg,
     
     for k in dn2df:
         to_table(dn2df[k],dn2dp[k])
-
-    make_gif(cellcfg,
-             force=force)    
+#     make_gif(cellcfg,
+#              force=force)    
         
 def apply_cellcfgp2distances(cellcfgp):
     """
