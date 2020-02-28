@@ -11,10 +11,10 @@ pip:
   - statsmodels
   - trackpy==0.4.2
   - scikit-image
-  - numba
-  - pims
+  - numba=0.44.1
+  - pims==0.4.1
   - tensorflow==1.5
   - pandas==0.25.3
   - rohan
-  - keras
+  - keras==2.2.4
 
