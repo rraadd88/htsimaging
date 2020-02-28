@@ -16,3 +16,5 @@ pip:
   - tensorflow==1.5
   - pandas==0.25.3
   - rohan
+  - keras
+
