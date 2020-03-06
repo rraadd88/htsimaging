@@ -94,7 +94,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step='
                 logging.info(f"{trial};cell{celli+1:08d}")
                 # make cg for cell
                 cellcfg=make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,
-                                      test=test,force=force if rerun_step is None else True)
+                                      test=test,force=force if rerun_step=='' else True)
                 cellcfgps.append(cellcfg['cfgp'])
         cfg['cellcfgps']=cellcfgps        
         cfg['flag_cellframes_done']=True
@@ -109,7 +109,7 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step='
             print(f"{get_datetime()}: processing: {len(cellcfgps)} cells.")
             for cellcfgp in cellcfgps:
                 cellcfg_=read_dict(cellcfgp)
-                cellcfg_['force']=force if rerun_step is None else True
+                cellcfg_['force']=force if rerun_step=='' else True
                 to_dict(cellcfg_,cellcfgp)
             if not test:
                 pool=Pool(processes=cfg['cores']) 
