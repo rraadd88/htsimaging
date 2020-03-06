@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from multiprocessing import Pool    
 
-def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=None):
+def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=''):
     """
     runs the analysis.   
     
@@ -42,8 +42,9 @@ def run_trials(prjd,bright_fn_marker,test=False,force=False,cores=4,rerun_step=N
 
     """
     if not rerun_step is None:
-        if isinstance(rerun_step,str):
-            rerun_step=[rerun_step]
+        if isinstance(rerun_step,list):
+            rerun_step='-'.join(rerun_step)
+            
     # make cfg for the project
     from htsimaging.lib.io_cfg import make_project_cfg,make_cell_cfg
     cfg=make_project_cfg(prjd,bright_fn_marker,cores=cores,test=test,force=force)
