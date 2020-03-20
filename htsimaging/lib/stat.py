@@ -1,5 +1,5 @@
 from rohan.global_imports import *
-from htsimaging.lib.plot import *
+#from htsimaging.lib.plot import *
 
 from scipy.spatial import distance
 
