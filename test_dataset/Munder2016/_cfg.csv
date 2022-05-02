@@ -1,0 +1,5 @@
+var,val,descr,
+mpp,0.0645,micron per pixel,
+fps,0.2,frames per second,
+max_lagtime,100,intervals of frames out to which MSD is computed,
+get_coords,False,

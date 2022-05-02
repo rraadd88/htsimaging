@@ -1,0 +1,20 @@
+name: htsimaging
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.6.5
+  - imagemagick
+pip:
+  - argh
+  - statsmodels
+  - trackpy==0.4.2
+  - scikit-image
+  - numba=0.44.1
+  - pims==0.4.1
+  - tensorflow==1.5
+  - pandas==0.25.3
+  - roux
+  - keras==2.2.4
+

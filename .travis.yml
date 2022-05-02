@@ -1,0 +1,37 @@
+language: python
+cache: pip
+sudo: false
+env:
+  global:
+  - PACKAGENAME="htsimaging"
+  - MINICONDA_URL="https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+python:
+- '3.6'
+before_install:
+- export MINICONDA=$HOME/miniconda
+- export PATH="$MINICONDA/bin:$PATH"
+- hash -r
+- echo $MINICONDA_URL
+- wget $MINICONDA_URL -O miniconda.sh;
+- bash miniconda.sh -b -f -p $MINICONDA;
+- conda config --set always_yes yes
+- conda update conda
+- conda info -a
+- conda env create -f environment.yml
+- source activate htsimaging
+install:
+- python setup.py install --record installed_files.txt
+script:
+- python test/test_install.py
+# - python test/test_datasets.py
+after_success:
+- coveralls
+deploy:
+  provider: pypi
+  user: rraadd88
+  distributions: sdist bdist_wheel
+  password:
+    secure: yVI8JCPYGkOtEI+fWnNffCf+vRbM81bSZ+tBsBMcqPptuW2zMdnBHMjXg0t79NrfUrwXE6HRch67flUxbHtM62ca+eM+3RT3eS69Avq4OKh/AZCWgckTaLRxmf31PAGgBic6UXYrUzZNwVwrpuYHhdPeG85GaGXBxHuVEWap3UPyJ5nf/v8J3+KE/o6QdZKX56q7SIDZxaXnM10CBnqg0ryhzfCJcss2TCo27npQ7oP8AEzfC3vYXdYqcX0i+ySyAF+mykcTRt8ZTElGYpzzmgmzFAsuBuirJpLIuIUmbsGANVb3jBU/2Ehrw9ItRa9+S3DrKpMB+f4Q/s1F9hxvS5jv0rfKUQ1LBGLpTL1nIwq+M/yHPlWRAdV/Y/eBxfl8Yrjswlog2Oc+sWcvpDmvRpBrNKq2MTIhT6ocItYocsZp3+V9ZZsFpke3fxJ9s20JdKZ8K+vR7hXRF+x7raPQFVgYHmWnRh5a6wH+L5kxM4HCVzX0uQ5CbtXkPSSuFeap8C6Ro+aSCbzQZacQTe3CIVdj3aRx/LtbTdS4ApT67W9KcZuZpwrFoef5W9U8+zo5e0pq3DKGmSP00HwtvVEk//dh1qv+ZJbCBEilbn7kFRHYUCAflDUBE5Ib+tmMMINvjdEphycwGh8MFCYh9Zwtr6vXwOgI90odR5Ix9pDCSN0=
+  on:
+    tags: true
+    branch: master
