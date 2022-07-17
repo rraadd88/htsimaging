@@ -58,8 +58,14 @@ def run_yeastspotter(cfg,test=False):
             copyfile(brightp2copyfromto[p][0],brightp2copyfromto[p][1]) 
     return cfg
 
-def segmentation2cells(imp,imsegp,fiterby_border_thickness=100,magnification=100,plotp=None,
-                      **kws):
+def segmentation2cells(
+    imp,
+    imsegp,
+    fiterby_border_thickness=100,
+    magnification=100,
+    plotp=None,
+    **kws
+    ):
     """
     prop_type='area',mn=100,mx=8000
     at 1.5X

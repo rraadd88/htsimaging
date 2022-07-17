@@ -149,7 +149,8 @@ def plot_properties_cell(cellcfg,df2,cols_colorby,colx='x',coly='y'):
 def dist_signal(img,threshold=None,label_threshold=None,
                 params_hist={},
                 params_axvline={'color':'r','linestyle':'dashed'},
-                ax=None):
+                ax=None,
+               **kws):
     ax=plt.subplot() if ax is None else ax 
     a=np.ravel(img)
     a = a[~np.isnan(a)]
@@ -163,15 +164,22 @@ def dist_signal(img,threshold=None,label_threshold=None,
     ax.set_ylabel('density')
     return ax
 
-def image_background(img_region=None,img=None,ax=None,cmap='binary_r',alpha=1):
+def image_background(img_region=None,img=None,
+                     ax=None,
+                     cmap='binary_r',alpha=1,
+                    linewidths=1,colors='cyan',
+                     kws_region={},
+                     **kws,
+                    ):
     if cmap=='gfp':
-        from rohan.lib.plot.colors import make_cmap
+        from roux.viz.colors import make_cmap
         cmap=make_cmap(["#000000",'#83f52c'],N=50)
     ax=plt.subplot(111) if ax is None else ax
     if not img is None:
-        ax.imshow(img,cmap=cmap,alpha=alpha)
+        ax.imshow(img,cmap=cmap,alpha=alpha,
+                  **kws)
     if not img_region is None:
-        ax.contour(img_region, [0.5], linewidths=1, linestyles='dashed',colors='cyan')
+        ax.contour(img_region, [0.5], linewidths=linewidths, linestyles='dashed',colors=colors,**kws_region)
     ax.grid(False)
     return ax
 
