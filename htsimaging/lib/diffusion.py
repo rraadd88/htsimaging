@@ -17,7 +17,14 @@ from htsimaging.lib.io_nd_files import average_z
 import logging
 logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..): %(message)s',level=logging.DEBUG) # 
 
-def plot_msd(imsd,emsd,ax):
+def plot_msd(
+    imsd,
+    emsd,
+    ax: plt.Axes,
+    ):
+    """
+    Plot MSD.
+    """
     imsd.reset_index().plot(x="lag time [s]",legend=None,alpha=0.75,ax=ax)
     ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]',
            xlabel='lag time $t$')
@@ -32,7 +39,10 @@ def plot_msd(imsd,emsd,ax):
     plt.tight_layout()
     return ax
 
-def plot_emsd(expt_data,ax_emsd):
+def plot_emsd(
+    expt_data: pd.DataFrame,
+    ax_emsd: plt.Axes,
+    ) :
     # print expt_data.head()
     expt_data.plot(x="lagt",style='o',ax=ax_emsd)
     ax_emsd.set_xscale('log')
@@ -41,8 +51,11 @@ def plot_emsd(expt_data,ax_emsd):
                 xlabel='lag time $t$')
     ax_emsd.legend(loc = 'center left', bbox_to_anchor = (1.0, 0.5)) #bbox_to_anchor=(2.2, 1.0)
     plt.tight_layout()
+    return ax_emsd
 
-def nd2msd(nd_fh):
+def nd2msd(
+    nd_fh: str,
+    ) -> tuple:
     # print nd_fh
     frames=pims.ND2_Reader(nd_fh)
     logging.info('number of frames = %d' % len(np.shape(frames)))
@@ -67,7 +80,10 @@ def nd2msd(nd_fh):
     emsd=tp.emsd(t_cor,0.1,0.2, max_lagtime=100)
     return imsd,emsd
 
-def expt2plots(expt_info,expt_dh):
+def expt2plots(
+    expt_info,
+    expt_dh: str,
+    ):
     if not exists(expt_dh):
         makedirs(expt_dh)
     expt_data=pd.DataFrame()    

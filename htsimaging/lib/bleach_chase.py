@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
-# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
-# This program is distributed under General Public License v. 3.    
-
-
-
-def arr_list_stb2kin(arr_list_stb,cut_off):
+def arr_list_stb2kin(
+    arr_list_stb,
+    cut_off,
+    ) -> pd.DataFrame:
     ## cut_off=3000
     pre_bleach=arr_list_stb[0]
     index=np.where(pre_bleach>cut_off)
@@ -17,20 +15,31 @@ def arr_list_stb2kin(arr_list_stb,cut_off):
     kin['time']=np.array(range(len(arr_list_stb)))*time_increment
     return kin
 
-def nd2kins(nd_fns,nd_dh,time_increment):
+def nd2kins(
+    nd_fns: list,
+    nd_dh: str,
+    time_increment,
+    ) -> pd.DataFrame:
     arr_list=nd2arr_list(nd_dh,nd_fns)
     arr_list_stb=raw2phasecorr(arr_list)
     kin=arr_list_stb2kin(arr_list_stb,3000) #stitch
     kins_mean=kin.drop(['time'], axis=1) 
     return kins_mean
 
-def data_num_kin2diff(data_num,b_well,u_well):    
+def data_num_kin2diff(
+    data_num,
+    b_well,
+    u_well,
+    ):    
     b_data =data_num.loc[:,b_well]
     u_data =data_num.loc[:,u_well]
     otpt_diff=np.log(u_data/b_data)
     return otpt_diff
 
-def getrateofrecov(x,y):
+def getrateofrecov(
+    x,
+    y,
+    ) tuple:
     otpt_diff_fitted=pd.Series(index=range(len(x)))
     for totpts in range(12,4,-1):
         slope, intercept, r_value, p_value, slope_std_error = stats.linregress(x[:totpts], y[:totpts])
@@ -45,7 +54,12 @@ def getrateofrecov(x,y):
     #alpha=stats.linregress(x,y)
     return slope,otpt_diff_fitted
 
-def data_num_kin2ana(data_num_kin,wells,wells_b,wells_u): #num_type mode, mean, meadian
+def data_num_kin2ana(
+    data_num_kin,
+    wells,
+    wells_b,
+    wells_u,
+    ): #num_type mode, mean, meadian
     diff_df=pd.DataFrame(columns=wells_b)
     diff_df.loc[:,'time']=time
     for welli in range(len(wells_b)):

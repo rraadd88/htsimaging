@@ -1,3 +1,4 @@
+"""Analyse the bleach-chase data."""
 #!/usr/bin/env python
 
 # Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
@@ -24,8 +25,9 @@ import matplotlib.pyplot as plt
 
 
 
-def main(fh_xls):
-    
+def main(
+    fh_xls: str,
+    ):
     # fh_xls=sys.argv[1]
     info=pd.read_excel(fh_xls,'info')
     info=info.set_index('varname')

@@ -1,3 +1,4 @@
+"""GLobally used variables."""
 from matplotlib import colors
 import numpy as np
 

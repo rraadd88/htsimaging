@@ -1,7 +1,5 @@
+"""Analyse the Single-Particle Tracking."""
 #!/usr/bin/env python
-
-# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
-# This program is distributed under General Public License v. 3.    
 
 import sys
 import logging
@@ -32,7 +30,11 @@ def main():
              force=args.force)
     logging.shutdown()
 
-def pipeline(expt_dh,test=False,force=False):
+def pipeline(
+    expt_dh: str,
+    test: bool=False,
+    force: bool=False,
+    ):
     if not exists(expt_dh):    
         if expt_dh.count('/')<2:
             expt_dh='%s/../test_dataset/%s' % (dirname(abspath(__file__)),expt_dh) 

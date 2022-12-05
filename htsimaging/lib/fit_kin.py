@@ -57,7 +57,15 @@ def logistic5_peval(x, p):
     A,B,C,D,E = p
     return logistic5(x, A, B, C, D, E)
 
-def fit_power(x,y,p0=[0, 1],plot=False):
+def fit_power(
+    x,
+    y,
+    p0: list=[0, 1],
+    plot: bool=False,
+    ):
+    """
+    Fit a power law.
+    """
     plsq,cov,infodict,mesg,ier= leastsq(power_residuals, p0, args=(y, x),full_output=1)
     ss_err=(infodict['fvec']**2).sum()
     ss_tot=((y-y.mean())**2).sum()
@@ -69,7 +77,12 @@ def fit_power(x,y,p0=[0, 1],plot=False):
         plt.plot(x,power_peval(x,plsq)) 
     return plsq[0], plsq[1],rsquared,power_peval(np.max(x),plsq)
 
-def fit_line(x,y,p0=[0, 1],plot=False):
+def fit_line(
+    x,
+    y,
+    p0: list=[0, 1],
+    plot: bool=False,
+    ) -> tuple:
     plsq,cov,infodict,mesg,ier= leastsq(line_residuals, p0, args=(y, x),full_output=1)
     ss_err=(infodict['fvec']**2).sum()
     ss_tot=((y-y.mean())**2).sum()
@@ -84,16 +97,23 @@ def fit_line(x,y,p0=[0, 1],plot=False):
 from roux.lib.io_dfs import set_index
 from os.path import basename
 import matplotlib.cm as cm
-def plot_kin(traj,dparams=None,ctime='time (s)',
-             fit_eqn=None,
-             smp_ctrl=None,
-             plot_parami=1,
-             ylabel='',
-             ymargin=0.2,
-             label='',
-             color='b',
-             ax1=None,
-             plot_fh=None):
+def plot_kin(
+    traj,
+    dparams: pd.DataFrame=None,
+    ctime: str='time (s)',
+    fit_eqn: str=None,
+    smp_ctrl=None,
+    plot_parami: int=1,
+    ylabel: str='',
+    ymargin: float=0.2,
+    label: str='',
+    color: str='b',
+    ax1: plt.Axes=None,
+    plot_fh: str=None,
+    ) -> plt.Axes:
+    """
+    Plot kinetics.
+    """
     traj_mean=set_index(traj,col_index=ctime)
     traj_mean=traj.T.mean()
     traj_std=traj.T.std()
@@ -164,7 +184,13 @@ from os.path import dirname
 from htsimaging.lib.fit_kin import plot_kin
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-def plot_kin_all(expt_dh,imsd_fhs):
+def plot_kin_all(
+    expt_dh: str,
+    imsd_fhs: list,
+    ):
+    """
+    Plot multiple kinetics plots.
+    """
     fig=plt.figure(figsize=(8,3))
     colors=cm.rainbow(np.linspace(0,1,len(imsd_fhs)))
     ylimmx=[]

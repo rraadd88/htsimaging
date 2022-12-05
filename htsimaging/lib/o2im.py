@@ -1,12 +1,7 @@
 #!/usr/bin/env python
-
-# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
-# This program is distributed under General Public License v. 3.    
-
-```
+"""
 This converts the imaging data from microscopes to the usable images for analysis.
-```
-
+"""
 import sys
 import os
 from os import makedirs
@@ -26,7 +21,17 @@ import matplotlib.pyplot as plt
 import subprocess
 
 
-def arr2vid(arr_list,regions,kins_mean,vid_fh,xpixels, ypixels):
+def arr2vid(
+    arr_list: list,
+    regions: list,
+    kins_mean: float,
+    vid_fh: str,
+    xpixels: list,
+    ypixels: list,
+    ) -> str:
+    """
+    From array to video.
+    """
     dpi = 100
     png_dh=os.path.splitext(vid_fh)[0]
     if not os.path.exists(png_dh):
@@ -53,9 +58,21 @@ def arr2vid(arr_list,regions,kins_mean,vid_fh,xpixels, ypixels):
         ax_kin.clear()
     bash_command=("ffmpeg -f image2 -r 4 -i "+png_dh+"/%02d.png -vcodec mpeg4 -y "+vid_fh)
     subprocess.Popen(bash_command, shell=True, executable='/bin/bash')
-
+    return vid_fh
     
-def makevid(gfp_list_stb,brf_list_stb,cmap_gfp,cmap_brf,vid_fh,conditionn=None,interval=None,dpi = 300):
+def makevid(
+    gfp_list_stb: list,
+    brf_list_stb: list,
+    cmap_gfp: str,
+    cmap_brf: str,
+    vid_fh: str,
+    conditionn: int=None,
+    interval=None,
+    dpi : int= 300,
+    ) -> str:
+    """
+    Convert to a video.
+    """
     png_dh=splitext(vid_fh)[0]
     if not exists(png_dh):
         makedirs(png_dh)
@@ -74,4 +91,4 @@ def makevid(gfp_list_stb,brf_list_stb,cmap_gfp,cmap_brf,vid_fh,conditionn=None,i
     bash_command=("ffmpeg -f image2 -r 20 -i "+png_dh+"/%03d.png -vcodec mpeg4 -y "+vid_fh)
     print vid_fh
     subprocess.Popen(bash_command, shell=True)
-
+    return vid_fh

@@ -1,7 +1,5 @@
+"""Analyse the Single-Particle Tracking."""
 #!/usr/bin/env python
-
-# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
-# This program is distributed under General Public License v. 3.    
 
 import nd2reader
 import pandas as pd
@@ -21,7 +19,9 @@ data_job=pd.read_excel(fh_xls,'JobView')
 nd_fhs=[ nd2_dh+'/'+str(fn) for fn in data_job['File Name'].unique()]
 
 # convert t0 csvs
-def nd2csv(nd_fh):
+def nd2csv(
+    nd_fh: str,
+    ):
     nd = nd2reader.Nd2(nd_fh)
     frame_cnt=0
     for frame in nd:

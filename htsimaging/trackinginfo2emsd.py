@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
-# This program is distributed under General Public License v. 3.    
-
 import sys
 import logging
 logging.basicConfig(format='[%(asctime)s] %(levelname)s\tfrom %(filename)s in %(funcName)s(..): %(message)s',level=logging.DEBUG) # 

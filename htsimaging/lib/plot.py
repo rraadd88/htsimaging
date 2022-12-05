@@ -1,6 +1,11 @@
 from roux.global_imports import *
 
-def _plot(ax, coords, pos_columns, **plot_style):
+def _plot(
+    ax,
+    coords,
+    pos_columns,
+    **plot_style,
+    ):
     """ This function wraps Axes.plot to make its call signature the same for
     2D and 3D plotting. The y axis is inverted for 2D plots, but not for 3D
     plots.
@@ -26,10 +31,21 @@ def _plot(ax, coords, pos_columns, **plot_style):
     elif len(pos_columns) == 2:
         return ax.plot(coords[pos_columns[0]], coords[pos_columns[1]],
                        **plot_style)
-def plot_trajectories(traj,image, colorby='particle', mpp=None, label=False,
-                        cmap=None, ax=None, t_column=None,
-                        pos_columns=None, plot_style={},
-                        params_text={'ha':'center','va':'center'}, **kwargs):
+    
+def plot_trajectories(
+    traj,
+    image,
+    colorby: str='particle',
+    mpp: float=None,
+    label: str=False,
+    cmap: str=None,
+    t_column: str=None,
+    pos_columns: list=None,
+    plot_style: dict={},
+    params_text: dict={'ha':'center','va':'center'},
+    ax: plt.Axes=None,
+    **kwargs,
+    ) -> plt.Axes:
     """Plot traces of trajectories for each particle.
     Optionally image it on a frame from the video.
 
@@ -146,11 +162,18 @@ def plot_properties_cell(cellcfg,df2,cols_colorby,colx='x',coly='y'):
 #         ax.set_axis_off()
     plt.tight_layout()
     
-def dist_signal(img,threshold=None,label_threshold=None,
-                params_hist={},
-                params_axvline={'color':'r','linestyle':'dashed'},
-                ax=None,
-               **kws):
+def dist_signal(
+    img,
+    threshold: float=None,
+    label_threshold: float=None,
+    params_hist: dict={},
+    params_axvline: dict={'color':'r','linestyle':'dashed'},
+    ax: plt.Axes=None,
+    **kws,
+    ) -> plt.Axes:
+    """
+    Plot the distribution of intensity.    
+    """
     ax=plt.subplot() if ax is None else ax 
     a=np.ravel(img)
     a = a[~np.isnan(a)]
@@ -164,13 +187,20 @@ def dist_signal(img,threshold=None,label_threshold=None,
     ax.set_ylabel('density')
     return ax
 
-def image_background(img_region=None,img=None,
-                     ax=None,
-                     cmap='binary_r',alpha=1,
-                    linewidths=1,colors='cyan',
-                     kws_region={},
-                     **kws,
-                    ):
+def image_background(
+    img_region=None,
+    img=None,
+    cmap: str='binary_r',
+    alpha: float=1,
+    linewidths: float=1,
+    colors: str='cyan',
+    kws_region: dict={},
+    ax: plt.Axes=None,
+    **kws,
+    ) -> plt.Axes:
+    """
+    Plot image background.
+    """
     if cmap=='gfp':
         from roux.viz.colors import make_cmap
         cmap=make_cmap(["#000000",'#83f52c'],N=50)
@@ -183,7 +213,17 @@ def image_background(img_region=None,img=None,
     ax.grid(False)
     return ax
 
-def image_locate_particles(df1,frame,img_region,fig=None,ax=None,annotate_particles=False):
+def image_locate_particles(
+    df1: pd.DataFrame,
+    frame,
+    img_region,
+    annotate_particles=False,
+    fig=None,
+    ax: plt.Axes=None,
+    ) -> plt.Axes:
+    """
+    Plot image with particles.
+    """
     import trackpy as tp
     fig=plt.figure(figsize=[20,20]) if fig is None else fig
     ax=plt.subplot(111) if ax is None else ax
@@ -194,8 +234,17 @@ def image_locate_particles(df1,frame,img_region,fig=None,ax=None,annotate_partic
 #     ax.grid(False)
     return ax
 
-def image_trajectories(dtraj,img_gfp=None,img_bright=None,label=True,
-                       fig=None,ax=None):
+def image_trajectories(
+    dtraj: pd.DataFrame,
+    img_gfp=None,
+    img_bright=None,
+    label: bool=True,
+    fig=None,
+    ax: plt.Axes=None,
+    ) -> plt.Axes:
+    """
+    Plot trajectories.
+    """
     import trackpy as tp    
     fig=plt.figure(figsize=[20,20]) if fig is None else fig
     ax=plt.subplot(111) if ax is None else ax
@@ -211,7 +260,18 @@ def image_trajectories(dtraj,img_gfp=None,img_bright=None,label=True,
     ax.grid(False)
     return ax
 
-def plot_moving_particles(t_cor,img_bright=None,frame=None,framei=0,particle2color=None,test=False,outd=None):
+def plot_moving_particles(
+    t_cor,
+    img_bright=None,
+    frame=None,
+    framei: int=0,
+    particle2color=None,
+    test: bool=False,
+    outd: str=None,
+    ):
+    """
+    Plot moving particles.
+    """
     plotp=f'{outd}/{framei:03d}.jpeg'
     plt.figure(figsize=[5,5])
     ax=plt.subplot(111)
@@ -250,9 +310,19 @@ def plot_moving_particles(t_cor,img_bright=None,frame=None,framei=0,particle2col
         plt.savefig(plotp)
         plt.clf();plt.close();
         
-def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
-             outd=None,particle2color=None,
-             test=False,force=False):
+def make_gif(
+    cellcfg=None,
+    frames: list=None,
+    t_cor=None,
+    img_bright=None,
+    outd: str=None,
+    particle2color: dict=None,
+    test: bool=False,
+    force: bool=False,
+    ):
+    """
+    Make a .gif file out of frames. 
+    """
     if not cellcfg is None:
         if frames is None:
             frames=[np.load(p) for p in sorted(cellcfg['cellframes'])]
@@ -296,11 +366,20 @@ def make_gif(cellcfg=None,frames=None,t_cor=None,img_bright=None,
         runbashcmd(com)
     return gifp
 
-def plot_trajectories_stats(df,coly,colx='frame',rescalex=True,
-                    label=None,
-                    axvlinex=None,
-                    params_plot={'color':'k','alpha':0.5},
-                   fig=None,ax=None):
+def plot_trajectories_stats(
+    df: pd.DataFrame,
+    coly: str,
+    colx: str='frame',
+    rescalex: bool=True,
+    label: str=None,
+    axvlinex=None,
+    params_plot: dict={'color':'k','alpha':0.5},
+    fig=None,
+    ax: plt.Axes=None,
+    ) -> plt.Axes:
+    """
+    Plot statistics of the particle trajectories.
+    """
     fig=plt.figure() if fig is None else fig
     axin=not ax is None
     ax=plt.subplot() if ax is None else ax

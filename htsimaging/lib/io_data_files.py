@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 
-# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
-# This program is distributed under General Public License v. 3.    
-
-
 from os.path import splitext, join, exists, isdir,basename,abspath,dirname
 from os import makedirs
 import numpy as np
@@ -13,19 +9,31 @@ from glob import glob
 import logging
 
 import pickle
-def to_pkl(data,fh):
+
+def to_pkl(
+    data,
+    fh,
+    ):
     if not fh is None:
         with open(fh, 'wb') as f:
             try:
                 pickle.dump(data, f, -1)
             except:
-                pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)                
-def read_pkl(fh):
+                pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+                
+def read_pkl(
+    fh,
+    ):
     with open(fh,'rb') as f:
         return pickle.load(f) 
 
 
-def expt_dh2expt_info(expt_dh):
+def expt_dh2expt_info(
+    expt_dh: str,
+    ):
+    """
+    Make configuration using the directory structure for an experiment.
+    """
     if exists(expt_dh+"info"):
         expt_info=pd.read_csv(expt_dh+"info")
     elif exists(expt_dh+"info.csv"):
@@ -51,7 +59,12 @@ def expt_dh2expt_info(expt_dh):
     del expt_info2["index"]
     return expt_info2
 
-def createinfo(expt_dh):
+def createinfo(
+    expt_dh: str,
+    ):
+    """
+    Create information file.
+    """
     info=pd.read_csv(expt_dh+"info")
     for i in range(len(info)):
         reps=glob("%s/%s*" % (info.loc[i,"dh"],info.loc[i,"fn_lead"]))

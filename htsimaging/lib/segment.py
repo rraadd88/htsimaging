@@ -5,7 +5,16 @@ from roux.global_imports import *
 from skimage import io,measure
 from htsimaging.lib.utils import filter_regions
 
-def set_opts(indp,outdp,yeast_segmentation_srcdp):
+from os import symlink
+
+def set_opts(
+    indp: str,
+    outdp: str,
+    yeast_segmentation_srcdp: str,
+    ):
+    """
+    Set options for the segmentation tool.
+    """
     cfg={'input_directory':abspath(indp),
     'output_directory':abspath(outdp),
     'rescale':False,
@@ -21,9 +30,13 @@ def set_opts(indp,outdp,yeast_segmentation_srcdp):
                 cfg[k]=f"'{cfg[k]}'"
             f.write(f"{k}={cfg[k]}\n")
             
-from os import symlink
-from roux.global_imports import *
-def run_yeastspotter(cfg,test=False):
+def run_yeastspotter(
+    cfg: dict,
+    test: bool=False,
+    ) -> dict:
+    """
+    Run yeastspotter.
+    """
     cfg['segmentation_cell']={}
     cfg['segmentation_cell']['parentd']=f"{cfg['prjd']}/segmentation_cell"
     cfg['segmentation_cell']['inputd']=f"{cfg['segmentation_cell']['parentd']}/yeastspotter_input"
@@ -59,13 +72,13 @@ def run_yeastspotter(cfg,test=False):
     return cfg
 
 def segmentation2cells(
-    imp,
-    imsegp,
-    fiterby_border_thickness=100,
-    magnification=100,
-    plotp=None,
-    **kws
-    ):
+    imp: str,
+    imsegp: str,
+    fiterby_border_thickness: int=100,
+    magnification: int=100,
+    plotp: str=None,
+    **kws: dict,
+    ) -> list:
     """
     prop_type='area',mn=100,mx=8000
     at 1.5X
@@ -93,7 +106,11 @@ def segmentation2cells(
                            mn=fiterby_border_thickness,mx=im.shape[1]+fiterby_border_thickness,check=False)
     return regions               
                
-def get_cellboxes(regions,plotp=None,cellbox_width=150):
+def get_cellboxes(
+    regions: list,
+    plotp: str=None,
+    cellbox_width: int=150,
+    ) -> list:
     import matplotlib.patches as mpatches
     if not plotp is None:
         fig, ax = plt.subplots(figsize=(10, 6))

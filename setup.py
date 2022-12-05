@@ -35,7 +35,7 @@ with open('requirements.txt') as f:
 setup(
 name='htsimaging',
 author='Rohan Dandage',
-version='1.0.2',
+version='1.0.3',
 url='https://github.com/rraadd88/..',
 download_url='https://github.com/rraadd88/htsimaging',
 description='For analysis of microscopy images',

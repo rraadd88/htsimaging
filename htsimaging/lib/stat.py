@@ -3,13 +3,25 @@ from roux.global_imports import *
 
 from scipy.spatial import distance
 
-
-def distance_effective(particle,frame1,frame2,t_cor):
+def distance_effective(
+    particle,
+    frame1,
+    frame2,
+    t_cor,
+    ):
+    """
+    Distance effective.
+    """
     a=t_cor.loc[((t_cor['particle']==particle) & (t_cor['frame']==frame1)),['x','y']]
     b=t_cor.loc[((t_cor['particle']==particle) & (t_cor['frame']==frame2)),['x','y']]
     return distance.euclidean(a.values, b.values)
 
-def get_distance_travelled(t_cor):
+def get_distance_travelled(
+    t_cor: pd.DataFrame,
+    ):
+    """
+    Distance travelled.
+    """
     for f1,f2 in zip(list(range(0,t_cor['frame'].max())),
                 list(range(1,t_cor['frame'].max()+1))):
         for p in t_cor['particle'].unique():
@@ -33,9 +45,22 @@ def get_distance_travelled(t_cor):
     t_cor['intensity']=t_cor['mass']            
     return t_cor
 
-def get_slope(df,ds):
+def get_slope(
+    df: pd.DataFrame,
+    ds: pd.Series,
+    ):
+    """
+    Get slope. 
+    """
     return sc.stats.linregress(df.loc[ds.index,'frame'],df.loc[ds.index,'distance effective from centroid per frame']).slope
-def get_inflection_point(df,threshold_slope=0.25):
+
+def get_inflection_point(
+    df: pd.DataFrame,
+    threshold_slope: float=0.25,
+    ) -> pd.DataFrame:
+    """
+    Get inflation point.
+    """
     label=df.name
     df['slope distance effective from centroid versus frame']=df.rolling(6)['y'].apply(lambda x: get_slope(df,x),raw=False)
     if any(df['slope distance effective from centroid versus frame']>threshold_slope) and not all(df['slope distance effective from centroid versus frame']>threshold_slope):
@@ -45,8 +70,13 @@ def get_inflection_point(df,threshold_slope=0.25):
     df['inflection point']=inflection_point
     return df
 
-
-def get_distance_from_centroid(df1,center=[75,75]):
+def get_distance_from_centroid(
+    df1: pd.DataFrame,
+    center: list=[75,75],
+    ) -> pd.DataFrame:
+    """
+    Get distance from the centroid.
+    """
     # get distance from center
 #     from scipy.spatial import distance
     if 'distance effective from centroid' in df1:

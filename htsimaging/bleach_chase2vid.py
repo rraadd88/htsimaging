@@ -1,7 +1,5 @@
+"""Make a video from bleach-chase data."""
 #!/usr/bin/env python
-
-# Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
-# This program is distributed under General Public License v. 3.    
 
 import sys
 import os
@@ -22,7 +20,10 @@ import matplotlib.pyplot as plt
 import subprocess
 # from nd2kins import nd2arr_list,raw2phasecorr,arr_list2regions
 
-def main(fh_xls,well):
+def main(
+    fh_xls: str,
+    well: str,
+    ):
     info=pd.read_excel(fh_xls,'info')
     info=info.set_index('varname')
     for var in info.iterrows() :

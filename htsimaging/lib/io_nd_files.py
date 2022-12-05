@@ -26,7 +26,14 @@ import subprocess
 
 
 
-def nd2arr_list(nd_dh=None,nd_fns=[],nd_fh=None):
+def nd2arr_list(
+    nd_dh: str=None,
+    nd_fns: list=[],
+    nd_fh: str=None,
+    ) -> list:
+    """
+    To lists of arrays. 
+    """
     arr_list=[]
     if nd_fh is None:
         for nd_fn in nd_fns:
@@ -41,7 +48,10 @@ def nd2arr_list(nd_dh=None,nd_fns=[],nd_fh=None):
             arr_list.append(np.array(ndi))
         return arr_list
     
-def raw2phasecorr(arr_list,clip=0): #cv
+def raw2phasecorr(
+    arr_list: list,
+    clip: int=0,
+    ) -> list: #cv
     cx = 0.0
     cy = 0.0
     stb_arr_list=[]
@@ -67,7 +77,10 @@ def raw2phasecorr(arr_list,clip=0): #cv
         stb_arr_list.append(stable_image_clipped)
     return stb_arr_list
 
-def arr_list2regions(arr_list, time_increment):
+def arr_list2regions(
+    arr_list: list,
+    time_increment: int,
+    ) -> tuple:
     pre_bleach=arr_list[0]
     denoised=restoration.denoise_bilateral(pre_bleach.astype('uint16'), sigma_range=0.01, sigma_spatial=15)
     smoothened = filters.median(denoised,np.ones((4,4)))
@@ -96,7 +109,14 @@ def arr_list2regions(arr_list, time_increment):
     kins_mean['time']=np.array(range(len(arr_list)))*time_increment #stitch
     return regions_large,kins_mean
 
-def arr_list2vid(arr_list,regions,kins_mean,vid_fh,xpixels, ypixels):
+def arr_list2vid(
+    arr_list: list,
+    regions: list,
+    kins_mean: float,
+    vid_fh: str,
+    xpixels: list,
+    ypixels: list,
+    ) -> str:
     dpi = 100
     png_dh=os.path.splitext(vid_fh)[0]
     if not os.path.exists(png_dh):
@@ -123,9 +143,12 @@ def arr_list2vid(arr_list,regions,kins_mean,vid_fh,xpixels, ypixels):
         ax_kin.clear()
     bash_command=("ffmpeg -f image2 -r 4 -i "+png_dh+"/%02d.png -vcodec mpeg4 -y "+vid_fh)
     subprocess.Popen(bash_command, shell=True, executable='/bin/bash')
+    return vid_fh
 
 @pims.pipeline
-def average_z(frames):
+def average_z(
+    frames: list,
+    ) -> list:
     if len(np.shape(frames))==4:
         return frames.mean(axis=0)  # the same as image[0] + ... + image[4]
     else: 

@@ -3,8 +3,13 @@ from os.path import isdir
 import pims
 import sys
 
-def make_project_cfg(prjd,bright_fn_marker,cores=1,
-                    test=False,force=False):
+def make_project_cfg(
+    prjd: str,
+    bright_fn_marker,
+    cores: int=1,
+    test: bool=False,
+    force: bool=False,
+    )-> dict:
     prjd=abspath(prjd)
     cfgp=f"{prjd}/cfg.yml"
     if not exists(cfgp) or force:    
@@ -50,14 +55,23 @@ def make_project_cfg(prjd,bright_fn_marker,cores=1,
         cfg=yaml.load(open(cfgp,'r'))
     return cfg
 
-def make_cell_cfg(cfg,frames,cells,trial,celli,cellbox,
-                 params_get_signal_summary_by_roi={'xy_center':None,'width':20,
+def make_cell_cfg(
+    cfg: dict,
+    frames: list,
+    cells: list,
+    trial: str,
+    celli: int,
+    cellbox: list,
+    params_get_signal_summary_by_roi: dict={'xy_center':None,'width':20,
                                   'fun_summary_frame':'min',
                                   'fun_summary_frames':'median'
                                  },
-                  test=False,force=False,
-                        ):
-                                                              
+    test: bool=False,
+    force: bool=False,
+    ) -> dict:
+    """
+    Make the configuration for an individual cell.
+    """
     outp=f"{cfg['trials'][trial]['datad']}/cells/cell{celli+1:08d}/"
     cfgp=f"{outp}/cfg.yml"
     if not exists(cfgp) or force:

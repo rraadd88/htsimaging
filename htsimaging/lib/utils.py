@@ -12,18 +12,37 @@ import matplotlib.animation as animation
 from matplotlib import colors
 import subprocess
 
-def filterframes(frames,cutoff=0):
+def filterframes(
+    frames: list,
+    cutoff: float=0,
+    ):
+    """
+    Filter the frames.
+    """
     frames_cleaned=[]
     for framei in frames:
         frames_cleaned.append(filterframe(framei,cutoff))
     return frames_cleaned
 
-def filterframe(frame,cutoff=0):
+def filterframe(
+    frame,
+    cutoff: float=0,
+    ):
+    """
+    Filter a frame.
+    """
     frame_cleand=np.array(frame)
     frame_cleand[frame_cleandi<cutoff]=0
     return frame_cleaned
 
-def get_data_by_regions(regions,img=None,prop_type='area'):
+def get_data_by_regions(
+    regions: list,
+    img=None,
+    prop_type: str='area',
+    ) -> pd.DataFrame:
+    """
+    Get properties by regions.
+    """
     if prop_type=='mean_intensity':
         ValueError("arg img is required")
     regions_props= measure.regionprops(regions.astype(int),intensity_image=img)
@@ -35,9 +54,18 @@ def get_data_by_regions(regions,img=None,prop_type='area'):
                      })
     return df1
 
-def filter_regions(regions,img=None,prop_type='area',mn=0,mx=0,
-                   check=False,plotp=None):
+def filter_regions(
+    regions: list,
+    img=None,
+    prop_type: str='area',
+    mn: float=0,
+    mx: float=0,
+    check: bool=False,
+    plotp: str=None,
+    ):
     """
+    Filter regions.
+    
     Parameters:
         regions (np.array): segmented image, labeled with `measure.label(regions)`.
     """
@@ -80,18 +108,33 @@ def filter_regions(regions,img=None,prop_type='area',mn=0,mx=0,
             plt.savefig(plotp)
     return regions_filtered
 
-def smoothen(img):
+def smoothen(
+    img,
+    ):
+    """
+    Smoothen the image.
+    """
     denoised=restoration.denoise_bilateral(img.astype('uint16'), sigma_range=0.01, sigma_spatial=15)
     smoothened = filters.median(denoised,np.ones((4,4)))
     return smoothened
 
-def smoothenframes(frames):
+def smoothenframes(
+    frames,
+    ):
+    """
+    Smoothen the images.    
+    """
     frames_cleaned=[]
     for framei in frames:
         frames_cleaned.append(smoothen(np.array(framei)))
     return frames_cleaned
         
-def get_regions(img):
+def get_regions(
+    img,
+    ):
+    """
+    Get regions.
+    """
     denoised=restoration.denoise_bilateral(img.astype('uint16'), 
 #                                            sigma_range=0.01, 
                                            sigma_spatial=15,
@@ -108,7 +151,10 @@ def get_regions(img):
     regions= measure.label(labels)
     return regions, denoised, smoothened,markers
 
-def raw2phasecorr(arr_list,clip=0): #cv
+def raw2phasecorr(
+    arr_list: list,
+    clip: int=0,
+    ) -> list: #cv
     import cv2
     cx = 0.0
     cy = 0.0
@@ -135,7 +181,13 @@ def raw2phasecorr(arr_list,clip=0): #cv
         stb_arr_list.append(stable_image_clipped)
     return stb_arr_list
 
-def imlistcropper(imlist,loci):
+def imlistcropper(
+    imlist: list,
+    loci: int,
+    ):
+    """
+    Crop a list of images.
+    """
     rowini,rowend,colini,colend=loci
     imlist_region=[]
     for im in imlist:
@@ -143,7 +195,13 @@ def imlistcropper(imlist,loci):
     return imlist_region
 
 
-def imclipper(im_stb,clip):
+def imclipper(
+    im_stb,
+    clip,
+    ):
+    """
+    Crop an image.
+    """
     ht,wd=np.shape(im_stb)
 #         clip=0.125 #0.25
     lt=int(wd*clip)
@@ -153,7 +211,11 @@ def imclipper(im_stb,clip):
     im_stb_clipped=im_stb[up:dw,lt:rt]
     return im_stb_clipped
 
-def phasecorr(imlist,imlist2=None,clip=0): #cv  [rowini,rowend,colini,colend]
+def phasecorr(
+    imlist: list,
+    imlist2: list=None,
+    clip: int=0,
+    ): #cv  [rowini,rowend,colini,colend]
     import cv2
     cx = 0.0
     cy = 0.0            
@@ -187,24 +249,32 @@ def phasecorr(imlist,imlist2=None,clip=0): #cv  [rowini,rowend,colini,colend]
         return imlist_stb
 
 ## features
-def get_cellprops(regions,intensity_imgtype2img,properties=['area',
-    'bbox_area',
-    'convex_area',
-    'eccentricity',
-    'equivalent_diameter',
-    'euler_number',
-    'extent',
-    'filled_area',
-    'label',
-    'major_axis_length',
-    'max_intensity',
-    'mean_intensity',
-    'min_intensity',
-    'minor_axis_length',
-    'orientation',
-    'perimeter',
-    'solidity',
-    'centroid']):
+def get_cellprops(
+    regions,
+    intensity_imgtype2img,
+    properties=['area',
+        'bbox_area',
+        'convex_area',
+        'eccentricity',
+        'equivalent_diameter',
+        'euler_number',
+        'extent',
+        'filled_area',
+        'label',
+        'major_axis_length',
+        'max_intensity',
+        'mean_intensity',
+        'min_intensity',
+        'minor_axis_length',
+        'orientation',
+        'perimeter',
+        'solidity',
+        'centroid',
+                ],
+    ) -> pd.DataFrame:
+    """
+    Get cell properties.
+    """
     dn2df={}
     for imgtype in intensity_imgtype2img:
         df=pd.DataFrame(measure.regionprops_table(regions.astype(int),
@@ -216,10 +286,16 @@ def get_cellprops(regions,intensity_imgtype2img,properties=['area',
     df=pd.concat(dn2df,axis=0,names=['image type']).reset_index(0)
     return df
 
-def get_signal_summary_by_roi(cellframes,xy_center=None,width=20,
-                       fun_summary_frame='min',fun_summary_frames='median'):
+def get_signal_summary_by_roi(
+    cellframes: list,
+    xy_center: tuple=None,
+    width: int=20,
+    fun_summary_frame: str='min',
+    fun_summary_frames: str='median',
+    ):
     """
-    place of the roi in the image is defined by
+    Place of the roi in the image is defined by
+    
     :param xy_center:
     :param width:    
     """

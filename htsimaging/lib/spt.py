@@ -11,14 +11,25 @@ from htsimaging.lib.stat import *
 # %matplotlib inline
 
 @pims.pipeline
-def average_z(image):
+def average_z(
+    image,
+    ):
     return image.mean(axis=0) 
     
-def plot_msd(imsd,emsd,ax=None,scale="log",plot_fh=None,
-    params_msd={"mpp":0.0645,
+def plot_msd(
+    imsd,
+    emsd,
+    scale: str="log",
+    plot_fh: str=None,
+    params_msd: dict={"mpp":0.0645,
                 "fps":0.2,
                 "max_lagtime":100
-                }):
+                },
+    ax: plt.Axes=None,
+    ) -> plt.Axes:
+    """
+    Plot MSD.
+    """
     if ax is None:
         plt.figure(figsize=(3, 3))
         ax=plt.subplot(111)
@@ -48,7 +59,13 @@ def plot_msd(imsd,emsd,ax=None,scale="log",plot_fh=None,
 #         plt.clf();plt.close()
     return ax
 
-def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
+def plot_emsd(
+    expt_data: pd.DataFrame,
+    color: str='k',
+    scale: str="log",
+    plot_fh: str=None,
+    ax: plt.Axes=None,
+    ) -> plt.Axes:
     if ax is None:
         plt.figure(figsize=(6, 3))
         ax=plt.subplot(121)
@@ -65,7 +82,12 @@ def plot_emsd(expt_data,ax=None,color='k',scale="log",plot_fh=None):
 #         plt.clf();plt.close()
     return ax 
 
-def nd2frames(nd_fh):
+def nd2frames(
+    nd_fh: str,
+    ):
+    """
+    Convert to frames.
+    """
     if nd_fh.endswith('nd2'):
         frames=pims.ND2_Reader(nd_fh)
     elif nd_fh.endswith('mp4'):
@@ -82,7 +104,16 @@ def nd2frames(nd_fh):
         frames.iter_axes = 't'
     return frames
     
-def test_locate_particles(cellcfg,params_locate,frame=None,force=False,test=False):
+def test_locate_particles(
+    cellcfg: dict,
+    params_locate: dict,
+    frame=None,
+    force: bool=False,
+    test: bool=False,
+    ) -> bool:
+    """
+    Test locating of the particles.
+    """
     dlocate_testp=f"{cellcfg['outp']}/dlocate_test.tsv"
     if exists(dlocate_testp) and not force and not test:
         return True
@@ -133,7 +164,12 @@ def test_locate_particles(cellcfg,params_locate,frame=None,force=False,test=Fals
 #             savefig(f"{cellcfg['plotp']}/plot_properties_cell_locate_particles.png")
     return True
         
-def trim_returns(df1):
+def trim_returns(
+    df1: pd.DataFrame,
+    ) -> pd.DataFrame:
+    """
+    Trim images.
+    """
     from htsimaging.lib.stat import get_inflection_point
     from htsimaging.lib.plot import plot_trajectories_stats
     # get inflection point if any
@@ -170,7 +206,13 @@ def trim_returns(df1):
     ax.set_xlim(df1['frame'].min(),df1['frame'].max())
     return df2
                 
-def fill_frame_jumps(df1,jump_length):
+def fill_frame_jumps(
+    df1: pd.DataFrame,
+    jump_length,
+    ) -> pd.DataFrame:
+    """
+    Fill the frame jumps.
+    """
     df1=df1.sort_values(by=['particle','frame'])
     df1['frame delta']=df1['frame']-([df1['frame'].tolist()[0]-1]+df1['frame'].tolist()[:-1])
     df=df1.loc[(df1['frame delta']==jump_length),:]
@@ -184,27 +226,33 @@ def fill_frame_jumps(df1,jump_length):
     df1.index=range(len(df1))
     return df1                
             
-def cellcfg2distances(cellcfg,
-                    # for 150x150 images
-                    params={'locate':{'diameter':11, # round to odd number
-                                      'noise_size':1,
-                                      'separation':15,
-                                      'threshold':4000,
-                                      'preprocess':True,
-                                      'invert':False,
-                                      'max_iterations':50,
-                                      'percentile':0,
-                                      'engine':'numba',
-                                      },
-                    'link_df':{
-                               'search_range':5,
-                               'memory':1,
-                               'link_strategy':'drop',},
-                    'filter_stubs':{'threshold':4},
-                    'get_distance_from_centroid':{'center':[75,75]},
-#                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
-                           },
-                    test=False,force=False):
+def cellcfg2distances(
+    cellcfg: dict,
+    # for 150x150 images
+    params: dict={
+        'locate':{'diameter':11, # round to odd number
+                      'noise_size':1,
+                      'separation':15,
+                      'threshold':4000,
+                      'preprocess':True,
+                      'invert':False,
+                      'max_iterations':50,
+                      'percentile':0,
+                      'engine':'numba',
+                      },
+        'link_df':{
+                   'search_range':5,
+                   'memory':1,
+                   'link_strategy':'drop',},
+        'filter_stubs':{'threshold':4},
+        'get_distance_from_centroid':{'center':[75,75]},
+    #                     'msd':{'mpp':0.0645,'fps':0.2, 'max_lagtime':100},
+               },
+    test: bool=False,
+    force: bool=False):
+    """
+    Calculate distances from cell configuration.
+    """
     params['locate']['separation']=params['locate']['diameter']*1
     params['locate']['threshold']=cellcfg['signal_cytoplasm']*0.5
     params['link_df']['search_range']=params['locate']['diameter']*0.33
@@ -295,7 +343,7 @@ def cellcfg2distances(cellcfg,
         
 def apply_cellcfgp2distances(cellcfgp):
     """
-    wrapper around cellcfg2distances for multiprocessing
+    Wrapper around cellcfg2distances for multiprocessing.
     """
     celli='/'.join(dirname(cellcfgp).split('/')[-3:])
     print(f"processing {celli}: ");logging.info(celli)

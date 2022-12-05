@@ -1,3 +1,4 @@
+"""Kinetics from statistics."""
 #!/usr/bin/env python
 
 # Copyright 2016, Rohan Dandage <rraadd_8@hotmail.com>
@@ -13,7 +14,9 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from scipy.optimize import curve_fit
 
-def main(data_xls_fh):
+def main(
+    data_xls_fh: str,
+    ):
     def data2diff(data_mean,b_well,u_well,info_pt00):    
         #def norm2max(pdseries):
         #    otpt_norm=pd.Series(index=pdseries.index)
