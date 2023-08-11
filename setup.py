@@ -58,7 +58,7 @@ extras_require['all']=list(set(extras_require['all']))
 # main setup command
 setuptools.setup(
     name='htsimaging',
-    version='1.0.3',
+    version='1.0.4',
     description='High-Throughput Single-cell Imaging analysis.',
     long_description=long_description,
     long_description_content_type="text/markdown",
