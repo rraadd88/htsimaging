@@ -66,7 +66,7 @@ setuptools.setup(
     author='rraadd88',
     author_email='rohanadandage@gmail.com',
     license='General Public License v. 3',
-    packages=setuptools.find_packages('.',exclude=['test', 'unit','deps', 'data']),
+    packages=setuptools.find_packages('.',exclude=['test','tests', 'unit','deps','data','examples']),
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
