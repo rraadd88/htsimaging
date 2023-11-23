@@ -25,6 +25,7 @@ requirements = {
     'scikit-image', # image processing.
     'argh', # for command-line convinience
     'seaborn',
+    'fastparquet',
     ],
 'spt':[
     'pims==0.4.1', 
@@ -66,7 +67,7 @@ setuptools.setup(
     author='rraadd88',
     author_email='rohanadandage@gmail.com',
     license='General Public License v. 3',
-    packages=setuptools.find_packages('.',exclude=['test','tests', 'unit','deps','data','examples']),
+    packages=setuptools.find_packages('.',exclude=['test', 'unit','deps', 'data']),
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',

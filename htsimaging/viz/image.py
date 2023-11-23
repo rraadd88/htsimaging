@@ -47,6 +47,12 @@ def image_background(
             N=50,
             )        
     ax=plt.subplot(111) if ax is None else ax
+    # TODO preprocess
+    # if not rotation is None:
+    #     assert rotation%90 ==0:
+    # img=numpy.rot90(img,3)
+    # img_region=numpy.rot90(img_region,3)
+
     if not img is None:
         ax_img=ax.imshow(
             img,

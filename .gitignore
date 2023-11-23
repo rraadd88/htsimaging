@@ -78,3 +78,10 @@ target/
 
 6
 *.bak
+examples/*/*
+examples/*.npy
+examples/*test*
+examples/_*
+examples/_*/
+_*/
+examples/*demo_data*
