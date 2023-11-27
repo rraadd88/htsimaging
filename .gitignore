@@ -85,3 +85,4 @@ examples/_*
 examples/_*/
 _*/
 examples/*demo_data*
+outputs/

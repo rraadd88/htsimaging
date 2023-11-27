@@ -9,7 +9,7 @@
 <a href="">[![Issues](https://img.shields.io/github/issues/rraadd88/htsimaging.svg?style=for-the-badge)](https://github.com/rraadd88/htsimaging/issues)</a>
 <br />
 <a href="">[![Downloads](https://img.shields.io/pypi/dm/htsimaging?style=for-the-badge)](https://pepy.tech/project/htsimaging)</a>
-<a href="">[![GNU License](https://img.shields.io/github/license/rraadd88/htsimaging.svg?style=for-the-badge)](https://github.com/rraadd88/htsimaging/blob/master/LICENSE)</a>
+<a href="">[![GNU License](https://img.shields.io/github/license/rraadd88/htsimaging.svg?style=for-the-badge)](https://github.com/rraadd88/htsimaging/blob/main/LICENSE)</a>
 </div>
   
 <!-- PROJECT LOGO -->
@@ -23,8 +23,19 @@
     ·
     <a href="https://github.com/rraadd88/htsimaging#api">Explore the API</a>
   </p>
-</div> 
-  
+</div>  
+
+![image](./examples/image.png)   
+
+# Examples  
+
+[📈 Single-cell protein abundance and its normalization](https://github.com/rraadd88/htsimaging/blob/main/examples/protein_abundance_and_normalization.ipynb)   
+[📈 Single-cell protein abundance by marker localization](https://github.com/rraadd88/htsimaging/blob/main/examples/protein_abundance_by_marker_location.ipynb)  
+[🖼️ Visualization of the images.](https://github.com/rraadd88/htsimaging/blob/main/examples/viz_image.ipynb)  
+[📈 Quantitative analysis of endocytosis.](https://github.com/rraadd88/htsimaging/blob/main/examples/endocytosis.ipynb)  
+[📈 Single-particle tracking (SPT).](https://github.com/rraadd88/htsimaging/blob/main/examples/spt.ipynb)  
+[📈 Calculating the recovery rate from a bleach-chase data](https://github.com/rraadd88/htsimaging/blob/main/examples/bleach_chase.ipynb)  
+
 # Installation
     
 ```
@@ -34,14 +45,30 @@ With additional dependencies as required:
 ```
 pip install htsimaging[spt]         # for the analysis of the Single-Particle Tracking e.g. endocytosis.
 ```
-# Examples
+  
+# How to cite?  
+1. Using BibTeX:   
+```
+@software{Dandage_htsimaging,
+  title   = {htsimaging: High-Throughput Single-cell Imaging analysis in python},
+  author  = {Dandage, Rohan},
+  year    = {2023},
+  url     = {https://zenodo.org/doi/10.5281/zenodo.3697134},
+  version = {v1.0.5},
+  note    = {The URL is a DOI link to the permanent archive of the software.},
+}
+```
+2. DOI link: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3697134.svg)](https://zenodo.org/doi/10.5281/zenodo.3697134), or  
 
-[Single-cell protein abundance and its normalization](https://github.com/rraadd88/htsimaging/blob/master/examples/protein_abundance_and_normalization.ipynb)  
-[Single-cell protein abundance by marker localization](https://github.com/rraadd88/htsimaging/blob/master/examples/protein_abundance_by_marker_location.ipynb)  
-[Visualization of the images.](https://github.com/rraadd88/htsimaging/blob/master/examples/viz_image.ipynb)  
-[Quantitative analysis of endocytosis.](https://github.com/rraadd88/htsimaging/blob/master/examples/endocytosis.ipynb)  
-[Single-particle tracking (SPT).](https://github.com/rraadd88/htsimaging/blob/master/examples/spt.ipynb)  
-[Calculating the recovery rate from a bleach-chase data](https://github.com/rraadd88/htsimaging/blob/master/examples/bleach_chase.ipynb)  
+3. Using citation information from [CITATION.CFF file](https://github.com/rraadd88/htsimaging/blob/main/CITATION.cff).  
+  
+
+# Future directions, for which contributions are welcome  
+- [ ] Command-line usage.  
+  
+# Similar projects  
+- https://github.com/vanvalenlab/deepcell-tf  
+- https://github.com/junlabucsd/napari-mm3  
 
 # API
 <!-- markdownlint-disable -->
@@ -1680,208 +1707,6 @@ Distance travelled.
 
 <!-- markdownlint-disable -->
 
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/spt.py#L0"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-## <kbd>module</kbd> `htsimaging.spt.viz`
-
-
-
-
-
----
-
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/spt/viz.py#L20"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>function</kbd> `plot_msd`
-
-```python
-plot_msd(
-    imsd: DataFrame,
-    emsd: DataFrame,
-    scale: str = 'log',
-    plot_fh: str = None,
-    time_points_max: int = None,
-    ax: Axes = None
-) → Axes
-```
-
-Plot MSD. 
-
-
-
-**Args:**
- 
- - <b>`imsd`</b> (pd.DataFrame):  mean squared displacement of each particle. 
- - <b>`emsd`</b> (pd.DataFrame):  ensemble mean squared displacement of particles. 
- - <b>`scale`</b> (str, optional):  axis scale. Defaults to "log". 
- - <b>`plot_fh`</b> (str, optional):  output path. Defaults to None. 
- - <b>`params_msd`</b> (dict, optional):  parameters of MSD. Defaults to { "mpp":0.0645, "fps":0.2, "max_lagtime":100 }. 
- - <b>`ax`</b> (plt.Axes, optional):  subplot. Defaults to None. 
-
-
-
-**Returns:**
- 
- - <b>`plt.Axes`</b>:  subplot 
-
-
-
-**Examples:**
-  Calculate `time_points_max`: ```
-         params_msd: dict={
-             "mpp":0.0645,
-             "fps":0.2,
-             "max_lagtime":100
-             }
-         time_points_max=params_msd["fps"]*params_msd["max_lagtime"]
-    ``` 
-
-
----
-
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/spt/viz.py#L80"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>function</kbd> `plot_emsd`
-
-```python
-plot_emsd(
-    expt_data: DataFrame,
-    color: str = 'k',
-    scale: str = 'log',
-    plot_fh: str = None,
-    ax: Axes = None
-) → Axes
-```
-
-Plot ensemble mean squared displacement of particles. 
-
-
-
-**Args:**
- 
- - <b>`expt_data`</b> (pd.DataFrame):  input data. 
- - <b>`color`</b> (str, optional):  color. Defaults to 'k'. 
- - <b>`scale`</b> (str, optional):  scale of the axes. Defaults to "log". 
- - <b>`plot_fh`</b> (str, optional):  output path. Defaults to None. 
- - <b>`ax`</b> (plt.Axes, optional):  subplot. Defaults to None. 
-
-
-
-**Returns:**
- 
- - <b>`plt.Axes`</b>:  subplot 
-
-
----
-
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/spt/viz.py#L117"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>function</kbd> `plot_kin`
-
-```python
-plot_kin(
-    traj: DataFrame,
-    dparams: DataFrame = None,
-    ctime: str = 'time (s)',
-    fit_eqn: str = None,
-    ylabel: str = '',
-    label: str = '',
-    color: str = 'b',
-    ax1: Axes = None,
-    plot_fh: str = None
-) → Axes
-```
-
-Plot kinetics. 
-
-
-
-**Args:**
- 
- - <b>`traj`</b> (pd.DataFrame):  table containing the trajectories. 
- - <b>`dparams`</b> (pd.DataFrame, optional):  table containing the parameters. Defaults to None. 
- - <b>`ctime`</b> (str, optional):  time point. Defaults to 'time (s)'. 
- - <b>`fit_eqn`</b> (str, optional):  fit equation name. Defaults to None. 
-
-
-
-**Returns:**
- plt.Axes 
-
-
----
-
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/spt/viz.py#L187"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>function</kbd> `plot_kin_all`
-
-```python
-plot_kin_all(expt_dh: str, imsd_fhs: list)
-```
-
-Plot multiple kinetics plots. 
-
-
----
-
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/spt/viz.py#L220"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>function</kbd> `plot_trajectories_stats`
-
-```python
-plot_trajectories_stats(
-    df: DataFrame,
-    coly: str,
-    colx: str = 'frame',
-    rescalex: bool = True,
-    label: str = None,
-    axvlinex=None,
-    params_plot: dict = {'color': 'k', 'alpha': 0.5},
-    fig=None,
-    ax: Axes = None
-) → Axes
-```
-
-Plot statistics of the particle trajectories. 
-
-
----
-
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/spt/viz.py#L252"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
-
-### <kbd>function</kbd> `plot_trajectories`
-
-```python
-plot_trajectories(
-    traj,
-    image,
-    colorby: str = 'particle',
-    mpp: float = None,
-    label: str = False,
-    cmap: str = None,
-    t_column: str = None,
-    pos_columns: list = None,
-    plot_style: dict = {},
-    params_text: dict = {'ha': 'center', 'va': 'center'},
-    ax: Axes = None,
-    **kwargs
-) → Axes
-```
-
-Plot traces of trajectories for each particle. Optionally image it on a frame from the video. 
-
-Parameters 
----------- traj : DataFrame  The DataFrame should include time and spatial coordinate columns. colorby : {'particle', 'frame'}, optional mpp : float, optional  Microns per pixel. If omitted, the labels will have units of pixels. label : boolean, optional  Set to True to write particle ID numbers next to trajectories. image : ndarray, optional  Background image, default None cmap : colormap, optional  This is only used in colorby='frame' mode. Default = mpl.cm.winter ax : matplotlib axes object, optional  Defaults to current axes t_column : string, optional  DataFrame column name for time coordinate. Default is 'frame'. pos_columns : list of strings, optional  Dataframe column names for spatial coordinates. Default is ['x', 'y']. plot_style : dictionary  Keyword arguments passed through to the `Axes.plot(...)` command 
-
-Returns 
-------- Axes object 
-
-See Also 
--------- plot_traj3d : the 3D equivalent of `plot_traj` 
-
-
-<!-- markdownlint-disable -->
-
 <a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/viz.py#L0"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>module</kbd> `htsimaging.viz.colors`
@@ -1954,7 +1779,7 @@ Keyword Args: parameters provided to the `plt.imshow`.
 
 ---
 
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/viz/image.py#L81"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/viz/image.py#L87"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>function</kbd> `annot_cells`
 
@@ -1980,7 +1805,7 @@ Annotate the cells on an image.
 
 ---
 
-<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/viz/image.py#L108"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="https://github.com/rraadd88/htsimaging/blob/master/htsimaging/viz/image.py#L114"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>function</kbd> `image_regions_annotated`
 
