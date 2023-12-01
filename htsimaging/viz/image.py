@@ -15,6 +15,7 @@ def image_background(
     show_scalebar=None,
     scalebar_color: str='w',
     show_cbar: bool=True,
+    cbar_label: str='Intensity',
     test=False,
     ax=None,
     **kws_img,
@@ -78,7 +79,7 @@ def image_background(
     if not img is None and show_cbar:
         cax = ax.figure.add_axes([ax.get_position().x1+0.01,ax.get_position().y0,0.02,ax.get_position().height if ax.figure.get_size_inches()[1]<5 else (2/ax.figure.get_size_inches()[1])])
         cbar = ax.figure.colorbar(ax_img,cax=cax)
-        cbar.ax.set_ylabel('Intensity')
+        cbar.ax.set_ylabel(cbar_label)
         # cbar.ax.hist(img.ravel()) # show histogram in the colorbar
     ax.grid(test)
     ax.set_aspect('equal')
