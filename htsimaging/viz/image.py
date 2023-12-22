@@ -86,14 +86,14 @@ def image_background(
     return ax
 
 def annot_cells(
-    label_image,
+    img_label,
     show_boxes: bool=False,
     ax: plt.Axes=None,
     )-> plt.Axes:
     """Annotate the cells on an image.
 
     Args:
-        label_image (_type_): image with the labeled regions 
+        img_label (_type_): image with the labeled regions 
         show_boxes (bool, optional): show boxes around regions. Defaults to False.
         ax (plt.Axes, optional): plt.Axes. Defaults to None.
 
@@ -102,7 +102,7 @@ def annot_cells(
     """
     from skimage.measure import regionprops
     import matplotlib.patches as mpatches
-    for region in regionprops(label_image):
+    for region in regionprops(img_label):
         minr, minc, maxr, maxc = region.bbox
         ax.text(x=np.mean([minc,maxc]),y=np.mean([minr,maxr]),s=f"{region.label:.0f}",ha='center',va='center',color='r',zorder=10,size=10)
         if show_boxes:
@@ -115,6 +115,7 @@ def annot_cells(
 def image_regions_annotated(
     img_region,
     img,
+    img_label=None,
     show_boxes: bool=False,
     **kws_img,
     ) -> plt.Axes:
@@ -123,8 +124,9 @@ def image_regions_annotated(
     Usage: for QC of the segmentation.
 
     Args:
-        img_region (_type_): image with segmentated regions.
-        img (_type_): image with intensity.
+        img_region (np.array): image with segmentated regions to show.
+        img (np.array): image with intensity.
+        img_label (np.array): image with segmentated regions to label.
         show_boxes (bool, optional): whether to show the boxes around the regions. Defaults to False.
 
     Keyword Args:
@@ -139,7 +141,7 @@ def image_regions_annotated(
         **kws_img,
         )
     annot_cells(
-        label_image=img_region,
+        img_label=img_label if not img_label is None else img_region,
         show_boxes=show_boxes,
         ax=ax,
         )
